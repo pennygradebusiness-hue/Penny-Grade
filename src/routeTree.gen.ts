@@ -17,8 +17,10 @@ import { Route as OffersRouteImport } from './routes/offers'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PPartnerSlugRouteImport } from './routes/p.$partnerSlug'
 import { Route as PartnersIndexRouteImport } from './routes/partners.index'
 import { Route as PartnersSlugRouteImport } from './routes/partners.$slug'
+import { Route as VerificationSessionIdRouteImport } from './routes/verification.$sessionId'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
 import { Route as AuthenticatedAccountHistoryRouteImport } from './routes/_authenticated/account.history'
 import { Route as AuthenticatedAccountMembershipRouteImport } from './routes/_authenticated/account.membership'
@@ -63,6 +65,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PPartnerSlugRoute = PPartnerSlugRouteImport.update({
+  id: '/p/$partnerSlug',
+  path: '/p/$partnerSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PartnersIndexRoute = PartnersIndexRouteImport.update({
   id: '/partners/',
   path: '/partners/',
@@ -71,6 +78,11 @@ const PartnersIndexRoute = PartnersIndexRouteImport.update({
 const PartnersSlugRoute = PartnersSlugRouteImport.update({
   id: '/partners/$slug',
   path: '/partners/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerificationSessionIdRoute = VerificationSessionIdRouteImport.update({
+  id: '/verification/$sessionId',
+  path: '/verification/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountIndexRoute =
@@ -106,7 +118,9 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
+  '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
+  '/verification/$sessionId': typeof VerificationSessionIdRoute
   '/partners/': typeof PartnersIndexRoute
   '/account/history': typeof AuthenticatedAccountHistoryRoute
   '/account/membership': typeof AuthenticatedAccountMembershipRoute
@@ -121,7 +135,9 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
+  '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
+  '/verification/$sessionId': typeof VerificationSessionIdRoute
   '/partners': typeof PartnersIndexRoute
   '/account/history': typeof AuthenticatedAccountHistoryRoute
   '/account/membership': typeof AuthenticatedAccountMembershipRoute
@@ -138,7 +154,9 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
+  '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
+  '/verification/$sessionId': typeof VerificationSessionIdRoute
   '/partners/': typeof PartnersIndexRoute
   '/_authenticated/account/history': typeof AuthenticatedAccountHistoryRoute
   '/_authenticated/account/membership': typeof AuthenticatedAccountMembershipRoute
@@ -155,7 +173,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
+    | '/p/$partnerSlug'
     | '/partners/$slug'
+    | '/verification/$sessionId'
     | '/partners/'
     | '/account/history'
     | '/account/membership'
@@ -170,7 +190,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
+    | '/p/$partnerSlug'
     | '/partners/$slug'
+    | '/verification/$sessionId'
     | '/partners'
     | '/account/history'
     | '/account/membership'
@@ -186,7 +208,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
+    | '/p/$partnerSlug'
     | '/partners/$slug'
+    | '/verification/$sessionId'
     | '/partners/'
     | '/_authenticated/account/history'
     | '/_authenticated/account/membership'
@@ -203,7 +227,9 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   TermsRoute: typeof TermsRoute
+  PPartnerSlugRoute: typeof PPartnerSlugRoute
   PartnersSlugRoute: typeof PartnersSlugRoute
+  VerificationSessionIdRoute: typeof VerificationSessionIdRoute
   PartnersIndexRoute: typeof PartnersIndexRoute
 }
 
@@ -265,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$partnerSlug': {
+      id: '/p/$partnerSlug'
+      path: '/p/$partnerSlug'
+      fullPath: '/p/$partnerSlug'
+      preLoaderRoute: typeof PPartnerSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/partners/': {
       id: '/partners/'
       path: '/partners'
@@ -277,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/partners/$slug'
       fullPath: '/partners/$slug'
       preLoaderRoute: typeof PartnersSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verification/$sessionId': {
+      id: '/verification/$sessionId'
+      path: '/verification/$sessionId'
+      fullPath: '/verification/$sessionId'
+      preLoaderRoute: typeof VerificationSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/': {
@@ -336,7 +376,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   TermsRoute: TermsRoute,
+  PPartnerSlugRoute: PPartnerSlugRoute,
   PartnersSlugRoute: PartnersSlugRoute,
+  VerificationSessionIdRoute: VerificationSessionIdRoute,
   PartnersIndexRoute: PartnersIndexRoute,
 }
 export const routeTree = rootRouteImport
