@@ -10,33 +10,428 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OffersRouteImport } from './routes/offers'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as PPartnerSlugRouteImport } from './routes/p.$partnerSlug'
+import { Route as PartnersIndexRouteImport } from './routes/partners.index'
+import { Route as PartnersSlugRouteImport } from './routes/partners.$slug'
+import { Route as VerificationSessionIdRouteImport } from './routes/verification.$sessionId'
+import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
+import { Route as AuthenticatedAccountHistoryRouteImport } from './routes/_authenticated/account.history'
+import { Route as AuthenticatedAccountMembershipRouteImport } from './routes/_authenticated/account.membership'
+import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin.admins'
+import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as AuthenticatedAdminCardsRouteImport } from './routes/_authenticated/admin.cards'
+import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
+import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
+import { Route as AuthenticatedAdminOffersRouteImport } from './routes/_authenticated/admin.offers'
+import { Route as AuthenticatedAdminPartnersRouteImport } from './routes/_authenticated/admin.partners'
+import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin.plans'
+import { Route as AuthenticatedAdminQrCodesRouteImport } from './routes/_authenticated/admin.qr-codes'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffersRoute = OffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PPartnerSlugRoute = PPartnerSlugRouteImport.update({
+  id: '/p/$partnerSlug',
+  path: '/p/$partnerSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersIndexRoute = PartnersIndexRouteImport.update({
+  id: '/partners/',
+  path: '/partners/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersSlugRoute = PartnersSlugRouteImport.update({
+  id: '/partners/$slug',
+  path: '/partners/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerificationSessionIdRoute = VerificationSessionIdRouteImport.update({
+  id: '/verification/$sessionId',
+  path: '/verification/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountIndexRoute =
+  AuthenticatedAccountIndexRouteImport.update({
+    id: '/account/',
+    path: '/account/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountHistoryRoute =
+  AuthenticatedAccountHistoryRouteImport.update({
+    id: '/account/history',
+    path: '/account/history',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountMembershipRoute =
+  AuthenticatedAccountMembershipRouteImport.update({
+    id: '/account/membership',
+    path: '/account/membership',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountProfileRoute =
+  AuthenticatedAccountProfileRouteImport.update({
+    id: '/account/profile',
+    path: '/account/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminAdminsRoute =
+  AuthenticatedAdminAdminsRouteImport.update({
+    id: '/admins',
+    path: '/admins',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminCardsRoute = AuthenticatedAdminCardsRouteImport.update({
+  id: '/cards',
+  path: '/cards',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminCategoriesRoute =
+  AuthenticatedAdminCategoriesRouteImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminMembersRoute =
+  AuthenticatedAdminMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminOffersRoute =
+  AuthenticatedAdminOffersRouteImport.update({
+    id: '/offers',
+    path: '/offers',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPartnersRoute =
+  AuthenticatedAdminPartnersRouteImport.update({
+    id: '/partners',
+    path: '/partners',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminQrCodesRoute =
+  AuthenticatedAdminQrCodesRouteImport.update({
+    id: '/qr-codes',
+    path: '/qr-codes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminVerificationsRoute =
+  AuthenticatedAdminVerificationsRouteImport.update({
+    id: '/verifications',
+    path: '/verifications',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
+  '/offers': typeof OffersRoute
+  '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin/login': typeof AdminLoginRoute
+  '/p/$partnerSlug': typeof PPartnerSlugRoute
+  '/partners/$slug': typeof PartnersSlugRoute
+  '/verification/$sessionId': typeof VerificationSessionIdRoute
+  '/partners/': typeof PartnersIndexRoute
+  '/account/history': typeof AuthenticatedAccountHistoryRoute
+  '/account/membership': typeof AuthenticatedAccountMembershipRoute
+  '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/admin/admins': typeof AuthenticatedAdminAdminsRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/admin/cards': typeof AuthenticatedAdminCardsRoute
+  '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
+  '/admin/offers': typeof AuthenticatedAdminOffersRoute
+  '/admin/partners': typeof AuthenticatedAdminPartnersRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/qr-codes': typeof AuthenticatedAdminQrCodesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/account/': typeof AuthenticatedAccountIndexRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
+  '/offers': typeof OffersRoute
+  '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/p/$partnerSlug': typeof PPartnerSlugRoute
+  '/partners/$slug': typeof PartnersSlugRoute
+  '/verification/$sessionId': typeof VerificationSessionIdRoute
+  '/partners': typeof PartnersIndexRoute
+  '/account/history': typeof AuthenticatedAccountHistoryRoute
+  '/account/membership': typeof AuthenticatedAccountMembershipRoute
+  '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/admin/admins': typeof AuthenticatedAdminAdminsRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/admin/cards': typeof AuthenticatedAdminCardsRoute
+  '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
+  '/admin/offers': typeof AuthenticatedAdminOffersRoute
+  '/admin/partners': typeof AuthenticatedAdminPartnersRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/qr-codes': typeof AuthenticatedAdminQrCodesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/account': typeof AuthenticatedAccountIndexRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
+  '/offers': typeof OffersRoute
+  '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin/login': typeof AdminLoginRoute
+  '/p/$partnerSlug': typeof PPartnerSlugRoute
+  '/partners/$slug': typeof PartnersSlugRoute
+  '/verification/$sessionId': typeof VerificationSessionIdRoute
+  '/partners/': typeof PartnersIndexRoute
+  '/_authenticated/account/history': typeof AuthenticatedAccountHistoryRoute
+  '/_authenticated/account/membership': typeof AuthenticatedAccountMembershipRoute
+  '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
+  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/_authenticated/admin/cards': typeof AuthenticatedAdminCardsRoute
+  '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
+  '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
+  '/_authenticated/admin/offers': typeof AuthenticatedAdminOffersRoute
+  '/_authenticated/admin/partners': typeof AuthenticatedAdminPartnersRoute
+  '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/_authenticated/admin/qr-codes': typeof AuthenticatedAdminQrCodesRoute
+  '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/how-it-works'
+    | '/login'
+    | '/offers'
+    | '/privacy'
+    | '/register'
+    | '/sitemap.xml'
+    | '/terms'
+    | '/admin'
+    | '/admin/login'
+    | '/p/$partnerSlug'
+    | '/partners/$slug'
+    | '/verification/$sessionId'
+    | '/partners/'
+    | '/account/history'
+    | '/account/membership'
+    | '/account/profile'
+    | '/admin/admins'
+    | '/admin/audit'
+    | '/admin/cards'
+    | '/admin/categories'
+    | '/admin/members'
+    | '/admin/offers'
+    | '/admin/partners'
+    | '/admin/plans'
+    | '/admin/qr-codes'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/verifications'
+    | '/account/'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/how-it-works'
+    | '/login'
+    | '/offers'
+    | '/privacy'
+    | '/register'
+    | '/sitemap.xml'
+    | '/terms'
+    | '/admin/login'
+    | '/p/$partnerSlug'
+    | '/partners/$slug'
+    | '/verification/$sessionId'
+    | '/partners'
+    | '/account/history'
+    | '/account/membership'
+    | '/account/profile'
+    | '/admin/admins'
+    | '/admin/audit'
+    | '/admin/cards'
+    | '/admin/categories'
+    | '/admin/members'
+    | '/admin/offers'
+    | '/admin/partners'
+    | '/admin/plans'
+    | '/admin/qr-codes'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/verifications'
+    | '/account'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/how-it-works'
+    | '/login'
+    | '/offers'
+    | '/privacy'
+    | '/register'
+    | '/sitemap.xml'
+    | '/terms'
+    | '/_authenticated/admin'
+    | '/admin/login'
+    | '/p/$partnerSlug'
+    | '/partners/$slug'
+    | '/verification/$sessionId'
+    | '/partners/'
+    | '/_authenticated/account/history'
+    | '/_authenticated/account/membership'
+    | '/_authenticated/account/profile'
+    | '/_authenticated/admin/admins'
+    | '/_authenticated/admin/audit'
+    | '/_authenticated/admin/cards'
+    | '/_authenticated/admin/categories'
+    | '/_authenticated/admin/members'
+    | '/_authenticated/admin/offers'
+    | '/_authenticated/admin/partners'
+    | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/qr-codes'
+    | '/_authenticated/admin/reports'
+    | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/verifications'
+    | '/_authenticated/account/'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  HowItWorksRoute: typeof HowItWorksRoute
+  LoginRoute: typeof LoginRoute
+  OffersRoute: typeof OffersRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RegisterRoute: typeof RegisterRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  PPartnerSlugRoute: typeof PPartnerSlugRoute
+  PartnersSlugRoute: typeof PartnersSlugRoute
+  VerificationSessionIdRoute: typeof VerificationSessionIdRoute
+  PartnersIndexRoute: typeof PartnersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +443,295 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offers': {
+      id: '/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof OffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$partnerSlug': {
+      id: '/p/$partnerSlug'
+      path: '/p/$partnerSlug'
+      fullPath: '/p/$partnerSlug'
+      preLoaderRoute: typeof PPartnerSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners/': {
+      id: '/partners/'
+      path: '/partners'
+      fullPath: '/partners/'
+      preLoaderRoute: typeof PartnersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners/$slug': {
+      id: '/partners/$slug'
+      path: '/partners/$slug'
+      fullPath: '/partners/$slug'
+      preLoaderRoute: typeof PartnersSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verification/$sessionId': {
+      id: '/verification/$sessionId'
+      path: '/verification/$sessionId'
+      fullPath: '/verification/$sessionId'
+      preLoaderRoute: typeof VerificationSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account/': {
+      id: '/_authenticated/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/history': {
+      id: '/_authenticated/account/history'
+      path: '/account/history'
+      fullPath: '/account/history'
+      preLoaderRoute: typeof AuthenticatedAccountHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/membership': {
+      id: '/_authenticated/account/membership'
+      path: '/account/membership'
+      fullPath: '/account/membership'
+      preLoaderRoute: typeof AuthenticatedAccountMembershipRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/profile': {
+      id: '/_authenticated/account/profile'
+      path: '/account/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/admins': {
+      id: '/_authenticated/admin/admins'
+      path: '/admins'
+      fullPath: '/admin/admins'
+      preLoaderRoute: typeof AuthenticatedAdminAdminsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/audit': {
+      id: '/_authenticated/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/cards': {
+      id: '/_authenticated/admin/cards'
+      path: '/cards'
+      fullPath: '/admin/cards'
+      preLoaderRoute: typeof AuthenticatedAdminCardsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/categories': {
+      id: '/_authenticated/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/members': {
+      id: '/_authenticated/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/offers': {
+      id: '/_authenticated/admin/offers'
+      path: '/offers'
+      fullPath: '/admin/offers'
+      preLoaderRoute: typeof AuthenticatedAdminOffersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/partners': {
+      id: '/_authenticated/admin/partners'
+      path: '/partners'
+      fullPath: '/admin/partners'
+      preLoaderRoute: typeof AuthenticatedAdminPartnersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/plans': {
+      id: '/_authenticated/admin/plans'
+      path: '/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/qr-codes': {
+      id: '/_authenticated/admin/qr-codes'
+      path: '/qr-codes'
+      fullPath: '/admin/qr-codes'
+      preLoaderRoute: typeof AuthenticatedAdminQrCodesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/verifications': {
+      id: '/_authenticated/admin/verifications'
+      path: '/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAdminsRoute: typeof AuthenticatedAdminAdminsRoute
+  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
+  AuthenticatedAdminCardsRoute: typeof AuthenticatedAdminCardsRoute
+  AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
+  AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
+  AuthenticatedAdminOffersRoute: typeof AuthenticatedAdminOffersRoute
+  AuthenticatedAdminPartnersRoute: typeof AuthenticatedAdminPartnersRoute
+  AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
+  AuthenticatedAdminQrCodesRoute: typeof AuthenticatedAdminQrCodesRoute
+  AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAdminsRoute: AuthenticatedAdminAdminsRoute,
+  AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
+  AuthenticatedAdminCardsRoute: AuthenticatedAdminCardsRoute,
+  AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
+  AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
+  AuthenticatedAdminOffersRoute: AuthenticatedAdminOffersRoute,
+  AuthenticatedAdminPartnersRoute: AuthenticatedAdminPartnersRoute,
+  AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
+  AuthenticatedAdminQrCodesRoute: AuthenticatedAdminQrCodesRoute,
+  AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAccountHistoryRoute: typeof AuthenticatedAccountHistoryRoute
+  AuthenticatedAccountMembershipRoute: typeof AuthenticatedAccountMembershipRoute
+  AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAccountHistoryRoute: AuthenticatedAccountHistoryRoute,
+  AuthenticatedAccountMembershipRoute: AuthenticatedAccountMembershipRoute,
+  AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  HowItWorksRoute: HowItWorksRoute,
+  LoginRoute: LoginRoute,
+  OffersRoute: OffersRoute,
+  PrivacyRoute: PrivacyRoute,
+  RegisterRoute: RegisterRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  PPartnerSlugRoute: PPartnerSlugRoute,
+  PartnersSlugRoute: PartnersSlugRoute,
+  VerificationSessionIdRoute: VerificationSessionIdRoute,
+  PartnersIndexRoute: PartnersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
