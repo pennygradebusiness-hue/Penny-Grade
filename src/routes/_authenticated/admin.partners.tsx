@@ -29,7 +29,7 @@ function Partners() {
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin"] }); qc.invalidateQueries({ queryKey: ["public"] }); };
 
   const upd = async (id: string, patch: Record<string, unknown>, action: string, name: string) => {
-    const { error } = await supabase.from("partners").update(patch).eq("id", id);
+    const { error } = await supabase.from("partners").update(patch as never).eq("id", id);
     if (error) return toast.error("Not permitted");
     await logAudit(action, "partner", id, { name, ...patch }); toast.success(action); refresh();
   };
