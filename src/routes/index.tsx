@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Check, QrCode, Store, BadgeCheck, CreditCard, ShieldCheck, Infinity as InfinityIcon, Smartphone } from "lucide-react";
+import { Check, ShieldCheck, Infinity as InfinityIcon, Smartphone } from "lucide-react";
 import { SiteLayout, PartnerCard } from "@/components/site";
 import { LOGO_URL } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { categoriesQuery, partnersQuery, categoryIcon } from "@/lib/queries";
 import { offerHeadline, offerSub } from "@/lib/format";
+import { STEPS } from "@/lib/steps";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,12 +23,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-export const STEPS = [
-  { icon: CreditCard, title: "Get PennyGrade Membership", body: "Join PennyGrade and receive your membership." },
-  { icon: Store, title: "Find a Partner", body: "Explore cafés, restaurants, hotels, salons and other participating businesses." },
-  { icon: QrCode, title: "Scan & Verify", body: "Scan the PennyGrade QR displayed at the partner location and enter your bill amount." },
-  { icon: BadgeCheck, title: "Show & Save", body: "Show the live verification screen to staff and enjoy your member discount." },
-];
 
 const FAQ = [
   ["How do I use my discount?", "At a partner, scan the PennyGrade QR at the counter, enter your bill amount and show the live verification screen to staff. They apply the discount in their normal billing."],
