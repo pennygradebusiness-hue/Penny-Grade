@@ -27,6 +27,8 @@ import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAccountHistoryRouteImport } from './routes/_authenticated/account.history'
 import { Route as AuthenticatedAccountMembershipRouteImport } from './routes/_authenticated/account.membership'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -121,6 +123,17 @@ const AuthenticatedAccountProfileRoute =
     path: '/account/profile',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminMembersRoute =
+  AuthenticatedAdminMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -130,7 +143,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
@@ -139,7 +152,9 @@ export interface FileRoutesByFullPath {
   '/account/history': typeof AuthenticatedAccountHistoryRoute
   '/account/membership': typeof AuthenticatedAccountMembershipRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,7 +164,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/admin/login': typeof AdminLoginRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
@@ -158,7 +172,9 @@ export interface FileRoutesByTo {
   '/account/history': typeof AuthenticatedAccountHistoryRoute
   '/account/membership': typeof AuthenticatedAccountMembershipRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/account': typeof AuthenticatedAccountIndexRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,7 +186,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
@@ -179,7 +195,9 @@ export interface FileRoutesById {
   '/_authenticated/account/history': typeof AuthenticatedAccountHistoryRoute
   '/_authenticated/account/membership': typeof AuthenticatedAccountMembershipRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -200,7 +218,9 @@ export interface FileRouteTypes {
     | '/account/history'
     | '/account/membership'
     | '/account/profile'
+    | '/admin/members'
     | '/account/'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,7 +230,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
-    | '/admin'
     | '/admin/login'
     | '/p/$partnerSlug'
     | '/partners/$slug'
@@ -219,7 +238,9 @@ export interface FileRouteTypes {
     | '/account/history'
     | '/account/membership'
     | '/account/profile'
+    | '/admin/members'
     | '/account'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -239,7 +260,9 @@ export interface FileRouteTypes {
     | '/_authenticated/account/history'
     | '/_authenticated/account/membership'
     | '/_authenticated/account/profile'
+    | '/_authenticated/admin/members'
     | '/_authenticated/account/'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -386,11 +409,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/members': {
+      id: '/_authenticated/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAccountHistoryRoute: typeof AuthenticatedAccountHistoryRoute
   AuthenticatedAccountMembershipRoute: typeof AuthenticatedAccountMembershipRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
@@ -398,7 +448,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAccountHistoryRoute: AuthenticatedAccountHistoryRoute,
   AuthenticatedAccountMembershipRoute: AuthenticatedAccountMembershipRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
