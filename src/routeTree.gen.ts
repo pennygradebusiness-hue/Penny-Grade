@@ -10,21 +10,37 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PartnersIndexRouteImport } from './routes/partners.index'
 import { Route as PartnersSlugRouteImport } from './routes/partners.$slug'
+import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
+import { Route as AuthenticatedAccountHistoryRouteImport } from './routes/_authenticated/account.history'
+import { Route as AuthenticatedAccountMembershipRouteImport } from './routes/_authenticated/account.membership'
+import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OffersRoute = OffersRouteImport.update({
@@ -35,6 +51,11 @@ const OffersRoute = OffersRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -52,70 +73,135 @@ const PartnersSlugRoute = PartnersSlugRouteImport.update({
   path: '/partners/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountIndexRoute =
+  AuthenticatedAccountIndexRouteImport.update({
+    id: '/account/',
+    path: '/account/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountHistoryRoute =
+  AuthenticatedAccountHistoryRouteImport.update({
+    id: '/account/history',
+    path: '/account/history',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountMembershipRoute =
+  AuthenticatedAccountMembershipRouteImport.update({
+    id: '/account/membership',
+    path: '/account/membership',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountProfileRoute =
+  AuthenticatedAccountProfileRouteImport.update({
+    id: '/account/profile',
+    path: '/account/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/partners/': typeof PartnersIndexRoute
+  '/account/history': typeof AuthenticatedAccountHistoryRoute
+  '/account/membership': typeof AuthenticatedAccountMembershipRoute
+  '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/partners': typeof PartnersIndexRoute
+  '/account/history': typeof AuthenticatedAccountHistoryRoute
+  '/account/membership': typeof AuthenticatedAccountMembershipRoute
+  '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/partners/': typeof PartnersIndexRoute
+  '/_authenticated/account/history': typeof AuthenticatedAccountHistoryRoute
+  '/_authenticated/account/membership': typeof AuthenticatedAccountMembershipRoute
+  '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/how-it-works'
+    | '/login'
     | '/offers'
     | '/privacy'
+    | '/register'
     | '/terms'
     | '/partners/$slug'
     | '/partners/'
+    | '/account/history'
+    | '/account/membership'
+    | '/account/profile'
+    | '/account/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/how-it-works'
+    | '/login'
     | '/offers'
     | '/privacy'
+    | '/register'
     | '/terms'
     | '/partners/$slug'
     | '/partners'
+    | '/account/history'
+    | '/account/membership'
+    | '/account/profile'
+    | '/account'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/how-it-works'
+    | '/login'
     | '/offers'
     | '/privacy'
+    | '/register'
     | '/terms'
     | '/partners/$slug'
     | '/partners/'
+    | '/_authenticated/account/history'
+    | '/_authenticated/account/membership'
+    | '/_authenticated/account/profile'
+    | '/_authenticated/account/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   HowItWorksRoute: typeof HowItWorksRoute
+  LoginRoute: typeof LoginRoute
   OffersRoute: typeof OffersRoute
   PrivacyRoute: typeof PrivacyRoute
+  RegisterRoute: typeof RegisterRoute
   TermsRoute: typeof TermsRoute
   PartnersSlugRoute: typeof PartnersSlugRoute
   PartnersIndexRoute: typeof PartnersIndexRoute
@@ -130,11 +216,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how-it-works': {
       id: '/how-it-works'
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offers': {
@@ -149,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -172,14 +279,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account/': {
+      id: '/_authenticated/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/history': {
+      id: '/_authenticated/account/history'
+      path: '/account/history'
+      fullPath: '/account/history'
+      preLoaderRoute: typeof AuthenticatedAccountHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/membership': {
+      id: '/_authenticated/account/membership'
+      path: '/account/membership'
+      fullPath: '/account/membership'
+      preLoaderRoute: typeof AuthenticatedAccountMembershipRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/profile': {
+      id: '/_authenticated/account/profile'
+      path: '/account/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountHistoryRoute: typeof AuthenticatedAccountHistoryRoute
+  AuthenticatedAccountMembershipRoute: typeof AuthenticatedAccountMembershipRoute
+  AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountHistoryRoute: AuthenticatedAccountHistoryRoute,
+  AuthenticatedAccountMembershipRoute: AuthenticatedAccountMembershipRoute,
+  AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   HowItWorksRoute: HowItWorksRoute,
+  LoginRoute: LoginRoute,
   OffersRoute: OffersRoute,
   PrivacyRoute: PrivacyRoute,
+  RegisterRoute: RegisterRoute,
   TermsRoute: TermsRoute,
   PartnersSlugRoute: PartnersSlugRoute,
   PartnersIndexRoute: PartnersIndexRoute,
