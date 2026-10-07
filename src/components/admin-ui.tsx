@@ -1,3 +1,4 @@
+import { ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({ title, desc, actions }: { title: string; desc?: string; actions?: React.ReactNode }) {
@@ -58,4 +59,8 @@ export function downloadCsv(name: string, rows: (string | number | null | undefi
   const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
+}
+
+export function Chart({ children }: { children: React.ReactElement }) {
+  return <div className="h-60"><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>;
 }

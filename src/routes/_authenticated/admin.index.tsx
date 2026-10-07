@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { PageHeader, Stat, Panel, TableSkeleton } from "@/components/admin-ui";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
+import { PageHeader, Stat, Panel, TableSkeleton, Chart } from "@/components/admin-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchLogs, groupSum, lastMonths, monthKey } from "@/lib/admin-data";
 import { inr } from "@/lib/format";
@@ -65,6 +65,3 @@ function Dashboard() {
   );
 }
 
-export function Chart({ children }: { children: React.ReactElement }) {
-  return <div className="h-60"><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>;
-}

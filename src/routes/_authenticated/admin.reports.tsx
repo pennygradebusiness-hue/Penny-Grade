@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
-import { PageHeader, Panel, Stat, TableSkeleton } from "@/components/admin-ui";
+import { PageHeader, Panel, Stat, TableSkeleton, Chart } from "@/components/admin-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchLogs, groupSum, lastMonths, monthKey } from "@/lib/admin-data";
 import { inr, maskId } from "@/lib/format";
-import { Chart } from "./admin.index";
 
 export const Route = createFileRoute("/_authenticated/admin/reports")({ component: Reports });
 const axis = { fontSize: 11, stroke: "var(--muted-foreground)" };
