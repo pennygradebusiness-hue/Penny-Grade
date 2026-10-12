@@ -5,8 +5,10 @@ import {
   generatePenCode,
   safeRandomUUID,
   saveStoreToDisk,
+  seedPartners,
   type V1Member,
   type V1PhysicalCard,
+  type V1Partner,
   type V1AuditLog,
   type V1AdminUser,
   type V1MemberApplication,
@@ -187,10 +189,10 @@ export const getAdminMembers = createServerFn({ method: "GET" }).handler(async (
 
 // Admin Update Member Status
 export const updateMemberStatus = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; status: "ACTIVE" | "SUSPENDED" | "CANCELLED" }) =>
+  .inputValidator((d: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED" }) =>
     z.object({
       id: z.string(),
-      status: z.enum(["ACTIVE", "SUSPENDED", "CANCELLED"]),
+      status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "CANCELLED"]),
     }).parse(d)
   )
   .handler(async ({ data }) => {
@@ -208,6 +210,41 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
         target_id: member.id,
         metadata: { member: member.full_name, status: data.status },
         created_at: member.updated_at,
+        who: "Super Admin",
+      });
+    }
+
+    saveStoreToDisk();
+
+    return { ok: true };
+  });
+
+// Admin Delete Member
+export const deleteMember = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const member = store.members.get(data.id);
+    if (!member) throw new Error("Member not found");
+
+    // Release assigned card back to AVAILABLE status if linked
+    if (member.card_id && store.cards.has(member.card_id)) {
+      const card = store.cards.get(member.card_id)!;
+      card.membership_id = null;
+      card.status = "AVAILABLE";
+      card.updated_at = new Date().toISOString();
+    }
+
+    store.members.delete(data.id);
+
+    if (store.auditLogs) {
+      store.auditLogs.unshift({
+        id: safeRandomUUID(),
+        admin_user_id: "admin-super",
+        action: `Deleted Member: ${member.full_name} (${member.membership_number})`,
+        target_type: "member",
+        target_id: data.id,
+        metadata: { name: member.full_name, membership_number: member.membership_number },
+        created_at: new Date().toISOString(),
         who: "Super Admin",
       });
     }
@@ -320,10 +357,10 @@ export const getAdminUsers = createServerFn({ method: "GET" }).handler(async ():
   if (!storeUsers.length) {
     const fallbackUsers: V1AdminUser[] = [
       {
-        id: "admin-user-1",
-        user_id: "uid-samir-001",
-        full_name: "Samir Pandey",
-        email: "samir@pennygrade.com",
+        id: "admin-primary-owner",
+        user_id: "uid-primary-owner",
+        full_name: "PennyGrade Business",
+        email: "pennygradebusiness@gmail.com",
         role: "super_admin",
         created_at: new Date(Date.now() - 30 * 864e5).toISOString(),
       },
@@ -978,4 +1015,157 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 
     saveStoreToDisk();
     return { ok: true, status: app.status };
+  });
+
+// ---------------- PARTNERS MANAGEMENT ----------------
+
+export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
+  if (!store.partners || store.partners.size === 0) {
+    store.partners = seedPartners();
+    saveStoreToDisk();
+  }
+  return Array.from(store.partners.values()).sort((a, b) =>
+    a.business_name.localeCompare(b.business_name)
+  );
+});
+
+const savePartnerSchema = z.object({
+  id: z.string().optional(),
+  business_name: z.string().trim().min(2, "Business name is required"),
+  slug: z.string().trim().min(1, "Slug is required"),
+  category_id: z.string().min(1, "Category is required"),
+  category_name: z.string().optional(),
+  description: z.string().optional().default(""),
+  logo_url: z.string().optional().default(""),
+  cover_image_url: z.string().optional().default(""),
+  phone: z.string().optional().default(""),
+  email: z.string().optional().default(""),
+  website: z.string().optional().default(""),
+  address: z.string().optional().default(""),
+  city: z.string().optional().default("Daltonganj"),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  business_hours: z.string().optional().default(""),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).default("ACTIVE"),
+  featured: z.boolean().default(false),
+});
+
+export const savePartner = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => savePartnerSchema.parse(d))
+  .handler(async ({ data }) => {
+    const now = new Date().toISOString();
+    if (!store.partners || store.partners.size === 0) {
+      store.partners = seedPartners();
+    }
+
+    const partnerId = data.id || safeRandomUUID();
+    const existing = store.partners.get(partnerId);
+
+    const partner: V1Partner = {
+      id: partnerId,
+      business_name: data.business_name,
+      slug: data.slug,
+      category_id: data.category_id,
+      category_name: data.category_name || existing?.category_name || "General",
+      description: data.description,
+      logo_url: data.logo_url,
+      cover_image_url:
+        data.cover_image_url ||
+        existing?.cover_image_url ||
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+      phone: data.phone,
+      email: data.email,
+      website: data.website,
+      address: data.address,
+      city: data.city || "Daltonganj",
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      business_hours: data.business_hours,
+      status: data.status,
+      featured: data.featured,
+      created_at: existing ? existing.created_at : now,
+      updated_at: now,
+    };
+
+    store.partners.set(partnerId, partner);
+
+    if (store.auditLogs) {
+      store.auditLogs.unshift({
+        id: safeRandomUUID(),
+        admin_user_id: "admin-super",
+        action: existing ? `Updated Partner: ${partner.business_name}` : `Created Partner: ${partner.business_name}`,
+        target_type: "partner",
+        target_id: partnerId,
+        metadata: { name: partner.business_name, slug: partner.slug, status: partner.status },
+        created_at: now,
+        who: "Super Admin",
+      });
+    }
+
+    saveStoreToDisk();
+    return { ok: true, partner };
+  });
+
+export const updatePartnerStatus = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }) =>
+    z.object({
+      id: z.string(),
+      status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
+      featured: z.boolean().optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    if (!store.partners || store.partners.size === 0) {
+      store.partners = seedPartners();
+    }
+    const partner = store.partners.get(data.id);
+    if (!partner) throw new Error("Partner not found");
+
+    if (data.status !== undefined) partner.status = data.status;
+    if (data.featured !== undefined) partner.featured = data.featured;
+    partner.updated_at = new Date().toISOString();
+
+    if (store.auditLogs) {
+      store.auditLogs.unshift({
+        id: safeRandomUUID(),
+        admin_user_id: "admin-super",
+        action: `Updated Partner ${partner.business_name} (Status: ${partner.status}, Featured: ${partner.featured})`,
+        target_type: "partner",
+        target_id: partner.id,
+        metadata: { name: partner.business_name, status: partner.status, featured: partner.featured },
+        created_at: partner.updated_at,
+        who: "Super Admin",
+      });
+    }
+
+    saveStoreToDisk();
+    return { ok: true, partner };
+  });
+
+export const deletePartner = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    if (!store.partners || store.partners.size === 0) {
+      store.partners = seedPartners();
+    }
+    const partner = store.partners.get(data.id);
+    if (!partner) throw new Error("Partner not found");
+
+    store.partners.delete(data.id);
+
+    if (store.auditLogs) {
+      store.auditLogs.unshift({
+        id: safeRandomUUID(),
+        admin_user_id: "admin-super",
+        action: `Deleted Partner: ${partner.business_name}`,
+        target_type: "partner",
+        target_id: data.id,
+        metadata: { name: partner.business_name, slug: partner.slug },
+        created_at: new Date().toISOString(),
+        who: "Super Admin",
+      });
+    }
+
+    saveStoreToDisk();
+    return { ok: true };
   });

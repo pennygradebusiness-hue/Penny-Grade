@@ -23,7 +23,7 @@ export interface V1Member {
   plan_name: string;
   start_date: string;
   expiry_date: string;
-  status: "ACTIVE" | "SUSPENDED" | "CANCELLED" | "EXPIRED";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED" | "EXPIRED";
   created_at: string;
   updated_at: string;
   card_id?: string;
@@ -88,6 +88,29 @@ export interface V1MemberApplication {
   notes?: string;
   status: "PENDING_VERIFICATION" | "CONTACTED" | "APPROVED" | "REJECTED";
   assigned_card_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface V1Partner {
+  id: string;
+  business_name: string;
+  slug: string;
+  category_id: string;
+  category_name?: string;
+  description?: string;
+  logo_url?: string;
+  cover_image_url?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  city?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  business_hours?: string;
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  featured: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -195,6 +218,7 @@ export interface V1AdminUser {
 export interface PennyGradeStore {
   members: Map<string, V1Member>;
   cards: Map<string, V1PhysicalCard>;
+  partners: Map<string, V1Partner>;
   sessions: Map<string, V1VerificationSession>;
   logs: V1VerificationLog[];
   auditLogs: V1AuditLog[];
@@ -225,6 +249,7 @@ export function saveStoreToDisk(): void {
     const serialized = {
       members: Array.from(s.members.entries()),
       cards: Array.from(s.cards.entries()),
+      partners: Array.from(s.partners?.entries() || []),
       sessions: Array.from(s.sessions.entries()),
       logs: s.logs,
       auditLogs: s.auditLogs,
@@ -238,14 +263,164 @@ export function saveStoreToDisk(): void {
   }
 }
 
+export function seedPartners(): Map<string, V1Partner> {
+  const map = new Map<string, V1Partner>();
+  const initial: V1Partner[] = [
+    {
+      id: "c55b653f-1445-44f8-896e-c0cd58dc2a31",
+      business_name: "ABC Café",
+      slug: "abc-cafe",
+      category_id: "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+      category_name: "Cafés",
+      description: "Neighbourhood specialty coffee, fresh bakes and all-day breakfast in a calm, sunlit space.",
+      logo_url: "",
+      cover_image_url: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+      phone: "+91 98200 11111",
+      email: "hello@abccafe.in",
+      website: "",
+      address: "12 Hill Road, Main Market",
+      city: "Daltonganj",
+      latitude: 24.0416,
+      longitude: 84.0722,
+      business_hours: "Mon–Sun · 8:00 AM – 11:00 PM",
+      status: "ACTIVE",
+      featured: true,
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+    },
+    {
+      id: "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
+      business_name: "Urban Brew",
+      slug: "urban-brew",
+      category_id: "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+      category_name: "Cafés",
+      description: "Artisanal coffee roasters and cozy work-friendly café with fast Wi-Fi.",
+      logo_url: "",
+      cover_image_url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&q=70",
+      phone: "+91 98200 22222",
+      email: "contact@urbanbrew.in",
+      website: "",
+      address: "45 Station Road",
+      city: "Daltonganj",
+      latitude: 24.0430,
+      longitude: 84.0710,
+      business_hours: "Mon–Sun · 9:00 AM – 10:30 PM",
+      status: "ACTIVE",
+      featured: false,
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+    },
+    {
+      id: "9d919438-8783-49dc-a755-a9e873473614",
+      business_name: "The Grand Stay",
+      slug: "the-grand-stay",
+      category_id: "11ca8085-0ae1-46cb-85eb-bab56680b39f",
+      category_name: "Hotels",
+      description: "Boutique rooms, rooftop dining and warm hospitality in the heart of the city.",
+      logo_url: "",
+      cover_image_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=70",
+      phone: "+91 98200 33333",
+      email: "stay@grandstay.in",
+      website: "",
+      address: "88 MG Road",
+      city: "Daltonganj",
+      latitude: 24.0450,
+      longitude: 84.0750,
+      business_hours: "Open 24 hours",
+      status: "ACTIVE",
+      featured: true,
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+    },
+    {
+      id: "d505adee-d353-4c15-873f-02346ef859d3",
+      business_name: "Glow Salon",
+      slug: "glow-salon",
+      category_id: "ade29f0c-e3f0-4609-bfdd-6ef41614ced6",
+      category_name: "Salons",
+      description: "Hair, skin and grooming by experienced stylists using premium products.",
+      logo_url: "",
+      cover_image_url: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=70",
+      phone: "+91 98200 44444",
+      email: "book@glowsalon.in",
+      website: "",
+      address: "21 Court Road",
+      city: "Daltonganj",
+      latitude: 24.0390,
+      longitude: 84.0680,
+      business_hours: "Tue–Sun · 10:00 AM – 9:00 PM",
+      status: "ACTIVE",
+      featured: false,
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+    },
+    {
+      id: "32ac0228-708f-4617-9c51-f876365f658b",
+      business_name: "FitZone",
+      slug: "fitzone",
+      category_id: "d8b33df5-ccbc-45c1-a4ea-dce08d1ca9b0",
+      category_name: "Fitness",
+      description: "Strength, cardio and group classes with certified coaches.",
+      logo_url: "",
+      cover_image_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=70",
+      phone: "+91 98200 55555",
+      email: "join@fitzone.in",
+      website: "",
+      address: "7 Stadium Road",
+      city: "Daltonganj",
+      latitude: 24.0400,
+      longitude: 84.0700,
+      business_hours: "Mon–Sat · 5:30 AM – 11:00 PM",
+      status: "ACTIVE",
+      featured: true,
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+    },
+    {
+      id: "96406673-ccd2-4948-9936-a5b3c9ad0292",
+      business_name: "Saffron Table",
+      slug: "saffron-table",
+      category_id: "1034422b-089a-4797-bf64-2578eb78adb9",
+      category_name: "Restaurants",
+      description: "Modern Indian cuisine with a seasonal dining menu.",
+      logo_url: "",
+      cover_image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=70",
+      phone: "+91 98200 66666",
+      email: "reserve@saffrontable.in",
+      website: "",
+      address: "3 Cinema Road",
+      city: "Daltonganj",
+      latitude: 24.0425,
+      longitude: 84.0735,
+      business_hours: "Mon–Sun · 12:00 PM – 11:30 PM",
+      status: "ACTIVE",
+      featured: false,
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+    },
+  ];
+  for (const p of initial) {
+    map.set(p.id, p);
+  }
+  return map;
+}
+
 function loadStoreFromDisk(): PennyGradeStore | null {
   try {
     if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, "utf-8");
       const parsed = JSON.parse(raw);
+      const partners = new Map<string, V1Partner>(parsed.partners || []);
+      if (partners.size === 0) {
+        const seeded = seedPartners();
+        for (const [k, v] of seeded.entries()) {
+          partners.set(k, v);
+        }
+      }
       return {
         members: new Map(parsed.members || []),
         cards: new Map(parsed.cards || []),
+        partners,
         sessions: new Map(parsed.sessions || []),
         logs: parsed.logs || [],
         auditLogs: parsed.auditLogs || [],
@@ -265,10 +440,10 @@ function seedAdminUsers(): V1AdminUser[] {
   const dayMs = 864e5;
   return [
     {
-      id: "admin-user-1",
-      user_id: "uid-samir-001",
-      full_name: "Samir Pandey",
-      email: "samir@pennygrade.com",
+      id: "admin-primary-owner",
+      user_id: "uid-primary-owner",
+      full_name: "PennyGrade Business",
+      email: "pennygradebusiness@gmail.com",
       role: "super_admin",
       temporary_password: "admin123",
       created_at: new Date(nowMs - 30 * dayMs).toISOString(),
@@ -312,13 +487,31 @@ function initStore(): PennyGradeStore {
   const fromDisk = loadStoreFromDisk();
   if (fromDisk && fromDisk.cards && fromDisk.cards.size >= 25) {
     // If cards exist on disk, use them directly
+    if (!fromDisk.partners || fromDisk.partners.size === 0) {
+      fromDisk.partners = seedPartners();
+    }
     // Ensure applications arrays are defined
     if (!fromDisk.memberApplications) fromDisk.memberApplications = [];
     if (!fromDisk.partnerApplications) fromDisk.partnerApplications = [];
     if (!fromDisk.adminUsers || fromDisk.adminUsers.length === 0) {
       fromDisk.adminUsers = seedAdminUsers();
+    } else {
+      // Cleanse old samir@pennygrade.com and ensure primary owner is pennygradebusiness@gmail.com
+      fromDisk.adminUsers = fromDisk.adminUsers.filter((u) => u.email.toLowerCase() !== "samir@pennygrade.com");
+      if (!fromDisk.adminUsers.some((u) => u.email.toLowerCase() === "pennygradebusiness@gmail.com")) {
+        fromDisk.adminUsers.unshift({
+          id: "admin-primary-owner",
+          user_id: "uid-primary-owner",
+          full_name: "PennyGrade Business",
+          email: "pennygradebusiness@gmail.com",
+          role: "super_admin",
+          is_password_set: true,
+          created_at: "2026-09-12T10:23:54.846Z",
+        });
+      }
     }
     globalThis.__pennyGradeStore = fromDisk;
+    saveStoreToDisk();
     return globalThis.__pennyGradeStore;
   }
 
@@ -477,12 +670,12 @@ function initStore(): PennyGradeStore {
     updated_at: new Date().toISOString(),
   };
 
-  const samirMember: V1Member = {
+  const defaultMember: V1Member = {
     id: defaultMemberId,
     membership_number: "PEN-7X4P-92LM",
     full_name: "Samir Pandey",
     mobile: "9876543210",
-    email: "samir@pennygrade.com",
+    email: "pennygradebusiness@gmail.com",
     plan_id: "f5aef446-7c6e-4781-9fdd-e5fa4dc1c935",
     plan_name: "PennyGrade 6-Month Membership",
     start_date: today,
@@ -494,10 +687,10 @@ function initStore(): PennyGradeStore {
     card_number: "PEN-7X4P-92LM",
   };
 
-  members.set(samirMember.id, samirMember);
+  members.set(defaultMember.id, defaultMember);
   cards.set(samirCard.id, samirCard);
 
-  // Pre-seed 34 available cards so total cards = 35 (1 active Samir card + 34 available cards)
+  // Pre-seed 34 available cards so total cards = 35 (1 active member card + 34 available cards)
   for (let i = 0; i < 34; i++) {
     const code = generatePenCode();
     const id = `card-${i + 1}`;
@@ -551,6 +744,7 @@ function initStore(): PennyGradeStore {
   globalThis.__pennyGradeStore = {
     members,
     cards,
+    partners: seedPartners(),
     sessions,
     logs,
     auditLogs,

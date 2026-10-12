@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { PageHeader, DataTable, td, TableSkeleton, Select, downloadCsv } from "@/components/admin-ui";
 import { StatusBadge } from "@/components/brand";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   getAdminMembers,
   getAdminCards,
   updateMemberStatus,
+  deleteMember,
   renewMember,
   assignCardToMember,
   getMemberApplications,
@@ -48,6 +49,7 @@ function Members() {
   const qc = useQueryClient();
   const fetchMembersFn = useServerFn(getAdminMembers);
   const updateStatusFn = useServerFn(updateMemberStatus);
+  const deleteMemberFn = useServerFn(deleteMember);
   const renewFn = useServerFn(renewMember);
   const fetchAppsFn = useServerFn(getMemberApplications);
   const updateAppStatusFn = useServerFn(updateMemberApplicationStatus);
@@ -106,13 +108,24 @@ function Members() {
     qc.invalidateQueries({ queryKey: ["admin"] });
   };
 
-  const setMStatus = async (m: Row, s: "ACTIVE" | "SUSPENDED" | "CANCELLED") => {
+  const setMStatus = async (m: Row, s: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED") => {
     try {
       await updateStatusFn({ data: { id: m.id, status: s } });
       toast.success(`Membership ${s.toLowerCase()}`);
       refresh();
     } catch {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleDeleteMember = async (m: Row) => {
+    if (!confirm(`Are you sure you want to permanently delete member "${m.full_name}" (${m.membership_number})? This action cannot be undone.`)) return;
+    try {
+      await deleteMemberFn({ data: { id: m.id } });
+      toast.success(`Member "${m.full_name}" deleted`);
+      refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete member");
     }
   };
 
@@ -369,29 +382,45 @@ function Members() {
                 <td className={td}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="cursor-pointer"><MoreHorizontal className="h-4 w-4" /></Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setView(m)}>View</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setCardFor(m)}>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem className="cursor-pointer" onClick={() => setView(m)}>View details</DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer" onClick={() => setCardFor(m)}>
                         {m.card_number ? "Replace card" : "Assign card"}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleRenew(m)}>Renew</DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer" onClick={() => handleRenew(m)}>Renew (180 days)</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {m.status !== "ACTIVE" && (
-                        <DropdownMenuItem onClick={() => setMStatus(m, "ACTIVE")}>Activate</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer font-medium text-emerald-700" onClick={() => setMStatus(m, "ACTIVE")}>
+                          Activate
+                        </DropdownMenuItem>
                       )}
                       {m.status === "ACTIVE" && (
-                        <DropdownMenuItem onClick={() => setMStatus(m, "SUSPENDED")}>Suspend</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer font-medium text-slate-700" onClick={() => setMStatus(m, "INACTIVE")}>
+                          Deactivate
+                        </DropdownMenuItem>
+                      )}
+                      {m.status !== "SUSPENDED" && (
+                        <DropdownMenuItem className="cursor-pointer text-amber-700" onClick={() => setMStatus(m, "SUSPENDED")}>
+                          Suspend
+                        </DropdownMenuItem>
                       )}
                       {m.status !== "CANCELLED" && (
                         <DropdownMenuItem
-                          className="text-destructive"
+                          className="cursor-pointer text-slate-600"
                           onClick={() => confirm("Cancel this membership?") && setMStatus(m, "CANCELLED")}
                         >
                           Cancel
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive font-semibold cursor-pointer hover:bg-destructive/10"
+                        onClick={() => handleDeleteMember(m)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete member
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
@@ -511,13 +540,13 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
           <F label="Full Name">
-            <Input required placeholder="e.g. Samir Pandey" value={f.full_name} onChange={set("full_name")} />
+            <Input required placeholder="e.g. Rahul Sharma" value={f.full_name} onChange={set("full_name")} />
           </F>
           <F label="Mobile">
             <Input required placeholder="e.g. 9876543210" value={f.mobile} onChange={set("mobile")} />
           </F>
           <F label="Email">
-            <Input required type="email" placeholder="e.g. samir@pennygrade.com" value={f.email} onChange={set("email")} />
+            <Input required type="email" placeholder="e.g. rahul@example.com" value={f.email} onChange={set("email")} />
           </F>
           <F label="Plan">
             <Select

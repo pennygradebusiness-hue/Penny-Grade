@@ -7,7 +7,7 @@
         "membership_number": "PEN-7X4P-92LM",
         "full_name": "Samir Pandey",
         "mobile": "9876543210",
-        "email": "samir@pennygrade.com",
+        "email": "pennygradebusiness@gmail.com",
         "plan_id": "f5aef446-7c6e-4781-9fdd-e5fa4dc1c935",
         "plan_name": "PennyGrade Annual Membership",
         "start_date": "2026-10-12",
@@ -1534,6 +1534,158 @@
       }
     ]
   ],
+  "partners": [
+    [
+      "c55b653f-1445-44f8-896e-c0cd58dc2a31",
+      {
+        "id": "c55b653f-1445-44f8-896e-c0cd58dc2a31",
+        "business_name": "ABC Café",
+        "slug": "abc-cafe",
+        "category_id": "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+        "category_name": "Cafés",
+        "description": "Neighbourhood specialty coffee, fresh bakes and all-day breakfast in a calm, sunlit space.",
+        "logo_url": "",
+        "cover_image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+        "phone": "+91 98200 11111",
+        "email": "hello@abccafe.in",
+        "website": "",
+        "address": "12 Hill Road, Main Market",
+        "city": "Daltonganj",
+        "latitude": 24.0416,
+        "longitude": 84.0722,
+        "business_hours": "Mon–Sun · 8:00 AM – 11:00 PM",
+        "status": "ACTIVE",
+        "featured": true,
+        "created_at": "2026-10-11T06:08:58.426Z",
+        "updated_at": "2026-10-11T06:08:58.426Z"
+      }
+    ],
+    [
+      "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
+      {
+        "id": "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
+        "business_name": "Urban Brew",
+        "slug": "urban-brew",
+        "category_id": "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+        "category_name": "Cafés",
+        "description": "Artisanal coffee roasters and cozy work-friendly café with fast Wi-Fi.",
+        "logo_url": "",
+        "cover_image_url": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&q=70",
+        "phone": "+91 98200 22222",
+        "email": "contact@urbanbrew.in",
+        "website": "",
+        "address": "45 Station Road",
+        "city": "Daltonganj",
+        "latitude": 24.043,
+        "longitude": 84.071,
+        "business_hours": "Mon–Sun · 9:00 AM – 10:30 PM",
+        "status": "ACTIVE",
+        "featured": false,
+        "created_at": "2026-10-11T06:08:58.426Z",
+        "updated_at": "2026-10-11T06:08:58.426Z"
+      }
+    ],
+    [
+      "9d919438-8783-49dc-a755-a9e873473614",
+      {
+        "id": "9d919438-8783-49dc-a755-a9e873473614",
+        "business_name": "The Grand Stay",
+        "slug": "the-grand-stay",
+        "category_id": "11ca8085-0ae1-46cb-85eb-bab56680b39f",
+        "category_name": "Hotels",
+        "description": "Boutique rooms, rooftop dining and warm hospitality in the heart of the city.",
+        "logo_url": "",
+        "cover_image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=70",
+        "phone": "+91 98200 33333",
+        "email": "stay@grandstay.in",
+        "website": "",
+        "address": "88 MG Road",
+        "city": "Daltonganj",
+        "latitude": 24.045,
+        "longitude": 84.075,
+        "business_hours": "Open 24 hours",
+        "status": "ACTIVE",
+        "featured": true,
+        "created_at": "2026-10-11T06:08:58.426Z",
+        "updated_at": "2026-10-11T06:08:58.426Z"
+      }
+    ],
+    [
+      "d505adee-d353-4c15-873f-02346ef859d3",
+      {
+        "id": "d505adee-d353-4c15-873f-02346ef859d3",
+        "business_name": "Glow Salon",
+        "slug": "glow-salon",
+        "category_id": "ade29f0c-e3f0-4609-bfdd-6ef41614ced6",
+        "category_name": "Salons",
+        "description": "Hair, skin and grooming by experienced stylists using premium products.",
+        "logo_url": "",
+        "cover_image_url": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=70",
+        "phone": "+91 98200 44444",
+        "email": "book@glowsalon.in",
+        "website": "",
+        "address": "21 Court Road",
+        "city": "Daltonganj",
+        "latitude": 24.039,
+        "longitude": 84.068,
+        "business_hours": "Tue–Sun · 10:00 AM – 9:00 PM",
+        "status": "ACTIVE",
+        "featured": false,
+        "created_at": "2026-10-11T06:08:58.426Z",
+        "updated_at": "2026-10-11T06:08:58.426Z"
+      }
+    ],
+    [
+      "32ac0228-708f-4617-9c51-f876365f658b",
+      {
+        "id": "32ac0228-708f-4617-9c51-f876365f658b",
+        "business_name": "FitZone",
+        "slug": "fitzone",
+        "category_id": "d8b33df5-ccbc-45c1-a4ea-dce08d1ca9b0",
+        "category_name": "Fitness",
+        "description": "Strength, cardio and group classes with certified coaches.",
+        "logo_url": "",
+        "cover_image_url": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=70",
+        "phone": "+91 98200 55555",
+        "email": "join@fitzone.in",
+        "website": "",
+        "address": "7 Stadium Road",
+        "city": "Daltonganj",
+        "latitude": 24.04,
+        "longitude": 84.07,
+        "business_hours": "Mon–Sat · 5:30 AM – 11:00 PM",
+        "status": "ACTIVE",
+        "featured": true,
+        "created_at": "2026-10-11T06:08:58.426Z",
+        "updated_at": "2026-10-11T06:08:58.426Z"
+      }
+    ],
+    [
+      "96406673-ccd2-4948-9936-a5b3c9ad0292",
+      {
+        "id": "96406673-ccd2-4948-9936-a5b3c9ad0292",
+        "business_name": "Saffron Table",
+        "slug": "saffron-table",
+        "category_id": "1034422b-089a-4797-bf64-2578eb78adb9",
+        "category_name": "Restaurants",
+        "description": "Modern Indian cuisine with a seasonal dining menu.",
+        "logo_url": "",
+        "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=70",
+        "phone": "+91 98200 66666",
+        "email": "reserve@saffrontable.in",
+        "website": "",
+        "address": "3 Cinema Road",
+        "city": "Daltonganj",
+        "latitude": 24.0425,
+        "longitude": 84.0735,
+        "business_hours": "Mon–Sun · 12:00 PM – 11:30 PM",
+        "status": "ACTIVE",
+        "featured": false,
+        "created_at": "2026-10-11T06:08:58.426Z",
+        "updated_at": "2026-10-11T06:08:58.426Z"
+      }
+    ]
+  ],
   "sessions": [
     [
       "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
@@ -1597,9 +1749,81 @@
         "expires_at": "2026-10-12T14:36:14.703Z",
         "created_at": "2026-10-12T14:31:14.703Z"
       }
+    ],
+    [
+      "b94330a3-ed3a-4edc-835c-72722a16f9ed",
+      {
+        "id": "b94330a3-ed3a-4edc-835c-72722a16f9ed",
+        "membership_id": "mem-samir-001",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "PennyGrade Member",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T15:02:31.755Z",
+        "created_at": "2026-10-12T14:57:31.755Z"
+      }
+    ],
+    [
+      "45147cce-f2db-4f59-b9f9-419ba380ef23",
+      {
+        "id": "45147cce-f2db-4f59-b9f9-419ba380ef23",
+        "membership_id": "mem-samir-001",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T15:03:02.307Z",
+        "created_at": "2026-10-12T14:58:02.307Z"
+      }
     ]
   ],
   "logs": [
+    {
+      "id": "bdb1b3f1-beea-402f-b5d8-bb0d0f9b1f06",
+      "verification_session_id": "45147cce-f2db-4f59-b9f9-419ba380ef23",
+      "membership_id": "mem-samir-001",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T14:58:02.307Z"
+    },
+    {
+      "id": "53166c35-441c-4c60-bafc-fd2564b67a50",
+      "verification_session_id": "b94330a3-ed3a-4edc-835c-72722a16f9ed",
+      "membership_id": "mem-samir-001",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T14:57:31.755Z"
+    },
     {
       "id": "f95dd1b2-ae5c-4ecf-9008-fdef8ded6ea8",
       "verification_session_id": "362921aa-4fea-41ec-a566-6fd3d0442cd1",
@@ -1858,6 +2082,34 @@
   ],
   "auditLogs": [
     {
+      "id": "c3cc9d89-46ca-4d99-812f-45d946e0b87c",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "8c01ccbe-1d2c-4971-8fc3-e3c106647d06",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T14:58:02.323Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "47702db3-b129-4e1f-ad4b-5be3824fb667",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "74a3640b-24f6-42dd-9698-e6adb1828850",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T14:57:31.773Z",
+      "who": "Super Admin"
+    },
+    {
       "id": "61e68bfc-55ab-4828-ba07-02e9f0038c36",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
@@ -2060,21 +2312,23 @@
   ],
   "adminUsers": [
     {
-      "id": "16befe14-be06-4e20-9a5c-ff80f4a87a9a",
-      "user_id": "6307c41c-ab5f-4e6e-99ba-2103498a7e41",
+      "id": "8c01ccbe-1d2c-4971-8fc3-e3c106647d06",
+      "user_id": "14fe7f01-a765-40ac-aa58-0df1b82944a9",
       "full_name": "Vikram Singhania",
       "email": "newsuper@pennygrade.com",
       "role": "super_admin",
       "temporary_password": "Perm@Password2026!",
       "is_password_set": true,
-      "created_at": "2026-10-12T14:31:14.722Z"
+      "created_at": "2026-10-12T14:58:02.323Z"
     },
     {
-      "id": "admin-user-1",
-      "user_id": "uid-samir-001",
-      "full_name": "Samir Pandey",
-      "email": "samir@pennygrade.com",
+      "id": "admin-primary-owner",
+      "user_id": "uid-primary-owner",
+      "full_name": "PennyGrade Business",
+      "email": "pennygradebusiness@gmail.com",
       "role": "super_admin",
+      "temporary_password": "admin123",
+      "is_password_set": true,
       "created_at": "2026-09-12T10:23:54.846Z"
     },
     {

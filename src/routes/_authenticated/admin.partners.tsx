@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Star, Phone, CheckCircle2 } from "lucide-react";
+import { MoreHorizontal, Star, Phone, CheckCircle2, Trash2 } from "lucide-react";
 import { PageHeader, DataTable, td, TableSkeleton, Select } from "@/components/admin-ui";
 import { StatusBadge } from "@/components/brand";
 import { Button } from "@/components/ui/button";
@@ -11,49 +11,155 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { logAudit } from "@/lib/use-session";
 import { slugify, fmtDate } from "@/lib/format";
-import { getPartnerApplications, updatePartnerApplicationStatus } from "@/lib/admin.functions";
-import type { V1PartnerApplication } from "@/lib/v1-store";
+import {
+  getAdminPartners,
+  savePartner,
+  updatePartnerStatus,
+  deletePartner,
+  getPartnerApplications,
+  updatePartnerApplicationStatus,
+} from "@/lib/admin.functions";
+import type { V1PartnerApplication, V1Partner } from "@/lib/v1-store";
 
 export const Route = createFileRoute("/_authenticated/admin/partners")({ component: Partners });
 
-const EMPTY = { business_name: "", slug: "", category_id: "", description: "", logo_url: "", cover_image_url: "", phone: "", email: "", website: "", address: "", city: "Daltonganj", latitude: "", longitude: "", business_hours: "", status: "ACTIVE", featured: false };
+const DEFAULT_CATEGORIES = [
+  { id: "e7d3fd02-abd7-4ba4-b129-294ac76bff15", name: "Cafés", slug: "cafes" },
+  { id: "1034422b-089a-4797-bf64-2578eb78adb9", name: "Restaurants", slug: "restaurants" },
+  { id: "11ca8085-0ae1-46cb-85eb-bab56680b39f", name: "Hotels", slug: "hotels" },
+  { id: "ade29f0c-e3f0-4609-bfdd-6ef41614ced6", name: "Salons", slug: "salons" },
+  { id: "d8b33df5-ccbc-45c1-a4ea-dce08d1ca9b0", name: "Fitness", slug: "fitness" },
+  { id: "cat-retail-001", name: "Retail & Shopping", slug: "retail" },
+  { id: "cat-health-001", name: "Healthcare & Diagnostics", slug: "healthcare" },
+];
+
+const EMPTY = {
+  business_name: "",
+  slug: "",
+  category_id: "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+  description: "",
+  logo_url: "",
+  cover_image_url: "",
+  phone: "",
+  email: "",
+  website: "",
+  address: "",
+  city: "Daltonganj",
+  latitude: "",
+  longitude: "",
+  business_hours: "Mon–Sun · 9:00 AM – 10:00 PM",
+  status: "ACTIVE",
+  featured: false,
+};
 type Form = typeof EMPTY & { id?: string };
 
 function Partners() {
   const qc = useQueryClient();
+  const fetchPartnersFn = useServerFn(getAdminPartners);
+  const savePartnerFn = useServerFn(savePartner);
+  const updatePartnerStatusFn = useServerFn(updatePartnerStatus);
+  const deletePartnerFn = useServerFn(deletePartner);
   const fetchPartnerAppsFn = useServerFn(getPartnerApplications);
   const updatePartnerAppFn = useServerFn(updatePartnerApplicationStatus);
 
   const [tab, setTab] = useState<"partners" | "inquiries">("partners");
-  const q = useQuery({ queryKey: ["admin", "partners"], queryFn: async () => (await supabase.from("partners").select("*, category:categories(name), offers(id,status)").order("business_name")).data ?? [] });
-  const cats = useQuery({ queryKey: ["admin", "categories"], queryFn: async () => (await supabase.from("categories").select("*").order("sort_order")).data ?? [] });
+  const q = useQuery({
+    queryKey: ["admin", "partners"],
+    queryFn: async () => {
+      const res = await fetchPartnersFn();
+      return (res ?? []) as V1Partner[];
+    },
+  });
+
+  const cats = useQuery({
+    queryKey: ["admin", "categories"],
+    queryFn: async () => {
+      try {
+        const { data } = await supabase.from("categories").select("*").order("sort_order");
+        if (data && data.length > 0) return data;
+      } catch {
+        // ignore
+      }
+      return DEFAULT_CATEGORIES;
+    },
+  });
+
   const partnerAppsQ = useQuery({
     queryKey: ["admin", "partner-applications"],
     queryFn: async () => (await fetchPartnerAppsFn()) as V1PartnerApplication[],
   });
+
   const [edit, setEdit] = useState<Form | null>(null);
   const [search, setSearch] = useState("");
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["admin"] }); qc.invalidateQueries({ queryKey: ["public"] }); };
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin"] });
+    qc.invalidateQueries({ queryKey: ["public"] });
+  };
 
-  const upd = async (id: string, patch: Record<string, unknown>, action: string, name: string) => {
-    const { error } = await supabase.from("partners").update(patch as never).eq("id", id);
-    if (error) return toast.error("Not permitted");
-    await logAudit(action, "partner", id, { name, ...patch }); toast.success(action); refresh();
+  const upd = async (id: string, patch: { status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }, action: string) => {
+    try {
+      await updatePartnerStatusFn({ data: { id, ...patch } });
+      toast.success(action);
+      refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update partner");
+    }
   };
+
   const save = async () => {
-    if (!edit || !edit.business_name.trim() || !edit.category_id) return toast.error("Name and category are required");
+    if (!edit || !edit.business_name.trim() || !edit.category_id) {
+      return toast.error("Business name and category are required");
+    }
     const { id, ...f } = edit;
-    const num = (v: string) => (v === "" ? null : Number(v));
-    const payload = { ...f, slug: f.slug || slugify(f.business_name), latitude: num(String(f.latitude)), longitude: num(String(f.longitude)), status: f.status as "ACTIVE" };
-    const { error } = id ? await supabase.from("partners").update(payload).eq("id", id) : await supabase.from("partners").insert(payload);
-    if (error) return toast.error(error.code === "23505" ? "That slug is already used" : "Could not save partner");
-    await logAudit(id ? "Updated partner" : "Created partner", "partner", id ?? payload.slug, { name: payload.business_name });
-    toast.success(id ? "Partner updated" : "Partner created"); setEdit(null); refresh();
+    const num = (v: string | number | null | undefined) => (v === "" || v === null || v === undefined ? null : Number(v));
+    const allCats = cats.data && cats.data.length > 0 ? cats.data : DEFAULT_CATEGORIES;
+    const matchedCat = allCats.find((c) => c.id === f.category_id);
+
+    try {
+      await savePartnerFn({
+        data: {
+          id: id || undefined,
+          business_name: f.business_name.trim(),
+          slug: f.slug?.trim() || slugify(f.business_name),
+          category_id: f.category_id,
+          category_name: matchedCat?.name || "General",
+          description: f.description || "",
+          logo_url: f.logo_url || "",
+          cover_image_url: f.cover_image_url || "",
+          phone: f.phone || "",
+          email: f.email || "",
+          website: f.website || "",
+          address: f.address || "",
+          city: f.city || "Daltonganj",
+          latitude: num(f.latitude),
+          longitude: num(f.longitude),
+          business_hours: f.business_hours || "",
+          status: (f.status || "ACTIVE") as "ACTIVE" | "INACTIVE" | "SUSPENDED",
+          featured: !!f.featured,
+        },
+      });
+      toast.success(id ? "Partner updated successfully" : "Partner created successfully");
+      setEdit(null);
+      refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Could not save partner");
+    }
   };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
+    try {
+      await deletePartnerFn({ data: { id } });
+      toast.success(`Partner "${name}" deleted`);
+      refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete partner");
+    }
+  };
+
   const list = (q.data ?? []).filter((p) => !search || p.business_name.toLowerCase().includes(search.toLowerCase()));
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setEdit({ ...edit!, [k]: e.target.value });
   const handleUpdateInquiry = async (id: string, st: "PENDING_REVIEW" | "CONTACTED" | "ONBOARDED" | "REJECTED") => {
@@ -231,27 +337,60 @@ function Partners() {
           <Input placeholder="Search partners" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 h-9 max-w-xs bg-card" />
           {q.isLoading ? <TableSkeleton /> : (
             <DataTable head={["Partner", "Category", "City", "Offers", "Status", "Featured", ""]} empty={!list.length}>
-              {list.map((p) => (
-                <tr key={p.id}>
-                  <td className={td}><p className="font-medium">{p.business_name}</p><p className="text-xs text-muted-foreground">/{p.slug}</p></td>
-                  <td className={td}>{p.category?.name}</td>
-                  <td className={td}>{p.city}</td>
-                  <td className={td}><Link to="/admin/offers" search={{ partner: p.id }} className="underline">{p.offers.filter((o) => o.status === "ACTIVE").length} active</Link></td>
-                  <td className={td}><StatusBadge status={p.status} /></td>
-                  <td className={td}>{p.featured && <Star className="h-4 w-4 fill-gold text-gold" />}</td>
-                  <td className={td}>
-                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEdit({ ...EMPTY, ...Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? ""])), featured: p.featured } as Form)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => upd(p.id, { featured: !p.featured }, p.featured ? "Unfeatured partner" : "Featured partner", p.business_name)}>{p.featured ? "Unfeature" : "Feature"}</DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link to="/admin/qr-codes">QR code</Link></DropdownMenuItem>
-                        {p.status !== "ACTIVE" && <DropdownMenuItem onClick={() => upd(p.id, { status: "ACTIVE" }, "Activated partner", p.business_name)}>Activate</DropdownMenuItem>}
-                        {p.status !== "INACTIVE" && <DropdownMenuItem onClick={() => upd(p.id, { status: "INACTIVE" }, "Deactivated partner", p.business_name)}>Deactivate</DropdownMenuItem>}
-                        {p.status !== "SUSPENDED" && <DropdownMenuItem className="text-destructive" onClick={() => upd(p.id, { status: "SUSPENDED" }, "Suspended partner", p.business_name)}>Suspend</DropdownMenuItem>}
-                      </DropdownMenuContent></DropdownMenu>
-                  </td>
-                </tr>
-              ))}
+              {list.map((p) => {
+                const catName = p.category_name || (p as any).category?.name || "General";
+                return (
+                  <tr key={p.id} className="hover:bg-slate-50/70">
+                    <td className={td}><p className="font-bold text-navy">{p.business_name}</p><p className="text-xs text-muted-foreground font-mono">/{p.slug}</p></td>
+                    <td className={td}><span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{catName}</span></td>
+                    <td className={td}>{p.city || "Daltonganj"}</td>
+                    <td className={td}><Link to="/admin/offers" search={{ partner: p.id }} className="underline text-xs font-medium text-amber-700">View offers</Link></td>
+                    <td className={td}><StatusBadge status={p.status} /></td>
+                    <td className={td}>{p.featured && <Star className="h-4 w-4 fill-gold text-gold" />}</td>
+                    <td className={td}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="cursor-pointer"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => setEdit({ ...EMPTY, ...p, latitude: String(p.latitude ?? ""), longitude: String(p.longitude ?? "") } as Form)}>
+                            Edit details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => upd(p.id, { featured: !p.featured }, p.featured ? "Unfeatured partner" : "Featured partner")}>
+                            {p.featured ? "Unfeature" : "Feature"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild className="cursor-pointer">
+                            <Link to="/admin/qr-codes">QR code</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {p.status !== "ACTIVE" && (
+                            <DropdownMenuItem className="cursor-pointer font-medium text-emerald-700" onClick={() => upd(p.id, { status: "ACTIVE" }, "Activated partner")}>
+                              Activate
+                            </DropdownMenuItem>
+                          )}
+                          {p.status === "ACTIVE" && (
+                            <DropdownMenuItem className="cursor-pointer font-medium text-slate-700" onClick={() => upd(p.id, { status: "INACTIVE" }, "Deactivated partner")}>
+                              Deactivate
+                            </DropdownMenuItem>
+                          )}
+                          {p.status !== "SUSPENDED" && (
+                            <DropdownMenuItem className="cursor-pointer text-amber-700" onClick={() => upd(p.id, { status: "SUSPENDED" }, "Suspended partner")}>
+                              Suspend
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive font-semibold cursor-pointer hover:bg-destructive/10"
+                            onClick={() => handleDelete(p.id, p.business_name)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete partner
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                );
+              })}
             </DataTable>
           )}
         </div>

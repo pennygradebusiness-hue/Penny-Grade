@@ -52,6 +52,76 @@ export const getCategories = createServerFn({ method: "GET" }).handler(async () 
 });
 
 export const getPartners = createServerFn({ method: "GET" }).handler(async () => {
+  // Fetch existing offers from Supabase if available to attach
+  const dbOffersMap = new Map<string, PublicOffer[]>();
+  try {
+    const { data: dbPartners } = await pub()
+      .from("partners")
+      .select(`id,slug,offers(${OFFER_COLS})`);
+    if (dbPartners) {
+      for (const p of dbPartners) {
+        if (p.offers && p.offers.length > 0) {
+          dbOffersMap.set(p.id, p.offers as unknown as PublicOffer[]);
+          dbOffersMap.set(p.slug, p.offers as unknown as PublicOffer[]);
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  if (store.partners && store.partners.size > 0) {
+    const activePartners = Array.from(store.partners.values())
+      .filter((p) => p.status === "ACTIVE")
+      .sort((a, b) => {
+        if (a.featured !== b.featured) return a.featured ? -1 : 1;
+        return a.business_name.localeCompare(b.business_name);
+      });
+
+    return activePartners.map((p) => {
+      const offers = dbOffersMap.get(p.id) || dbOffersMap.get(p.slug) || [
+        {
+          id: `offer-${p.id}`,
+          title: "10% Off",
+          description: "Exclusive discount with PennyGrade membership",
+          discount_type: "PERCENTAGE" as const,
+          discount_value: 10,
+          max_discount: 500,
+          minimum_bill: 300,
+          valid_from: null,
+          valid_until: null,
+          valid_days: [0, 1, 2, 3, 4, 5, 6],
+          terms_conditions: "Valid on presentation of active PennyGrade membership.",
+          usage_limit_type: "UNLIMITED",
+        },
+      ];
+
+      return {
+        id: p.id,
+        business_name: p.business_name,
+        slug: p.slug,
+        description: p.description || null,
+        logo_url: p.logo_url || null,
+        cover_image_url: p.cover_image_url || null,
+        phone: p.phone || null,
+        email: p.email || null,
+        website: p.website || null,
+        address: p.address || null,
+        city: p.city || "Daltonganj",
+        latitude: p.latitude ?? null,
+        longitude: p.longitude ?? null,
+        business_hours: p.business_hours || null,
+        featured: p.featured,
+        category: {
+          id: p.category_id,
+          name: p.category_name || "General",
+          slug: (p.category_name || "general").toLowerCase().replace(/\s+/g, "-"),
+        },
+        offers: currentOffers(offers),
+      };
+    });
+  }
+
   const { data, error } = await pub()
     .from("partners")
     .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)
@@ -64,6 +134,67 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
 export const getPartner = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(120) }).parse(d))
   .handler(async ({ data }) => {
+    if (store.partners && store.partners.size > 0) {
+      for (const p of store.partners.values()) {
+        if (p.slug === data.slug && p.status === "ACTIVE") {
+          let offers: PublicOffer[] = [];
+          try {
+            const { data: dbP } = await pub()
+              .from("partners")
+              .select(`offers(${OFFER_COLS})`)
+              .eq("slug", data.slug)
+              .maybeSingle();
+            if (dbP?.offers) offers = dbP.offers as unknown as PublicOffer[];
+          } catch {
+            // ignore
+          }
+
+          if (offers.length === 0) {
+            offers = [
+              {
+                id: `offer-${p.id}`,
+                title: "10% Off",
+                description: "Exclusive discount with PennyGrade membership",
+                discount_type: "PERCENTAGE" as const,
+                discount_value: 10,
+                max_discount: 500,
+                minimum_bill: 300,
+                valid_from: null,
+                valid_until: null,
+                valid_days: [0, 1, 2, 3, 4, 5, 6],
+                terms_conditions: "Valid on presentation of active PennyGrade membership.",
+                usage_limit_type: "UNLIMITED",
+              },
+            ];
+          }
+
+          return {
+            id: p.id,
+            business_name: p.business_name,
+            slug: p.slug,
+            description: p.description || null,
+            logo_url: p.logo_url || null,
+            cover_image_url: p.cover_image_url || null,
+            phone: p.phone || null,
+            email: p.email || null,
+            website: p.website || null,
+            address: p.address || null,
+            city: p.city || "Daltonganj",
+            latitude: p.latitude ?? null,
+            longitude: p.longitude ?? null,
+            business_hours: p.business_hours || null,
+            featured: p.featured,
+            category: {
+              id: p.category_id,
+              name: p.category_name || "General",
+              slug: (p.category_name || "general").toLowerCase().replace(/\s+/g, "-"),
+            },
+            offers: currentOffers(offers),
+          };
+        }
+      }
+    }
+
     const { data: p, error } = await pub()
       .from("partners")
       .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)

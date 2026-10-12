@@ -393,7 +393,7 @@ Please sign in and change your password upon first login.`;
           >
             {adminList.map((r) => {
               const cfg = ROLE_CONFIG[r.role as RoleType] || ROLE_CONFIG.support;
-              const isSamir = r.email.toLowerCase() === "samir@pennygrade.com";
+              const isPrimaryOwner = r.email.toLowerCase() === "pennygradebusiness@gmail.com";
 
               return (
                 <tr key={r.id} className="hover:bg-slate-50/70">
@@ -446,7 +446,7 @@ Please sign in and change your password upon first login.`;
                           <KeyRound className="h-3 w-3 mr-1 text-amber-500" /> Reset Password
                         </Button>
                       )}
-                      {isSuper && !isSamir ? (
+                      {isSuper && !isPrimaryOwner ? (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -457,7 +457,7 @@ Please sign in and change your password upon first login.`;
                         </Button>
                       ) : (
                         <span className="text-[11px] font-semibold text-muted-foreground">
-                          {isSamir ? "Primary Owner" : "Protected"}
+                          {isPrimaryOwner ? "Primary Owner" : "Protected"}
                         </span>
                       )}
                     </div>
