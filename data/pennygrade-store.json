@@ -13,8 +13,8 @@
         "start_date": "2026-10-12",
         "expiry_date": "2027-10-12",
         "status": "ACTIVE",
-        "created_at": "2026-10-12T13:29:35.291Z",
-        "updated_at": "2026-10-12T13:29:35.291Z",
+        "created_at": "2026-10-12T10:23:54.846Z",
+        "updated_at": "2026-10-12T10:23:54.846Z",
         "card_id": "card-samir-001",
         "card_number": "PEN-7X4P-92LM"
       }
@@ -28,425 +28,1590 @@
         "card_number": "PEN-7X4P-92LM",
         "membership_id": "mem-samir-001",
         "status": "ACTIVE",
-        "issued_at": "2026-10-12T13:29:35.291Z",
-        "created_at": "2026-10-12T13:29:35.291Z",
-        "updated_at": "2026-10-12T13:29:35.291Z"
+        "issued_at": "2026-10-12T10:23:54.846Z",
+        "created_at": "2026-10-12T10:23:54.846Z",
+        "updated_at": "2026-10-12T10:23:54.846Z"
       }
     ],
     [
       "card-1",
       {
         "id": "card-1",
-        "card_number": "PEN-9UM5-Q7PL",
+        "card_number": "PEN-4723-4RP7",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-2",
       {
         "id": "card-2",
-        "card_number": "PEN-38DE-A73R",
+        "card_number": "PEN-BTXK-W6BS",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-3",
       {
         "id": "card-3",
-        "card_number": "PEN-PQEV-4QVF",
+        "card_number": "PEN-NJBR-A6EF",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-4",
       {
         "id": "card-4",
-        "card_number": "PEN-2443-KKH3",
+        "card_number": "PEN-DVLD-S54W",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-5",
       {
         "id": "card-5",
-        "card_number": "PEN-VB8P-WBNG",
+        "card_number": "PEN-3VP8-22MQ",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-6",
       {
         "id": "card-6",
-        "card_number": "PEN-E37C-EK9B",
+        "card_number": "PEN-VTVL-BF97",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-7",
       {
         "id": "card-7",
-        "card_number": "PEN-F2T5-RYW4",
+        "card_number": "PEN-HDKT-BVCJ",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-8",
       {
         "id": "card-8",
-        "card_number": "PEN-Q28P-PAVT",
+        "card_number": "PEN-3SGD-M8NY",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-9",
       {
         "id": "card-9",
-        "card_number": "PEN-E4TF-Z4RT",
+        "card_number": "PEN-WLJ7-8FFY",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-10",
       {
         "id": "card-10",
-        "card_number": "PEN-BEZJ-FMET",
+        "card_number": "PEN-CF3A-J5L2",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-11",
       {
         "id": "card-11",
-        "card_number": "PEN-J7ZG-MWQQ",
+        "card_number": "PEN-9GJX-BQ3J",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-12",
       {
         "id": "card-12",
-        "card_number": "PEN-TCTN-8YD7",
+        "card_number": "PEN-PRBQ-VWSR",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-13",
       {
         "id": "card-13",
-        "card_number": "PEN-ZUVB-P4A4",
+        "card_number": "PEN-HQJE-LAGX",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-14",
       {
         "id": "card-14",
-        "card_number": "PEN-8CWQ-BMJ5",
+        "card_number": "PEN-K5MU-P3Q5",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-15",
       {
         "id": "card-15",
-        "card_number": "PEN-TT57-Y7F6",
+        "card_number": "PEN-EB9H-7DPR",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-16",
       {
         "id": "card-16",
-        "card_number": "PEN-PUUX-TU2T",
+        "card_number": "PEN-WNHG-TAU7",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-17",
       {
         "id": "card-17",
-        "card_number": "PEN-L2UG-QXSM",
+        "card_number": "PEN-EZCT-RE3A",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-18",
       {
         "id": "card-18",
-        "card_number": "PEN-T398-R3AJ",
+        "card_number": "PEN-6YEK-NEFN",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-19",
       {
         "id": "card-19",
-        "card_number": "PEN-Z4Z9-JJ82",
+        "card_number": "PEN-LT99-6FZW",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-20",
       {
         "id": "card-20",
-        "card_number": "PEN-DVY8-KRSZ",
+        "card_number": "PEN-LW49-GH5R",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-21",
       {
         "id": "card-21",
-        "card_number": "PEN-A59U-JC5S",
+        "card_number": "PEN-BQ4G-B47R",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-22",
       {
         "id": "card-22",
-        "card_number": "PEN-WLZE-DVXG",
+        "card_number": "PEN-HMBC-NEMC",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-23",
       {
         "id": "card-23",
-        "card_number": "PEN-56PY-RJPN",
+        "card_number": "PEN-LDKG-M2QW",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-24",
       {
         "id": "card-24",
-        "card_number": "PEN-UMZH-FHFU",
+        "card_number": "PEN-QZG3-PB55",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
       "card-25",
       {
         "id": "card-25",
-        "card_number": "PEN-3DW5-V7BR",
+        "card_number": "PEN-ZT4L-5YDQ",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:23:54.847Z",
+        "updated_at": "2026-10-12T10:23:54.847Z"
       }
     ],
     [
-      "card-26",
+      "0582d240-0415-41d8-972f-d1007fd61b5f",
       {
-        "id": "card-26",
-        "card_number": "PEN-AF3J-J9EZ",
+        "id": "0582d240-0415-41d8-972f-d1007fd61b5f",
+        "card_number": "PEN-WLTW-MEGE",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-27",
+      "be6f22b8-a903-4aba-b921-3135d55f6f1f",
       {
-        "id": "card-27",
-        "card_number": "PEN-H3XG-B4UE",
+        "id": "be6f22b8-a903-4aba-b921-3135d55f6f1f",
+        "card_number": "PEN-L8YQ-LJBC",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-28",
+      "4aa735d6-de83-444e-8ac4-2718f90d1868",
       {
-        "id": "card-28",
-        "card_number": "PEN-YP72-JXK3",
+        "id": "4aa735d6-de83-444e-8ac4-2718f90d1868",
+        "card_number": "PEN-83DG-LAQY",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-29",
+      "f1d18684-ad96-4160-8821-ae07d74e8c23",
       {
-        "id": "card-29",
-        "card_number": "PEN-27D2-GTQS",
+        "id": "f1d18684-ad96-4160-8821-ae07d74e8c23",
+        "card_number": "PEN-AGLK-6KZV",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-30",
+      "60991da0-4c46-44cd-be68-82b772a262e5",
       {
-        "id": "card-30",
-        "card_number": "PEN-3DVP-9ZMM",
+        "id": "60991da0-4c46-44cd-be68-82b772a262e5",
+        "card_number": "PEN-TFEB-V9WN",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-31",
+      "1c942e43-f4e5-4507-a06e-52b71ab38fca",
       {
-        "id": "card-31",
-        "card_number": "PEN-NQ4Q-MWMW",
+        "id": "1c942e43-f4e5-4507-a06e-52b71ab38fca",
+        "card_number": "PEN-5JWB-2NPV",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-32",
+      "1f04413c-338d-45ae-b4ea-3ae2c9635ae9",
       {
-        "id": "card-32",
-        "card_number": "PEN-EVN6-YRKT",
+        "id": "1f04413c-338d-45ae-b4ea-3ae2c9635ae9",
+        "card_number": "PEN-X22R-DWVU",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-33",
+      "cdd77151-9f7e-4086-a0c3-2bc14aae142d",
       {
-        "id": "card-33",
-        "card_number": "PEN-N53R-3K4A",
+        "id": "cdd77151-9f7e-4086-a0c3-2bc14aae142d",
+        "card_number": "PEN-WGWC-Y99K",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ],
     [
-      "card-34",
+      "6b754408-d020-440c-ad05-907b576fdbd2",
       {
-        "id": "card-34",
-        "card_number": "PEN-B7UK-DPTW",
+        "id": "6b754408-d020-440c-ad05-907b576fdbd2",
+        "card_number": "PEN-GM3D-BRWZ",
         "membership_id": null,
         "status": "AVAILABLE",
         "issued_at": null,
-        "created_at": "2026-10-12T13:29:35.292Z",
-        "updated_at": "2026-10-12T13:29:35.292Z"
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "29e6e5c4-c2f9-4288-b32f-1b252d9df41d",
+      {
+        "id": "29e6e5c4-c2f9-4288-b32f-1b252d9df41d",
+        "card_number": "PEN-FLKG-98WZ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "bdaa9882-ffdd-4e19-b398-27536696d4b2",
+      {
+        "id": "bdaa9882-ffdd-4e19-b398-27536696d4b2",
+        "card_number": "PEN-ZHUK-JZ6V",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "49ccdb0b-af06-4030-af1e-c445af511962",
+      {
+        "id": "49ccdb0b-af06-4030-af1e-c445af511962",
+        "card_number": "PEN-UGVM-BJTU",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "78e12044-34ef-4570-a10b-a3b3bc819e27",
+      {
+        "id": "78e12044-34ef-4570-a10b-a3b3bc819e27",
+        "card_number": "PEN-LRLP-3W83",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "0cf9c52d-78ba-4aef-bab6-d90d7e1eae35",
+      {
+        "id": "0cf9c52d-78ba-4aef-bab6-d90d7e1eae35",
+        "card_number": "PEN-KHJ2-XE4R",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "80c602c5-0411-4203-9205-209f1f80f527",
+      {
+        "id": "80c602c5-0411-4203-9205-209f1f80f527",
+        "card_number": "PEN-BCJX-6BA3",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "412d1253-e1d1-416a-b317-35cfa00fbf43",
+      {
+        "id": "412d1253-e1d1-416a-b317-35cfa00fbf43",
+        "card_number": "PEN-ZFNK-67AJ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "419544d0-8131-419a-9a36-d593a4ed891b",
+      {
+        "id": "419544d0-8131-419a-9a36-d593a4ed891b",
+        "card_number": "PEN-733L-QVES",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "176d0b36-8474-4bf9-8e17-5e16cd181ae4",
+      {
+        "id": "176d0b36-8474-4bf9-8e17-5e16cd181ae4",
+        "card_number": "PEN-92PD-8A8D",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "436e787d-f2dc-42a8-aa84-1352ebcd6522",
+      {
+        "id": "436e787d-f2dc-42a8-aa84-1352ebcd6522",
+        "card_number": "PEN-5M94-7X4N",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "f1e976ba-e07d-4915-979a-756dd4203a91",
+      {
+        "id": "f1e976ba-e07d-4915-979a-756dd4203a91",
+        "card_number": "PEN-ANKQ-4LUU",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "06612244-fbec-4ff3-9d96-e92d2ff13e73",
+      {
+        "id": "06612244-fbec-4ff3-9d96-e92d2ff13e73",
+        "card_number": "PEN-FHMD-BGHN",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "76fbc95e-53af-48fa-b058-983445fd5414",
+      {
+        "id": "76fbc95e-53af-48fa-b058-983445fd5414",
+        "card_number": "PEN-SM99-GKUJ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "63d2db20-8e84-405a-9d76-a776b0857362",
+      {
+        "id": "63d2db20-8e84-405a-9d76-a776b0857362",
+        "card_number": "PEN-MUSV-UV57",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "d7b20cf1-b055-43d3-87f0-e1b5ee9dee61",
+      {
+        "id": "d7b20cf1-b055-43d3-87f0-e1b5ee9dee61",
+        "card_number": "PEN-RDEK-FN4S",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "28dfdb52-9f13-4d28-974a-f943c9a1c597",
+      {
+        "id": "28dfdb52-9f13-4d28-974a-f943c9a1c597",
+        "card_number": "PEN-7REV-B5MH",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "d9d60d10-f924-43a7-9ca7-51a4ce0c8fa2",
+      {
+        "id": "d9d60d10-f924-43a7-9ca7-51a4ce0c8fa2",
+        "card_number": "PEN-7SFP-UBP6",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "99e4eded-fcb8-4058-8a86-8f4ba87bdf53",
+      {
+        "id": "99e4eded-fcb8-4058-8a86-8f4ba87bdf53",
+        "card_number": "PEN-XGRA-U8RZ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "e03cd532-568c-463b-98ef-0381d67ca9f3",
+      {
+        "id": "e03cd532-568c-463b-98ef-0381d67ca9f3",
+        "card_number": "PEN-WDVX-BZDA",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "5c3debc2-bded-4da1-ab92-40cd842ce05d",
+      {
+        "id": "5c3debc2-bded-4da1-ab92-40cd842ce05d",
+        "card_number": "PEN-RU8Q-2RNQ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "7f3cb3da-46f1-44b0-ac3f-d354eee2c68a",
+      {
+        "id": "7f3cb3da-46f1-44b0-ac3f-d354eee2c68a",
+        "card_number": "PEN-CN9M-N4FM",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "bbdfbb85-0578-4e16-baa0-33fcbd80a0f9",
+      {
+        "id": "bbdfbb85-0578-4e16-baa0-33fcbd80a0f9",
+        "card_number": "PEN-GH7Z-6L3A",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "d89831bc-6b49-46bf-93c1-77e6cc9d955f",
+      {
+        "id": "d89831bc-6b49-46bf-93c1-77e6cc9d955f",
+        "card_number": "PEN-B5HP-UQNJ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "f6a08ea5-af40-4c7d-bd11-2b6d818231aa",
+      {
+        "id": "f6a08ea5-af40-4c7d-bd11-2b6d818231aa",
+        "card_number": "PEN-NJZZ-CVFE",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "b59a3334-8da0-47a3-9cf3-a898457f6911",
+      {
+        "id": "b59a3334-8da0-47a3-9cf3-a898457f6911",
+        "card_number": "PEN-C2CY-26MQ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "a6515e9d-ce1b-4e4c-8476-413b6a7dcd5d",
+      {
+        "id": "a6515e9d-ce1b-4e4c-8476-413b6a7dcd5d",
+        "card_number": "PEN-THBK-9HVB",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "7ccc884e-fa4e-4cc2-82f4-1e804181e0b2",
+      {
+        "id": "7ccc884e-fa4e-4cc2-82f4-1e804181e0b2",
+        "card_number": "PEN-SCRE-NS4C",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "f5bdaa04-8aee-4571-9e86-4e35a62b5441",
+      {
+        "id": "f5bdaa04-8aee-4571-9e86-4e35a62b5441",
+        "card_number": "PEN-VQ2S-DZ5N",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "ab18776a-8808-44c8-88ca-4d0f1c824f93",
+      {
+        "id": "ab18776a-8808-44c8-88ca-4d0f1c824f93",
+        "card_number": "PEN-3V8Q-KCX6",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "f72a6b24-675f-43c3-9dbd-d3b1e8213358",
+      {
+        "id": "f72a6b24-675f-43c3-9dbd-d3b1e8213358",
+        "card_number": "PEN-Q46Z-W59Z",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "d8400dff-945d-4cff-9db6-c95df606a310",
+      {
+        "id": "d8400dff-945d-4cff-9db6-c95df606a310",
+        "card_number": "PEN-YJBE-R2W9",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "3e24436d-84c4-4b6b-9300-34603aa25463",
+      {
+        "id": "3e24436d-84c4-4b6b-9300-34603aa25463",
+        "card_number": "PEN-7Q9M-GPLP",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "8bd494c0-4573-48e3-a3b8-938378c83570",
+      {
+        "id": "8bd494c0-4573-48e3-a3b8-938378c83570",
+        "card_number": "PEN-2YBT-JDK6",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "52f7708b-467b-4b6f-9ac8-390bf6baa335",
+      {
+        "id": "52f7708b-467b-4b6f-9ac8-390bf6baa335",
+        "card_number": "PEN-S885-JD9E",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "68230a99-384f-4d34-827f-1602c6ffb432",
+      {
+        "id": "68230a99-384f-4d34-827f-1602c6ffb432",
+        "card_number": "PEN-9W6B-AYHZ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "10d2461b-7edd-49c1-8552-b5de24fb26c1",
+      {
+        "id": "10d2461b-7edd-49c1-8552-b5de24fb26c1",
+        "card_number": "PEN-AP7F-DACP",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "8a7ff08d-f4e4-44dd-8bf7-e8259cb44e5f",
+      {
+        "id": "8a7ff08d-f4e4-44dd-8bf7-e8259cb44e5f",
+        "card_number": "PEN-RVYS-C82Y",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "03f275b2-8c30-4b78-8c49-b68a93d8a851",
+      {
+        "id": "03f275b2-8c30-4b78-8c49-b68a93d8a851",
+        "card_number": "PEN-YMGK-UJUN",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "5efdbe7d-a2b2-44b0-a9de-2b29cfcc369e",
+      {
+        "id": "5efdbe7d-a2b2-44b0-a9de-2b29cfcc369e",
+        "card_number": "PEN-HCHX-Y3M8",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "2d7904d6-ab8b-4767-9395-cf7a81d9084f",
+      {
+        "id": "2d7904d6-ab8b-4767-9395-cf7a81d9084f",
+        "card_number": "PEN-FVHF-PHUP",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "7425dafb-d671-42b3-aaaa-1619dab9f1f9",
+      {
+        "id": "7425dafb-d671-42b3-aaaa-1619dab9f1f9",
+        "card_number": "PEN-NDJ5-4HYD",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "566450e6-1c4a-4eed-a53a-8dd9a2f34373",
+      {
+        "id": "566450e6-1c4a-4eed-a53a-8dd9a2f34373",
+        "card_number": "PEN-N2B3-PJRT",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "86d96420-43b3-4be0-88d7-a7e8e1c5ef45",
+      {
+        "id": "86d96420-43b3-4be0-88d7-a7e8e1c5ef45",
+        "card_number": "PEN-WUW4-7FUZ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "18002de4-2101-4500-b823-e61859a5a79f",
+      {
+        "id": "18002de4-2101-4500-b823-e61859a5a79f",
+        "card_number": "PEN-UUB2-QYG2",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "2d1fc4d0-8a23-402c-ba91-220a97671c2a",
+      {
+        "id": "2d1fc4d0-8a23-402c-ba91-220a97671c2a",
+        "card_number": "PEN-VC5D-ABPH",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "3521dd65-420c-4ff7-b20c-5f941cb421b8",
+      {
+        "id": "3521dd65-420c-4ff7-b20c-5f941cb421b8",
+        "card_number": "PEN-U4HN-KBC7",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "c37fc16e-5073-4a0c-85a0-07a5d606fae0",
+      {
+        "id": "c37fc16e-5073-4a0c-85a0-07a5d606fae0",
+        "card_number": "PEN-KFCT-PEY9",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "c9750a77-bea6-4377-8503-f5634cad9ba0",
+      {
+        "id": "c9750a77-bea6-4377-8503-f5634cad9ba0",
+        "card_number": "PEN-Z949-JJM2",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "d30ff2b9-9380-4081-a9d3-9e23cb980e26",
+      {
+        "id": "d30ff2b9-9380-4081-a9d3-9e23cb980e26",
+        "card_number": "PEN-PWC4-6DJF",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "ca012b9d-30aa-40d9-9e99-4ba07ab015c3",
+      {
+        "id": "ca012b9d-30aa-40d9-9e99-4ba07ab015c3",
+        "card_number": "PEN-4RV2-FEVE",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "117a6a4c-37bd-4d67-98b6-d0c5387b2234",
+      {
+        "id": "117a6a4c-37bd-4d67-98b6-d0c5387b2234",
+        "card_number": "PEN-35V7-PADR",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "020a97e0-965c-45e4-ae0b-b7b5db28d24e",
+      {
+        "id": "020a97e0-965c-45e4-ae0b-b7b5db28d24e",
+        "card_number": "PEN-EENG-KFEU",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "837421f6-fc7f-46e4-8a32-a9180aff2295",
+      {
+        "id": "837421f6-fc7f-46e4-8a32-a9180aff2295",
+        "card_number": "PEN-T6X2-5Z5D",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "9c1deaa0-784b-4e4f-b97a-6c730c6dc1c9",
+      {
+        "id": "9c1deaa0-784b-4e4f-b97a-6c730c6dc1c9",
+        "card_number": "PEN-YRR8-PEKZ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "b43cebcf-056b-4ad7-a718-374c3104358e",
+      {
+        "id": "b43cebcf-056b-4ad7-a718-374c3104358e",
+        "card_number": "PEN-WH3N-RFY6",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "9ecb5e62-57c6-46b5-b2e2-b178c964fe1c",
+      {
+        "id": "9ecb5e62-57c6-46b5-b2e2-b178c964fe1c",
+        "card_number": "PEN-GAPZ-6C3P",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "5a8aebde-2a8d-451c-b28c-3c123f36411b",
+      {
+        "id": "5a8aebde-2a8d-451c-b28c-3c123f36411b",
+        "card_number": "PEN-TZFA-UNBY",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "272fda1e-a872-4b9e-953f-0d3339810a61",
+      {
+        "id": "272fda1e-a872-4b9e-953f-0d3339810a61",
+        "card_number": "PEN-Q86K-KVQ9",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "335e35ef-ce55-4c2f-a4a8-a59bdb99b49d",
+      {
+        "id": "335e35ef-ce55-4c2f-a4a8-a59bdb99b49d",
+        "card_number": "PEN-SS3U-655D",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "6610b09b-c432-4854-9442-8c7599df8b47",
+      {
+        "id": "6610b09b-c432-4854-9442-8c7599df8b47",
+        "card_number": "PEN-8SFH-TX3L",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "15ea3444-f888-4f04-ae23-e26e6089a435",
+      {
+        "id": "15ea3444-f888-4f04-ae23-e26e6089a435",
+        "card_number": "PEN-VFFN-J5T9",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "485168ad-537a-4fdd-9a0a-a2cbef3983e0",
+      {
+        "id": "485168ad-537a-4fdd-9a0a-a2cbef3983e0",
+        "card_number": "PEN-SDKV-CMVL",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "a76805bd-d2b8-4abd-ae59-615b9cc81111",
+      {
+        "id": "a76805bd-d2b8-4abd-ae59-615b9cc81111",
+        "card_number": "PEN-WB99-BSRZ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "904917b2-c2fd-4ef1-9ef9-a8d6a9e3992c",
+      {
+        "id": "904917b2-c2fd-4ef1-9ef9-a8d6a9e3992c",
+        "card_number": "PEN-EMLN-LSFW",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "8f0d773c-1804-49f4-b84e-8ac7670f4ef4",
+      {
+        "id": "8f0d773c-1804-49f4-b84e-8ac7670f4ef4",
+        "card_number": "PEN-MXM9-TWLG",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "54e9ef4d-915e-469b-8ba6-14c4432f278d",
+      {
+        "id": "54e9ef4d-915e-469b-8ba6-14c4432f278d",
+        "card_number": "PEN-ZXSY-2VLG",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "0f34cc06-492a-4b19-9f32-71b9b464d6ab",
+      {
+        "id": "0f34cc06-492a-4b19-9f32-71b9b464d6ab",
+        "card_number": "PEN-B57J-7SMK",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "e3d7495c-6a80-4132-975a-81ee61a08009",
+      {
+        "id": "e3d7495c-6a80-4132-975a-81ee61a08009",
+        "card_number": "PEN-KLRH-BWYY",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "366ccdf1-5b41-42c4-92b3-7baf66eb6cfd",
+      {
+        "id": "366ccdf1-5b41-42c4-92b3-7baf66eb6cfd",
+        "card_number": "PEN-4LYH-58UE",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "7b5bba42-d66c-42f7-9765-c9113915c187",
+      {
+        "id": "7b5bba42-d66c-42f7-9765-c9113915c187",
+        "card_number": "PEN-9DHL-FEKP",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "1fcbcad5-00f6-4969-900c-c06e6b01668c",
+      {
+        "id": "1fcbcad5-00f6-4969-900c-c06e6b01668c",
+        "card_number": "PEN-PLBS-NPSC",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "a5692c8b-2626-4b5b-930a-cc525a5735f5",
+      {
+        "id": "a5692c8b-2626-4b5b-930a-cc525a5735f5",
+        "card_number": "PEN-FCDX-DZNT",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "e58c9e27-9c30-4c59-b9f9-bfb029cc961d",
+      {
+        "id": "e58c9e27-9c30-4c59-b9f9-bfb029cc961d",
+        "card_number": "PEN-ABRA-PKAE",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "f5160b3f-c6c2-47bd-a8d2-22950ebf3c7c",
+      {
+        "id": "f5160b3f-c6c2-47bd-a8d2-22950ebf3c7c",
+        "card_number": "PEN-SZ6U-F8YE",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "89851bf0-67a8-4f37-a3d6-a0c97ff5f070",
+      {
+        "id": "89851bf0-67a8-4f37-a3d6-a0c97ff5f070",
+        "card_number": "PEN-6VWZ-M33K",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "bcf8fcc8-75b7-4fe9-bc78-1d7a5a89e4a8",
+      {
+        "id": "bcf8fcc8-75b7-4fe9-bc78-1d7a5a89e4a8",
+        "card_number": "PEN-KLZ5-H9J5",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "ba56d6d4-7c00-4305-9a8a-d77d7feec123",
+      {
+        "id": "ba56d6d4-7c00-4305-9a8a-d77d7feec123",
+        "card_number": "PEN-KF73-XCCT",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "3e4bcf5a-08fe-4485-85e8-8bb9bd323d43",
+      {
+        "id": "3e4bcf5a-08fe-4485-85e8-8bb9bd323d43",
+        "card_number": "PEN-JGT3-HP9G",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "5aa94aec-b1b7-4358-bb14-9e92e7f4b189",
+      {
+        "id": "5aa94aec-b1b7-4358-bb14-9e92e7f4b189",
+        "card_number": "PEN-ZY46-NC4E",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "5243ee69-b063-449f-aff9-611278ebc5a2",
+      {
+        "id": "5243ee69-b063-449f-aff9-611278ebc5a2",
+        "card_number": "PEN-QZZG-FCDC",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "c72725fe-416d-470f-a597-3140d47af3bb",
+      {
+        "id": "c72725fe-416d-470f-a597-3140d47af3bb",
+        "card_number": "PEN-MF2F-25PP",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "975a5f0b-d3a5-443f-9e7e-7a798c9a2605",
+      {
+        "id": "975a5f0b-d3a5-443f-9e7e-7a798c9a2605",
+        "card_number": "PEN-ZBRL-KKN9",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "48778305-c7e3-40a5-9c65-f768ae85c297",
+      {
+        "id": "48778305-c7e3-40a5-9c65-f768ae85c297",
+        "card_number": "PEN-NVU5-M5XB",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "9c48f2bb-99ea-40ac-8d88-62a06b69d028",
+      {
+        "id": "9c48f2bb-99ea-40ac-8d88-62a06b69d028",
+        "card_number": "PEN-UU28-RAR3",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "8720f5c7-c8be-4bae-bbc4-887ed4e2f11a",
+      {
+        "id": "8720f5c7-c8be-4bae-bbc4-887ed4e2f11a",
+        "card_number": "PEN-ETV3-5M7E",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "61811181-7bbb-4778-ab3a-d511a0a7f432",
+      {
+        "id": "61811181-7bbb-4778-ab3a-d511a0a7f432",
+        "card_number": "PEN-TBGM-PE3G",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "1888eb43-d286-4522-a853-fb62a16cd23c",
+      {
+        "id": "1888eb43-d286-4522-a853-fb62a16cd23c",
+        "card_number": "PEN-32QD-RBKC",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "f34a66a1-e769-43ac-b6b1-51034112b253",
+      {
+        "id": "f34a66a1-e769-43ac-b6b1-51034112b253",
+        "card_number": "PEN-GQPM-RE8X",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "a64dce0f-49d0-45d3-9976-16e00306ca9c",
+      {
+        "id": "a64dce0f-49d0-45d3-9976-16e00306ca9c",
+        "card_number": "PEN-V3XY-AVPC",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "80e0ce80-7ee1-4031-ab58-b62183518594",
+      {
+        "id": "80e0ce80-7ee1-4031-ab58-b62183518594",
+        "card_number": "PEN-5R7N-2SLQ",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
+      }
+    ],
+    [
+      "07cc2286-f9eb-42b2-98c2-15017256883d",
+      {
+        "id": "07cc2286-f9eb-42b2-98c2-15017256883d",
+        "card_number": "PEN-HCY8-B4MD",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
+        "created_at": "2026-10-12T10:40:00.436Z",
+        "updated_at": "2026-10-12T10:40:00.436Z"
       }
     ]
   ],
-  "sessions": [],
+  "sessions": [
+    [
+      "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
+      {
+        "id": "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
+        "membership_id": "mem-samir-001",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T14:18:13.949Z",
+        "created_at": "2026-10-12T14:13:13.949Z"
+      }
+    ],
+    [
+      "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
+      {
+        "id": "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
+        "membership_id": "mem-samir-001",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T14:19:24.839Z",
+        "created_at": "2026-10-12T14:14:24.839Z"
+      }
+    ]
+  ],
   "logs": [
     {
+      "id": "efed175c-852e-4150-9913-6feb1f9f733c",
+      "verification_session_id": "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
+      "membership_id": "mem-samir-001",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T14:14:24.839Z"
+    },
+    {
+      "id": "28eae221-c417-4638-9681-4b38bf33e77b",
+      "verification_session_id": "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
+      "membership_id": "mem-samir-001",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T14:13:13.949Z"
+    },
+    {
       "id": "log-seed-1",
-      "verification_session_id": "36dd941a-2e6c-4710-86b1-a819c559e1d1",
+      "verification_session_id": "a0e066da-8128-449e-863a-3e5a8093e769",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
@@ -457,11 +1622,11 @@
       "discount_amount": 150,
       "final_amount": 1350,
       "status": "VERIFIED",
-      "created_at": "2026-10-12T01:29:35.292Z"
+      "created_at": "2026-10-11T22:23:54.847Z"
     },
     {
       "id": "log-seed-2",
-      "verification_session_id": "971a10bb-e2a0-476f-b00c-5a7722c10259",
+      "verification_session_id": "c2a6dede-4c21-4f60-b928-19788975658c",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-biryani",
@@ -472,11 +1637,11 @@
       "discount_amount": 360,
       "final_amount": 2040,
       "status": "VERIFIED",
-      "created_at": "2026-10-09T13:29:35.292Z"
+      "created_at": "2026-10-09T10:23:54.847Z"
     },
     {
       "id": "log-seed-3",
-      "verification_session_id": "514b6bae-50ed-4f7b-bef2-c61cc568eeba",
+      "verification_session_id": "779d0905-f438-4ad8-a60f-5b67c496ece6",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-gym",
@@ -487,11 +1652,11 @@
       "discount_amount": 170,
       "final_amount": 680,
       "status": "VERIFIED",
-      "created_at": "2026-10-07T01:29:35.292Z"
+      "created_at": "2026-10-06T22:23:54.847Z"
     },
     {
       "id": "log-seed-4",
-      "verification_session_id": "c71b2802-0d4c-4865-a45e-5bfa1297f400",
+      "verification_session_id": "be9cee3e-f102-4b41-b6b0-7a76823cff8d",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-brew",
@@ -502,11 +1667,11 @@
       "discount_amount": 320,
       "final_amount": 2880,
       "status": "VERIFIED",
-      "created_at": "2026-10-04T13:29:35.292Z"
+      "created_at": "2026-10-04T10:23:54.847Z"
     },
     {
       "id": "log-seed-5",
-      "verification_session_id": "ebe2bc7c-f880-4b29-83f4-7a5b79fbf92d",
+      "verification_session_id": "d26469aa-db01-49d4-b5df-45743c54f2d3",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-bawarchi",
@@ -517,11 +1682,11 @@
       "discount_amount": 132,
       "final_amount": 968,
       "status": "VERIFIED",
-      "created_at": "2026-10-02T01:29:35.292Z"
+      "created_at": "2026-10-01T22:23:54.847Z"
     },
     {
       "id": "log-seed-6",
-      "verification_session_id": "208b2265-e3ec-487a-9562-f47ea625c960",
+      "verification_session_id": "d80f8763-c346-4b94-bf29-ffda823d1499",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
@@ -532,11 +1697,11 @@
       "discount_amount": 185,
       "final_amount": 1665,
       "status": "VERIFIED",
-      "created_at": "2026-09-29T13:29:35.292Z"
+      "created_at": "2026-09-29T10:23:54.847Z"
     },
     {
       "id": "log-seed-7",
-      "verification_session_id": "687f0ea8-b795-4cab-8691-31118699396b",
+      "verification_session_id": "223b67f7-ae94-4539-90e4-68b9f0ebb68f",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-biryani",
@@ -547,11 +1712,11 @@
       "discount_amount": 435,
       "final_amount": 2465,
       "status": "VERIFIED",
-      "created_at": "2026-09-27T01:29:35.292Z"
+      "created_at": "2026-09-26T22:23:54.847Z"
     },
     {
       "id": "log-seed-8",
-      "verification_session_id": "d8bdee49-848e-4a6d-82df-e0877c4ead4c",
+      "verification_session_id": "54dfd2c9-3f2e-4132-9c8c-820ed810ad3f",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-gym",
@@ -562,11 +1727,11 @@
       "discount_amount": 190,
       "final_amount": 760,
       "status": "VERIFIED",
-      "created_at": "2026-09-24T13:29:35.292Z"
+      "created_at": "2026-09-24T10:23:54.847Z"
     },
     {
       "id": "log-seed-9",
-      "verification_session_id": "457dcb04-dcf7-4d7c-86ce-9b919b111eea",
+      "verification_session_id": "5746d0b9-192e-436e-8bdb-d9f83f05f755",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-brew",
@@ -577,11 +1742,11 @@
       "discount_amount": 410,
       "final_amount": 3690,
       "status": "VERIFIED",
-      "created_at": "2026-09-22T01:29:35.292Z"
+      "created_at": "2026-09-21T22:23:54.847Z"
     },
     {
       "id": "log-seed-10",
-      "verification_session_id": "25fb1d67-06a3-4440-bf02-24ddace41f92",
+      "verification_session_id": "19bce242-4205-493d-b375-5d82682b434d",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-bawarchi",
@@ -592,11 +1757,11 @@
       "discount_amount": 192,
       "final_amount": 1408,
       "status": "VERIFIED",
-      "created_at": "2026-09-19T13:29:35.292Z"
+      "created_at": "2026-09-19T10:23:54.847Z"
     },
     {
       "id": "log-seed-11",
-      "verification_session_id": "30de20c7-9195-4132-a577-1084a965f9ac",
+      "verification_session_id": "d566134f-972f-4f8f-a963-82165575b939",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
@@ -607,11 +1772,11 @@
       "discount_amount": 220,
       "final_amount": 1980,
       "status": "VERIFIED",
-      "created_at": "2026-09-17T01:29:35.292Z"
+      "created_at": "2026-09-16T22:23:54.847Z"
     },
     {
       "id": "log-seed-12",
-      "verification_session_id": "85c22b1b-7061-42c0-b36e-1a4aa1760029",
+      "verification_session_id": "e2f8babf-55a9-4896-9e36-c6c2f5c70fa9",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-biryani",
@@ -622,11 +1787,11 @@
       "discount_amount": 203,
       "final_amount": 1147,
       "status": "VERIFIED",
-      "created_at": "2026-09-14T13:29:35.292Z"
+      "created_at": "2026-09-14T10:23:54.847Z"
     },
     {
       "id": "log-seed-13",
-      "verification_session_id": "43ab1968-743a-4adf-a8df-89dee9cf7a7b",
+      "verification_session_id": "ac047c16-3f18-43e6-9f2f-a947cb778eea",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-gym",
@@ -637,11 +1802,11 @@
       "discount_amount": 720,
       "final_amount": 2880,
       "status": "VERIFIED",
-      "created_at": "2026-09-12T01:29:35.292Z"
+      "created_at": "2026-09-11T22:23:54.847Z"
     },
     {
       "id": "log-seed-14",
-      "verification_session_id": "73259ccb-9c8f-4ec2-a60b-4f76c3de2367",
+      "verification_session_id": "d1e27b2b-329f-4382-870f-72e46585fe9f",
       "membership_id": "mem-samir-001",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-brew",
@@ -652,21 +1817,75 @@
       "discount_amount": 89,
       "final_amount": 801,
       "status": "VERIFIED",
-      "created_at": "2026-09-09T13:29:35.292Z"
+      "created_at": "2026-09-09T10:23:54.847Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": "a7698b95-f3f7-4cf9-8d3e-f6bd718166ae",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "a5baf44b-27d5-4bd7-828a-44f08c7e2462",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T14:14:24.860Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "81016b50-814a-4edd-801e-b22ee90d9765",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "e7f4e76c-deec-4bd7-b4b2-f49eaadbef87",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T14:13:13.964Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "910f4d30-7f2f-4618-bcd6-3bf08fbe6d1c",
+      "admin_user_id": "public-portal",
+      "action": "Member Application Received: Samir Pandey",
+      "target_type": "member_application",
+      "target_id": "c65ace82-6040-4b31-9782-a91e93f251fe",
+      "metadata": {
+        "mobile": "7209853850",
+        "city": "Daltonganj",
+        "app_number": "PGM-2026-7096"
+      },
+      "created_at": "2026-10-12T13:52:33.863Z",
+      "who": "Public Portal"
+    },
+    {
+      "id": "f1b81a19-ad77-4ef0-8898-9835746474dc",
+      "admin_user_id": "admin-super",
+      "action": "Generated Batch (100 Cards)",
+      "target_type": "cards",
+      "target_id": "batch-1791801600438",
+      "metadata": {
+        "count": 100
+      },
+      "created_at": "2026-10-12T10:40:00.436Z",
+      "who": "Super Admin"
+    },
     {
       "id": "audit-1",
       "admin_user_id": "admin-super",
       "action": "Created Member Card Batch",
       "target_type": "cards",
-      "target_id": "batch-v1-35",
+      "target_id": "batch-v1-25",
       "metadata": {
-        "count": 35,
+        "count": 25,
         "status": "AVAILABLE"
       },
-      "created_at": "2026-10-07T13:29:35.290Z",
+      "created_at": "2026-10-07T10:23:54.846Z",
       "who": "Samir Pandey (Super Admin)"
     },
     {
@@ -679,7 +1898,7 @@
         "name": "ABC Café",
         "status": "ACTIVE"
       },
-      "created_at": "2026-10-08T13:29:35.290Z",
+      "created_at": "2026-10-08T10:23:54.846Z",
       "who": "Admin Manager"
     },
     {
@@ -692,7 +1911,7 @@
         "card_number": "PEN-7X4P-92LM",
         "member": "Samir Pandey"
       },
-      "created_at": "2026-10-09T13:29:35.290Z",
+      "created_at": "2026-10-09T10:23:54.846Z",
       "who": "Samir Pandey (Super Admin)"
     },
     {
@@ -706,7 +1925,7 @@
         "discount": "10% OFF",
         "min_bill": 500
       },
-      "created_at": "2026-10-10T13:29:35.290Z",
+      "created_at": "2026-10-10T10:23:54.846Z",
       "who": "Admin Manager"
     },
     {
@@ -719,18 +1938,94 @@
         "test_suites": "12/12 passing",
         "encryption": "crypto-random"
       },
-      "created_at": "2026-10-11T13:29:35.290Z",
+      "created_at": "2026-10-11T10:23:54.846Z",
+      "who": "System"
+    },
+    {
+      "id": "audit-1",
+      "admin_user_id": "admin-super",
+      "action": "Created Member Card Batch",
+      "target_type": "cards",
+      "target_id": "batch-v1-25",
+      "metadata": {
+        "count": 25,
+        "status": "AVAILABLE"
+      },
+      "created_at": "2026-10-07T10:23:54.847Z",
+      "who": "Samir Pandey (Super Admin)"
+    },
+    {
+      "id": "audit-2",
+      "admin_user_id": "admin-super",
+      "action": "Activated Partner Outlets",
+      "target_type": "partner",
+      "target_id": "abc-cafe",
+      "metadata": {
+        "name": "ABC Café",
+        "status": "ACTIVE"
+      },
+      "created_at": "2026-10-08T10:23:54.847Z",
+      "who": "Admin Manager"
+    },
+    {
+      "id": "audit-3",
+      "admin_user_id": "admin-super",
+      "action": "Issued Membership Card",
+      "target_type": "membership",
+      "target_id": "mem-samir-001",
+      "metadata": {
+        "card_number": "PEN-7X4P-92LM",
+        "member": "Samir Pandey"
+      },
+      "created_at": "2026-10-09T10:23:54.847Z",
+      "who": "Samir Pandey (Super Admin)"
+    },
+    {
+      "id": "audit-4",
+      "admin_user_id": "admin-super",
+      "action": "Updated Partner Offer",
+      "target_type": "offer",
+      "target_id": "offer-abc-10",
+      "metadata": {
+        "partner": "ABC Café",
+        "discount": "10% OFF",
+        "min_bill": 500
+      },
+      "created_at": "2026-10-10T10:23:54.847Z",
+      "who": "Admin Manager"
+    },
+    {
+      "id": "audit-5",
+      "admin_user_id": "admin-super",
+      "action": "System Security Audit Passed",
+      "target_type": "security",
+      "target_id": "sec-audit-01",
+      "metadata": {
+        "test_suites": "12/12 passing",
+        "encryption": "crypto-random"
+      },
+      "created_at": "2026-10-11T10:23:54.847Z",
       "who": "System"
     }
   ],
   "adminUsers": [
+    {
+      "id": "a5baf44b-27d5-4bd7-828a-44f08c7e2462",
+      "user_id": "d2cfbff3-a6b2-4c3a-9282-f7ed446ca799",
+      "full_name": "Vikram Singhania",
+      "email": "newsuper@pennygrade.com",
+      "role": "super_admin",
+      "temporary_password": "Perm@Password2026!",
+      "is_password_set": true,
+      "created_at": "2026-10-12T14:14:24.860Z"
+    },
     {
       "id": "admin-user-1",
       "user_id": "uid-samir-001",
       "full_name": "Samir Pandey",
       "email": "samir@pennygrade.com",
       "role": "super_admin",
-      "created_at": "2026-09-12T13:29:35.291Z"
+      "created_at": "2026-09-12T10:23:54.846Z"
     },
     {
       "id": "admin-user-2",
@@ -738,7 +2033,7 @@
       "full_name": "Rajesh Sharma",
       "email": "rajesh.manager@pennygrade.com",
       "role": "manager",
-      "created_at": "2026-09-22T13:29:35.291Z"
+      "created_at": "2026-09-22T10:23:54.846Z"
     },
     {
       "id": "admin-user-3",
@@ -746,7 +2041,7 @@
       "full_name": "Priya Patel",
       "email": "priya.cards@pennygrade.com",
       "role": "membership_manager",
-      "created_at": "2026-09-28T13:29:35.291Z"
+      "created_at": "2026-09-28T10:23:54.846Z"
     },
     {
       "id": "admin-user-4",
@@ -754,77 +2049,25 @@
       "full_name": "Amit Verma",
       "email": "amit.support@pennygrade.com",
       "role": "support",
-      "created_at": "2026-10-05T13:29:35.291Z"
+      "created_at": "2026-10-05T10:23:54.846Z"
     }
   ],
   "memberApplications": [
     {
-      "id": "app-mem-001",
-      "application_number": "PGM-2026-0812",
-      "full_name": "Vikramaditya Singh",
-      "mobile": "9835123456",
-      "email": "vikram.singh@gmail.com",
+      "id": "c65ace82-6040-4b31-9782-a91e93f251fe",
+      "application_number": "PGM-2026-7096",
+      "full_name": "Samir Pandey",
+      "mobile": "7209853850",
+      "email": "samirjee187@gmail.com",
       "city": "Daltonganj",
-      "plan_name": "PennyGrade Annual Membership",
-      "delivery_preference": "Physical Card Handover at Red Cross Mor",
-      "payment_preference": "Pay on Card Delivery",
-      "notes": "Looking forward to using at ABC Café and FitZone",
+      "plan_name": "PennyGrade 6-Month Membership",
+      "delivery_preference": "Direct Handover in Daltonganj (Free)",
+      "payment_preference": "UPI Payment upon Member Call Confirmation",
+      "notes": "e.g. Near Red Cross Mor, Daltonganj. Best time to call: evening after 5 PM.",
       "status": "PENDING_VERIFICATION",
-      "created_at": "2026-10-12T09:29:35.291Z",
-      "updated_at": "2026-10-12T09:29:35.291Z"
-    },
-    {
-      "id": "app-mem-002",
-      "application_number": "PGM-2026-0811",
-      "full_name": "Ananya Mukherjee",
-      "mobile": "9431187654",
-      "email": "ananya.m@outlook.com",
-      "city": "Daltonganj",
-      "plan_name": "PennyGrade Annual Membership",
-      "delivery_preference": "Courier to College Road",
-      "payment_preference": "UPI Verification",
-      "notes": "Interested in Glow Salon and restaurant discounts",
-      "status": "CONTACTED",
-      "created_at": "2026-10-11T11:29:35.291Z",
-      "updated_at": "2026-10-12T01:29:35.291Z"
+      "created_at": "2026-10-12T13:52:33.863Z",
+      "updated_at": "2026-10-12T13:52:33.863Z"
     }
   ],
-  "partnerApplications": [
-    {
-      "id": "app-ptr-001",
-      "application_number": "PGP-2026-0301",
-      "business_name": "Mocha Delight Bakery",
-      "category_name": "Cafés",
-      "contact_name": "Deepak Agrawal",
-      "mobile": "9123456780",
-      "email": "deepak@mochadelight.com",
-      "city": "Daltonganj",
-      "address": "Main Market, Near Clock Tower",
-      "proposed_discount": "15% Off on Bakery & Beverages",
-      "minimum_bill": "₹300",
-      "business_hours": "9:00 AM – 10:00 PM",
-      "notes": "High footfall bakery, want to install acrylic QR standee at counter.",
-      "status": "PENDING_REVIEW",
-      "created_at": "2026-10-12T05:29:35.291Z",
-      "updated_at": "2026-10-12T05:29:35.291Z"
-    },
-    {
-      "id": "app-ptr-002",
-      "application_number": "PGP-2026-0300",
-      "business_name": "Iron Core Gym & Crossfit",
-      "category_name": "Fitness",
-      "contact_name": "Suresh Yadav",
-      "mobile": "9934123890",
-      "email": "suresh@ironcoregym.in",
-      "city": "Daltonganj",
-      "address": "Shahpur Road, By-Pass",
-      "proposed_discount": "20% Off on Monthly & Annual Packages",
-      "minimum_bill": "₹1,000",
-      "business_hours": "5:30 AM – 9:30 PM",
-      "notes": "Wish to attract corporate and student crowd with PennyGrade.",
-      "status": "CONTACTED",
-      "created_at": "2026-10-11T07:29:35.291Z",
-      "updated_at": "2026-10-12T03:29:35.291Z"
-    }
-  ]
+  "partnerApplications": []
 }

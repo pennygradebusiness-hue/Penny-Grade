@@ -12,6 +12,9 @@ import {
   createVerificationSessionLogic,
   getVerificationSessionLogic,
   getCustomerHistoryLogic,
+  addAdminLogic,
+  verifyAdminLoginCredentialsLogic,
+  firstTimeSetPasswordLogic,
 } from "@/lib/v1-logic";
 
 describe("PennyGrade V1 Final Acceptance Criteria & Security Tests", () => {
@@ -187,5 +190,63 @@ describe("PennyGrade V1 Final Acceptance Criteria & Security Tests", () => {
 
     // Clean up
     store.members.delete("test-expired");
+  });
+
+  it("allows superadmin to create another superadmin with temporary password and complete first-time login", async () => {
+    // 1. Super Admin creates a new Super Admin with an auto/custom temporary password
+    const newAdminEmail = "newsuper@pennygrade.com";
+    const res = addAdminLogic({
+      email: newAdminEmail,
+      role: "super_admin",
+      full_name: "Vikram Singhania",
+      temporary_password: "Penny@Temp99!",
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.temporary_password).toBe("Penny@Temp99!");
+    expect(res.admin.role).toBe("super_admin");
+
+    // 2. Newly created Super Admin logs in using their first-time temporary password
+    const loginRes = verifyAdminLoginCredentialsLogic({
+      email: newAdminEmail,
+      password: "Penny@Temp99!",
+    });
+
+    expect(loginRes.ok).toBe(true);
+    expect(loginRes.user?.email).toBe(newAdminEmail);
+    expect(loginRes.user?.role).toBe("super_admin");
+
+    // 3. Trying to log in with an incorrect password fails
+    const badLogin = verifyAdminLoginCredentialsLogic({
+      email: newAdminEmail,
+      password: "WrongPassword123",
+    });
+    expect(badLogin.ok).toBe(false);
+
+    // 4. Admin updates their password to a permanent one via firstTimeSetPasswordLogic
+    const updateRes = firstTimeSetPasswordLogic({
+      email: newAdminEmail,
+      current_temporary_password: "Penny@Temp99!",
+      new_password: "Perm@Password2026!",
+    });
+    expect(updateRes.ok).toBe(true);
+
+    // 5. Old temporary password no longer works
+    const oldLogin = verifyAdminLoginCredentialsLogic({
+      email: newAdminEmail,
+      password: "Penny@Temp99!",
+    });
+    expect(oldLogin.ok).toBe(false);
+
+    // 6. New permanent password works
+    const newLogin = verifyAdminLoginCredentialsLogic({
+      email: newAdminEmail,
+      password: "Perm@Password2026!",
+    });
+    expect(newLogin.ok).toBe(true);
+    expect(newLogin.user?.role).toBe("super_admin");
+
+    // Clean up test admin
+    store.adminUsers = store.adminUsers.filter((u) => u.email !== newAdminEmail);
   });
 });

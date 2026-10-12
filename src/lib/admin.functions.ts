@@ -12,6 +12,12 @@ import {
   type V1MemberApplication,
   type V1PartnerApplication,
 } from "./v1-store";
+import {
+  addAdminLogic,
+  resetAdminPasswordLogic,
+  verifyAdminLoginCredentialsLogic,
+  firstTimeSetPasswordLogic,
+} from "./v1-logic";
 import { supabase } from "@/integrations/supabase/client";
 
 const memberSchema = z.object({
@@ -384,52 +390,55 @@ export const getAdminUsers = createServerFn({ method: "GET" }).handler(async ():
   return storeUsers;
 });
 
-// Admin addAdmin (delegation)
+// Admin addAdmin (delegation with initial password generation)
 export const addAdmin = createServerFn({ method: "POST" })
-  .inputValidator((d: { email: string; role: "super_admin" | "manager" | "membership_manager" | "support"; full_name?: string }) =>
+  .inputValidator((d: { email: string; role: "super_admin" | "manager" | "membership_manager" | "support"; full_name?: string; temporary_password?: string }) =>
     z.object({
       email: z.string().trim().email(),
       role: z.enum(["super_admin", "manager", "membership_manager", "support"]),
       full_name: z.string().optional(),
+      temporary_password: z.string().min(6).optional(),
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const now = new Date().toISOString();
-    const id = safeRandomUUID();
-    const name =
-      data.full_name?.trim() ||
-      data.email
-        .split("@")[0]
-        .replace(/[._]/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+    return addAdminLogic(data);
+  });
 
-    const newAdmin: V1AdminUser = {
-      id,
-      user_id: safeRandomUUID(),
-      full_name: name,
-      email: data.email,
-      role: data.role,
-      created_at: now,
-    };
+// Admin Reset Password
+export const resetAdminPassword = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; new_password?: string }) =>
+    z.object({
+      id: z.string(),
+      new_password: z.string().min(6).optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    return resetAdminPasswordLogic(data);
+  });
 
-    if (!store.adminUsers) store.adminUsers = [];
-    store.adminUsers = store.adminUsers.filter((u) => u.email.toLowerCase() !== data.email.toLowerCase());
-    store.adminUsers.unshift(newAdmin);
+// Verify Admin Login Credentials against store
+export const verifyAdminLoginCredentials = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string; password: string }) =>
+    z.object({
+      email: z.string().trim().email(),
+      password: z.string().min(1),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    return verifyAdminLoginCredentialsLogic(data);
+  });
 
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: "admin-super",
-        action: `Granted role ${data.role.replace(/_/g, " ")} to ${data.email}`,
-        target_type: "user_role",
-        target_id: id,
-        metadata: { email: data.email, role: data.role, name },
-        created_at: now,
-        who: "Super Admin",
-      });
-    }
-
-    return { ok: true, message: `Role ${data.role.replace(/_/g, " ")} granted to ${data.email}` };
+// First-Time Setup / Self-Service Password Set
+export const firstTimeSetPassword = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string; new_password: string; current_temporary_password?: string }) =>
+    z.object({
+      email: z.string().trim().email(),
+      new_password: z.string().min(6, "Password must be at least 6 characters"),
+      current_temporary_password: z.string().optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    return firstTimeSetPasswordLogic(data);
   });
 
 // Admin Remove Role
@@ -452,6 +461,8 @@ export const removeAdminRole = createServerFn({ method: "POST" })
         who: "Super Admin",
       });
     }
+
+    saveStoreToDisk();
 
     try {
       await supabase.from("user_roles").delete().eq("id", data.id);

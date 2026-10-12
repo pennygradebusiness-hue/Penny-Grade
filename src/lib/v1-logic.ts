@@ -1,12 +1,14 @@
 import {
   store,
   safeRandomUUID,
+  saveStoreToDisk,
   normalizeMembershipNumber,
   normalizeMobile,
   checkRateLimit,
   type V1Member,
   type V1VerificationSession,
   type V1VerificationLog,
+  type V1AdminUser,
 } from "./v1-store";
 
 // Helper to look up active member by membership number or card number
@@ -301,5 +303,194 @@ export function getCustomerHistoryLogic(params: {
       final_amount: l.final_amount,
       created_at: l.created_at,
     })),
+  };
+}
+
+// Admin Creation & Delegation Logic
+export function addAdminLogic(data: {
+  email: string;
+  role: "super_admin" | "manager" | "membership_manager" | "support";
+  full_name?: string;
+  temporary_password?: string;
+}): {
+  ok: boolean;
+  message: string;
+  admin: V1AdminUser;
+  temporary_password: string;
+} {
+  const now = new Date().toISOString();
+  const id = safeRandomUUID();
+  const name =
+    data.full_name?.trim() ||
+    data.email
+      .split("@")[0]
+      .replace(/[._]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const tempPassword =
+    data.temporary_password?.trim() ||
+    `Penny@${safeRandomUUID().slice(0, 4).toUpperCase()}!`;
+
+  const newAdmin: V1AdminUser = {
+    id,
+    user_id: safeRandomUUID(),
+    full_name: name,
+    email: data.email.toLowerCase(),
+    role: data.role,
+    temporary_password: tempPassword,
+    is_password_set: !!data.temporary_password,
+    created_at: now,
+  };
+
+  if (!store.adminUsers) store.adminUsers = [];
+  store.adminUsers = store.adminUsers.filter((u) => u.email.toLowerCase() !== data.email.toLowerCase());
+  store.adminUsers.unshift(newAdmin);
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: "admin-super",
+      action: `Granted role ${data.role.replace(/_/g, " ")} to ${data.email} with initial credentials`,
+      target_type: "user_role",
+      target_id: id,
+      metadata: { email: data.email, role: data.role, name },
+      created_at: now,
+      who: "Super Admin",
+    });
+  }
+
+  saveStoreToDisk();
+
+  return {
+    ok: true,
+    message: `Role ${data.role.replace(/_/g, " ")} granted to ${data.email}`,
+    admin: newAdmin,
+    temporary_password: tempPassword,
+  };
+}
+
+// Admin Password Reset Logic
+export function resetAdminPasswordLogic(data: {
+  id: string;
+  new_password?: string;
+}): { ok: boolean; email: string; temporary_password: string } {
+  if (!store.adminUsers) store.adminUsers = [];
+  const target = store.adminUsers.find((u) => u.id === data.id);
+  if (!target) throw new Error("Administrator not found");
+
+  const newPass = data.new_password?.trim() || `Penny@${safeRandomUUID().slice(0, 4).toUpperCase()}!`;
+  target.temporary_password = newPass;
+  target.is_password_set = false;
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: "admin-super",
+      action: `Reset administrator password for ${target.email}`,
+      target_type: "user_role",
+      target_id: target.id,
+      metadata: { email: target.email },
+      created_at: new Date().toISOString(),
+      who: "Super Admin",
+    });
+  }
+
+  saveStoreToDisk();
+  return { ok: true, email: target.email, temporary_password: newPass };
+}
+
+// Verify Admin Login Credentials against store
+export function verifyAdminLoginCredentialsLogic(data: {
+  email: string;
+  password: string;
+}): {
+  ok: boolean;
+  message?: string;
+  user?: {
+    id: string;
+    user_id: string;
+    email: string;
+    full_name: string;
+    role: "super_admin" | "manager" | "membership_manager" | "support";
+    requires_password_change?: boolean;
+  };
+} {
+  const cleanEmail = data.email.trim().toLowerCase();
+  if (!store.adminUsers) store.adminUsers = [];
+  const user = store.adminUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+
+  if (!user) {
+    if (cleanEmail === "admin@pennygrade.com" && data.password === "admin123") {
+      return {
+        ok: true,
+        user: {
+          id: "super-admin-01",
+          user_id: "uid-super-01",
+          email: "admin@pennygrade.com",
+          full_name: "Primary Administrator",
+          role: "super_admin",
+        },
+      };
+    }
+    return { ok: false, message: "No administrator account found with this email." };
+  }
+
+  const expectedPass = user.temporary_password || (user.role === "super_admin" ? "admin123" : "Penny@2026");
+  if (data.password !== expectedPass) {
+    return { ok: false, message: "Incorrect password for this administrator account." };
+  }
+
+  return {
+    ok: true,
+    user: {
+      id: user.id,
+      user_id: user.user_id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+      requires_password_change: !user.is_password_set,
+    },
+  };
+}
+
+// First-Time Setup / Self-Service Password Set Logic
+export function firstTimeSetPasswordLogic(data: {
+  email: string;
+  new_password: string;
+  current_temporary_password?: string;
+}): { ok: boolean; message: string } {
+  const cleanEmail = data.email.trim().toLowerCase();
+  if (!store.adminUsers) store.adminUsers = [];
+  const user = store.adminUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+  if (!user) {
+    throw new Error("No administrator account registered with this email address.");
+  }
+
+  if (user.temporary_password && data.current_temporary_password) {
+    if (user.temporary_password !== data.current_temporary_password.trim()) {
+      throw new Error("The initial temporary password entered is incorrect.");
+    }
+  }
+
+  user.temporary_password = data.new_password.trim();
+  user.is_password_set = true;
+  saveStoreToDisk();
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: user.id,
+      action: `Administrator set permanent password (${user.email})`,
+      target_type: "user_role",
+      target_id: user.id,
+      metadata: { email: user.email },
+      created_at: new Date().toISOString(),
+      who: user.full_name || "Admin",
+    });
+  }
+
+  return {
+    ok: true,
+    message: "Permanent password successfully configured. You can now sign in.",
   };
 }

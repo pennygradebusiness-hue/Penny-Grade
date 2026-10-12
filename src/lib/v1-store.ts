@@ -186,6 +186,9 @@ export interface V1AdminUser {
   full_name: string;
   email: string;
   role: "super_admin" | "manager" | "membership_manager" | "support";
+  temporary_password?: string;
+  password_hash?: string;
+  is_password_set?: boolean;
   created_at: string;
 }
 
@@ -257,6 +260,49 @@ function loadStoreFromDisk(): PennyGradeStore | null {
   return null;
 }
 
+function seedAdminUsers(): V1AdminUser[] {
+  const nowMs = Date.now();
+  const dayMs = 864e5;
+  return [
+    {
+      id: "admin-user-1",
+      user_id: "uid-samir-001",
+      full_name: "Samir Pandey",
+      email: "samir@pennygrade.com",
+      role: "super_admin",
+      temporary_password: "admin123",
+      created_at: new Date(nowMs - 30 * dayMs).toISOString(),
+    },
+    {
+      id: "admin-user-2",
+      user_id: "uid-rajesh-002",
+      full_name: "Rajesh Sharma",
+      email: "rajesh.manager@pennygrade.com",
+      role: "manager",
+      temporary_password: "Penny@2026",
+      created_at: new Date(nowMs - 20 * dayMs).toISOString(),
+    },
+    {
+      id: "admin-user-3",
+      user_id: "uid-priya-003",
+      full_name: "Priya Patel",
+      email: "priya.cards@pennygrade.com",
+      role: "membership_manager",
+      temporary_password: "Penny@2026",
+      created_at: new Date(nowMs - 14 * dayMs).toISOString(),
+    },
+    {
+      id: "admin-user-4",
+      user_id: "uid-amit-004",
+      full_name: "Amit Verma",
+      email: "amit.support@pennygrade.com",
+      role: "support",
+      temporary_password: "Penny@2026",
+      created_at: new Date(nowMs - 7 * dayMs).toISOString(),
+    },
+  ];
+}
+
 function initStore(): PennyGradeStore {
   if (globalThis.__pennyGradeStore) {
     return globalThis.__pennyGradeStore;
@@ -269,6 +315,9 @@ function initStore(): PennyGradeStore {
     // Ensure applications arrays are defined
     if (!fromDisk.memberApplications) fromDisk.memberApplications = [];
     if (!fromDisk.partnerApplications) fromDisk.partnerApplications = [];
+    if (!fromDisk.adminUsers || fromDisk.adminUsers.length === 0) {
+      fromDisk.adminUsers = seedAdminUsers();
+    }
     globalThis.__pennyGradeStore = fromDisk;
     return globalThis.__pennyGradeStore;
   }
@@ -327,45 +376,6 @@ function initStore(): PennyGradeStore {
         metadata: { test_suites: "12/12 passing", encryption: "crypto-random" },
         created_at: new Date(nowMs - 1 * dayMs).toISOString(),
         who: "System",
-      },
-    ];
-  };
-
-  const seedAdminUsers = (): V1AdminUser[] => {
-    const nowMs = Date.now();
-    const dayMs = 864e5;
-    return [
-      {
-        id: "admin-user-1",
-        user_id: "uid-samir-001",
-        full_name: "Samir Pandey",
-        email: "samir@pennygrade.com",
-        role: "super_admin",
-        created_at: new Date(nowMs - 30 * dayMs).toISOString(),
-      },
-      {
-        id: "admin-user-2",
-        user_id: "uid-rajesh-002",
-        full_name: "Rajesh Sharma",
-        email: "rajesh.manager@pennygrade.com",
-        role: "manager",
-        created_at: new Date(nowMs - 20 * dayMs).toISOString(),
-      },
-      {
-        id: "admin-user-3",
-        user_id: "uid-priya-003",
-        full_name: "Priya Patel",
-        email: "priya.cards@pennygrade.com",
-        role: "membership_manager",
-        created_at: new Date(nowMs - 14 * dayMs).toISOString(),
-      },
-      {
-        id: "admin-user-4",
-        user_id: "uid-amit-004",
-        full_name: "Amit Verma",
-        email: "amit.support@pennygrade.com",
-        role: "support",
-        created_at: new Date(nowMs - 7 * dayMs).toISOString(),
       },
     ];
   };
