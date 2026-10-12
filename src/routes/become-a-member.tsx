@@ -103,8 +103,8 @@ function BecomeAMemberPage() {
       } else {
         toast.error("Could not submit application. Please try again.");
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to submit application");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit application");
     } finally {
       setBusy(false);
     }
@@ -119,7 +119,9 @@ function BecomeAMemberPage() {
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
           {/* Breadcrumb & City Badge */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-6">
-            <Link to="/" className="hover:text-amber-600 transition-colors">Home</Link>
+            <Link to="/" className="hover:text-amber-600 transition-colors">
+              Home
+            </Link>
             <ChevronRight className="h-3 w-3" />
             <span className="font-semibold text-slate-800">Become a Member</span>
             <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-900 shadow-2xs">
@@ -141,9 +143,10 @@ function BecomeAMemberPage() {
               </h1>
 
               <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">
-                PennyGrade gives you an authentic, luxury physical membership card granting instant 
-                <strong className="text-slate-900 font-bold"> 10%–20% discounts </strong> 
-                at curated cafés, dining spots, luxury hotels, gyms, and grooming salons across Daltonganj.
+                PennyGrade gives you an authentic, luxury physical membership card granting instant
+                <strong className="text-slate-900 font-bold"> 10%–20% discounts </strong>
+                at curated cafés, dining spots, luxury hotels, gyms, and grooming salons across
+                Daltonganj.
               </p>
 
               {/* Quick Perks */}
@@ -179,7 +182,8 @@ function BecomeAMemberPage() {
               <div className="w-full max-w-sm">
                 <PhysicalCardPreview code="PEN-7X4P-92LM" />
                 <p className="mt-3 text-center text-[11px] font-medium text-slate-500">
-                  Every card contains a cryptographically unique identifier and gold holographic seal.
+                  Every card contains a cryptographically unique identifier and gold holographic
+                  seal.
                 </p>
               </div>
             </div>
@@ -236,14 +240,25 @@ function BecomeAMemberPage() {
                     What Happens Next?
                   </p>
                   <ol className="list-decimal list-inside space-y-1 text-slate-700">
-                    <li>Our PennyGrade membership manager will call you within <strong>24 hours</strong> to verify your address.</li>
-                    <li>We issue and encode your official physical PennyGrade card (`PEN-XXXX-XXXX`).</li>
-                    <li>The card is handed over to you directly, ready to use immediately at ABC Café, FitZone, and all partner venues.</li>
+                    <li>
+                      Our PennyGrade membership manager will call you within{" "}
+                      <strong>24 hours</strong> to verify your address.
+                    </li>
+                    <li>
+                      We issue and encode your official physical PennyGrade card (`PEN-XXXX-XXXX`).
+                    </li>
+                    <li>
+                      The card is handed over to you directly, ready to use immediately at ABC Café,
+                      FitZone, and all partner venues.
+                    </li>
                   </ol>
                 </div>
 
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <Button asChild className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md hover:from-amber-400 hover:to-amber-500 flex-1">
+                  <Button
+                    asChild
+                    className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md hover:from-amber-400 hover:to-amber-500 flex-1"
+                  >
                     <Link to="/partners">
                       Explore Partner Venues <ArrowRight className="h-4 w-4 ml-1" />
                     </Link>
@@ -268,7 +283,8 @@ function BecomeAMemberPage() {
                     Apply for Your PennyGrade Card
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    Fill in your details below. Our team will contact you to verify and coordinate physical card delivery.
+                    Fill in your details below. Our team will contact you to verify and coordinate
+                    physical card delivery.
                   </p>
                 </div>
 
@@ -353,9 +369,15 @@ function BecomeAMemberPage() {
                         onChange={(e) => setDelivery(e.target.value)}
                         className="mt-1.5 flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       >
-                        <option value="Direct Handover in Daltonganj (Free)">Direct Handover in Daltonganj (Free)</option>
-                        <option value="Courier to Residential / Office Address">Courier to Address (₹50 extra)</option>
-                        <option value="Pickup at ABC Café / Partner Venue">Pickup at Partner Venue</option>
+                        <option value="Direct Handover in Daltonganj (Free)">
+                          Direct Handover in Daltonganj (Free)
+                        </option>
+                        <option value="Courier to Residential / Office Address">
+                          Courier to Address (₹50 extra)
+                        </option>
+                        <option value="Pickup at ABC Café / Partner Venue">
+                          Pickup at Partner Venue
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -370,8 +392,12 @@ function BecomeAMemberPage() {
                       onChange={(e) => setPayment(e.target.value)}
                       className="mt-1.5 flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                      <option value="Pay Upon Card Handover & Verification">Pay ₹500 Upon Card Handover & Verification</option>
-                      <option value="UPI Payment upon Member Call Confirmation">UPI Payment upon Call Confirmation</option>
+                      <option value="Pay Upon Card Handover & Verification">
+                        Pay ₹500 Upon Card Handover & Verification
+                      </option>
+                      <option value="UPI Payment upon Member Call Confirmation">
+                        UPI Payment upon Call Confirmation
+                      </option>
                     </select>
                   </div>
 
@@ -396,7 +422,8 @@ function BecomeAMemberPage() {
                       <span className="font-bold text-sm">₹500 / 6 months</span>
                     </div>
                     <p className="mt-1 text-[11px] text-slate-500">
-                      Includes 1 Official Embossed Physical Card + Digital Barcode Verification. No hidden charges.
+                      Includes 1 Official Embossed Physical Card + Digital Barcode Verification. No
+                      hidden charges.
                     </p>
                   </div>
 
@@ -409,7 +436,8 @@ function BecomeAMemberPage() {
                   </Button>
 
                   <p className="text-center text-[11px] text-slate-400">
-                    By submitting, you agree to receive a verification call or WhatsApp message from our team.
+                    By submitting, you agree to receive a verification call or WhatsApp message from
+                    our team.
                   </p>
                 </form>
               </div>
@@ -432,7 +460,10 @@ function BecomeAMemberPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Guaranteed 10%–20% OFF:</strong>
-                    <p className="text-slate-500 mt-0.5">Applies across all participating dining, hotel, café, fitness, and salon partners.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      Applies across all participating dining, hotel, café, fitness, and salon
+                      partners.
+                    </p>
                   </div>
                 </div>
 
@@ -442,7 +473,10 @@ function BecomeAMemberPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Physical Card + QR Scanner:</strong>
-                    <p className="text-slate-500 mt-0.5">Simply show your physical card or scan the venue counter QR for instant approval.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      Simply show your physical card or scan the venue counter QR for instant
+                      approval.
+                    </p>
                   </div>
                 </div>
 
@@ -452,7 +486,10 @@ function BecomeAMemberPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">6 Months of Unlimited Usage:</strong>
-                    <p className="text-slate-500 mt-0.5">No limits on how many times you can visit your favourite café or gym in 6 months.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      No limits on how many times you can visit your favourite café or gym in 6
+                      months.
+                    </p>
                   </div>
                 </div>
 
@@ -462,7 +499,9 @@ function BecomeAMemberPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Direct Payback in 2 Visits:</strong>
-                    <p className="text-slate-500 mt-0.5">A ₹3,000 hotel stay or ₹1,500 café bill immediately saves ₹300–₹600!</p>
+                    <p className="text-slate-500 mt-0.5">
+                      A ₹3,000 hotel stay or ₹1,500 café bill immediately saves ₹300–₹600!
+                    </p>
                   </div>
                 </div>
               </div>
@@ -475,7 +514,8 @@ function BecomeAMemberPage() {
                 Have Questions Before Applying?
               </h3>
               <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-                Our local support desk in Daltonganj is available to answer any questions about memberships, partner venues, and corporate packages.
+                Our local support desk in Daltonganj is available to answer any questions about
+                memberships, partner venues, and corporate packages.
               </p>
 
               <div className="mt-4 space-y-2 text-xs">

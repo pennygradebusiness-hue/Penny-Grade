@@ -27,7 +27,8 @@ export interface StructuredErrorPayload {
 function extractErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
-  if (error instanceof Response) return `HTTP ${error.status}: ${error.statusText || "Request failed"}`;
+  if (error instanceof Response)
+    return `HTTP ${error.status}: ${error.statusText || "Request failed"}`;
   if (typeof error === "object" && error !== null) {
     const maybeMsg = (error as { message?: unknown }).message;
     if (typeof maybeMsg === "string") return maybeMsg;
@@ -53,9 +54,10 @@ export function logApplicationError(error: unknown, context: ErrorContext = {}):
     : undefined;
 
   const rawMessage = extractErrorMessage(error);
-  const sanitizedMessage = typeof sanitizeLogData(rawMessage) === "string"
-    ? (sanitizeLogData(rawMessage) as string)
-    : rawMessage;
+  const sanitizedMessage =
+    typeof sanitizeLogData(rawMessage) === "string"
+      ? (sanitizeLogData(rawMessage) as string)
+      : rawMessage;
 
   const payload: StructuredErrorPayload = {
     timestamp: new Date().toISOString(),

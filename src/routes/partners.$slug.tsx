@@ -148,10 +148,20 @@ function getCategoryCover(categoryName?: string | null) {
   if (cat.includes("rest") || cat.includes("din") || cat.includes("food")) {
     return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
   }
-  if (cat.includes("hotel") || cat.includes("stay") || cat.includes("resort") || cat.includes("inn")) {
+  if (
+    cat.includes("hotel") ||
+    cat.includes("stay") ||
+    cat.includes("resort") ||
+    cat.includes("inn")
+  ) {
     return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80";
   }
-  if (cat.includes("salon") || cat.includes("spa") || cat.includes("beauty") || cat.includes("hair")) {
+  if (
+    cat.includes("salon") ||
+    cat.includes("spa") ||
+    cat.includes("beauty") ||
+    cat.includes("hair")
+  ) {
     return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80";
   }
   if (cat.includes("fit") || cat.includes("gym") || cat.includes("yoga")) {
@@ -224,7 +234,10 @@ function PartnerPage() {
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-md backdrop-blur-xs hover:bg-white hover:scale-105 transition-all cursor-pointer"
             >
               <Heart
-                className={cn("h-5 w-5 transition-colors", isFav ? "fill-red-500 text-red-500" : "text-slate-700")}
+                className={cn(
+                  "h-5 w-5 transition-colors",
+                  isFav ? "fill-red-500 text-red-500" : "text-slate-700",
+                )}
               />
             </button>
           </div>
@@ -308,10 +321,7 @@ function PartnerPage() {
         {/* Breadcrumb Navigation */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6 mt-4">
           <Breadcrumbs
-            items={[
-              { label: "Partners", to: "/partners" },
-              { label: p.business_name },
-            ]}
+            items={[{ label: "Partners", to: "/partners" }, { label: p.business_name }]}
           />
         </div>
 
@@ -334,7 +344,9 @@ function PartnerPage() {
                     <h2 className="font-display text-lg font-bold text-slate-900">
                       How to Save at {p.business_name}
                     </h2>
-                    <p className="text-xs text-slate-600">Simple 3-step billing counter redemption</p>
+                    <p className="text-xs text-slate-600">
+                      Simple 3-step billing counter redemption
+                    </p>
                   </div>
                 </div>
 
@@ -343,7 +355,9 @@ function PartnerPage() {
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 font-display text-xs font-black text-amber-800 mb-2">
                       1
                     </span>
-                    <strong className="block text-xs font-bold text-slate-900">Tell the Cashier</strong>
+                    <strong className="block text-xs font-bold text-slate-900">
+                      Tell the Cashier
+                    </strong>
                     <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
                       Mention that you are a PennyGrade member when requesting your bill.
                     </p>
@@ -353,9 +367,12 @@ function PartnerPage() {
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 font-display text-xs font-black text-amber-800 mb-2">
                       2
                     </span>
-                    <strong className="block text-xs font-bold text-slate-900">Enter Bill & Card</strong>
+                    <strong className="block text-xs font-bold text-slate-900">
+                      Enter Bill & Card
+                    </strong>
                     <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                      Tap "Verify Discount" or scan the counter standee to input your card and bill total.
+                      Tap "Verify Discount" or scan the counter standee to input your card and bill
+                      total.
                     </p>
                   </div>
 
@@ -363,9 +380,12 @@ function PartnerPage() {
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 font-display text-xs font-black text-emerald-800 mb-2">
                       3
                     </span>
-                    <strong className="block text-xs font-bold text-slate-900">Show Live Screen</strong>
+                    <strong className="block text-xs font-bold text-slate-900">
+                      Show Live Screen
+                    </strong>
                     <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                      Show the running 5-min verification countdown. Staff applies the discount on your POS.
+                      Show the running 5-min verification countdown. Staff applies the discount on
+                      your POS.
                     </p>
                   </div>
                 </div>
@@ -373,7 +393,9 @@ function PartnerPage() {
 
               {/* ABOUT THIS PARTNER */}
               <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs">
-                <h3 className="font-display text-lg font-bold text-slate-900">About This Partner</h3>
+                <h3 className="font-display text-lg font-bold text-slate-900">
+                  About This Partner
+                </h3>
                 <p className="mt-3 text-xs sm:text-sm font-medium leading-relaxed text-slate-600">
                   {p.description ||
                     `${p.business_name} is an official verified PennyGrade partner outlet. Members enjoy guaranteed in-person discounts on every eligible visit throughout their 6-month card validity.`}
@@ -385,8 +407,12 @@ function PartnerPage() {
                     <div className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
                       <Clock className="h-4 w-4 text-[#c25e36] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[11px] font-semibold text-slate-400 block">Operating Hours</span>
-                        <p className="text-xs font-bold text-slate-900 mt-0.5">{p.business_hours}</p>
+                        <span className="text-[11px] font-semibold text-slate-400 block">
+                          Operating Hours
+                        </span>
+                        <p className="text-xs font-bold text-slate-900 mt-0.5">
+                          {p.business_hours}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -398,7 +424,9 @@ function PartnerPage() {
                     >
                       <Phone className="h-4 w-4 text-[#c25e36] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[11px] font-semibold text-slate-400 block">Contact Phone</span>
+                        <span className="text-[11px] font-semibold text-slate-400 block">
+                          Contact Phone
+                        </span>
                         <p className="text-xs font-bold text-slate-900 mt-0.5">{p.phone}</p>
                       </div>
                     </a>
@@ -411,8 +439,12 @@ function PartnerPage() {
                     >
                       <Mail className="h-4 w-4 text-[#c25e36] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[11px] font-semibold text-slate-400 block">Customer Email</span>
-                        <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">{p.email}</p>
+                        <span className="text-[11px] font-semibold text-slate-400 block">
+                          Customer Email
+                        </span>
+                        <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">
+                          {p.email}
+                        </p>
                       </div>
                     </a>
                   )}
@@ -426,7 +458,9 @@ function PartnerPage() {
                     >
                       <Globe className="h-4 w-4 text-[#c25e36] shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[11px] font-semibold text-slate-400 block">Official Website</span>
+                        <span className="text-[11px] font-semibold text-slate-400 block">
+                          Official Website
+                        </span>
                         <p className="text-xs font-bold text-slate-900 mt-0.5 truncate flex items-center gap-1">
                           <span>Visit Website</span>
                           <ExternalLink className="h-3 w-3" />
@@ -459,9 +493,7 @@ function PartnerPage() {
                       <h3 className="font-display text-3xl sm:text-4xl font-black text-amber-400">
                         {offerHeadline(offer)}
                       </h3>
-                      <p className="mt-1 text-xs font-semibold text-slate-300">
-                        {offerSub(offer)}
-                      </p>
+                      <p className="mt-1 text-xs font-semibold text-slate-300">{offerSub(offer)}</p>
                     </div>
                   </div>
 
@@ -476,7 +508,9 @@ function PartnerPage() {
 
                     <div className="mt-2">
                       <div className="relative">
-                        <span className="absolute left-3.5 top-2.5 font-bold text-slate-400 text-sm">₹</span>
+                        <span className="absolute left-3.5 top-2.5 font-bold text-slate-400 text-sm">
+                          ₹
+                        </span>
                         <input
                           type="number"
                           value={calcBill}
@@ -499,7 +533,9 @@ function PartnerPage() {
                           </div>
                           <div className="border-t border-slate-100 pt-1.5 flex justify-between text-xs font-extrabold text-slate-900">
                             <span>You Pay Staff:</span>
-                            <span className="text-emerald-700 font-display text-sm">{inr(estimatedPayable)}</span>
+                            <span className="text-emerald-700 font-display text-sm">
+                              {inr(estimatedPayable)}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -540,13 +576,17 @@ function PartnerPage() {
                     <div className="flex justify-between border-b border-slate-100 pb-2">
                       <span className="text-slate-500 font-medium">Minimum Bill</span>
                       <span className="font-bold text-slate-900">
-                        {Number(offer.minimum_bill) > 0 ? inr(offer.minimum_bill) : "No Minimum Bill"}
+                        {Number(offer.minimum_bill) > 0
+                          ? inr(offer.minimum_bill)
+                          : "No Minimum Bill"}
                       </span>
                     </div>
 
                     <div className="flex justify-between border-b border-slate-100 pb-2">
                       <span className="text-slate-500 font-medium">Valid Days</span>
-                      <span className="font-bold text-slate-900 text-right">{formatDays(offer.valid_days)}</span>
+                      <span className="font-bold text-slate-900 text-right">
+                        {formatDays(offer.valid_days)}
+                      </span>
                     </div>
 
                     <div className="flex justify-between border-b border-slate-100 pb-2">
@@ -573,13 +613,18 @@ function PartnerPage() {
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-display text-sm font-bold text-slate-900">At the Billing Counter?</h4>
-                    <p className="text-[11px] text-slate-500">Generate your live verification screen</p>
+                    <h4 className="font-display text-sm font-bold text-slate-900">
+                      At the Billing Counter?
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Generate your live verification screen
+                    </p>
                   </div>
                 </div>
 
                 <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                  Tap below to launch the live counter verification screen. Staff will deduct the discount from your final bill.
+                  Tap below to launch the live counter verification screen. Staff will deduct the
+                  discount from your final bill.
                 </p>
 
                 <Link
@@ -609,7 +654,9 @@ function PartnerPage() {
                   Unlimited
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 font-semibold">Deduct directly at billing counter</p>
+              <p className="text-[10px] text-slate-500 font-semibold">
+                Deduct directly at billing counter
+              </p>
             </div>
 
             <Link

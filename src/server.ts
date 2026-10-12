@@ -93,9 +93,7 @@ function applySecurityHeaders(response: Response, requestId: string): Response {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const requestId =
-      request.headers.get("x-request-id") ||
-      request.headers.get("cf-ray") ||
-      generateRequestId();
+      request.headers.get("x-request-id") || request.headers.get("cf-ray") || generateRequestId();
 
     try {
       const handler = await getServerEntry();

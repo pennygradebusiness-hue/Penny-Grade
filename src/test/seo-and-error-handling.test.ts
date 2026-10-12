@@ -11,11 +11,7 @@ import {
   buildLocalBusinessSchema,
   buildFaqSchema,
 } from "@/lib/seo";
-import {
-  generateRequestId,
-  sanitizeLogData,
-  createApiError,
-} from "@/lib/errors";
+import { generateRequestId, sanitizeLogData, createApiError } from "@/lib/errors";
 import { logApplicationError } from "@/lib/error-logger";
 import { renderErrorPage } from "@/lib/error-page";
 
@@ -43,23 +39,23 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
 
     it("strips query parameters and filters from canonical URLs", () => {
       expect(buildCanonicalUrl("/partners?q=coffee&category=cafes&sort=popular")).toBe(
-        "https://pennygrade.com/partners"
+        "https://pennygrade.com/partners",
       );
       expect(buildCanonicalUrl("/offers?discountMin=15")).toBe("https://pennygrade.com/offers");
     });
 
     it("strips hash fragments from canonical URLs", () => {
       expect(buildCanonicalUrl("/how-it-works#calculator")).toBe(
-        "https://pennygrade.com/how-it-works"
+        "https://pennygrade.com/how-it-works",
       );
     });
 
     it("generates correct partner profile canonical URLs using verified slug", () => {
       expect(buildCanonicalUrl("/partners/abc-cafe")).toBe(
-        "https://pennygrade.com/partners/abc-cafe"
+        "https://pennygrade.com/partners/abc-cafe",
       );
       expect(buildCanonicalUrl("/partners/urban-brew/")).toBe(
-        "https://pennygrade.com/partners/urban-brew"
+        "https://pennygrade.com/partners/urban-brew",
       );
     });
   });
@@ -199,7 +195,9 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(faqSchema["@type"]).toBe("FAQPage");
       expect(faqSchema.mainEntity).toHaveLength(2);
       expect(faqSchema.mainEntity[0].name).toBe("What is PennyGrade?");
-      expect(faqSchema.mainEntity[0].acceptedAnswer.text).toBe("PennyGrade is a physical card membership.");
+      expect(faqSchema.mainEntity[0].acceptedAnswer.text).toBe(
+        "PennyGrade is a physical card membership.",
+      );
     });
   });
 
@@ -255,7 +253,9 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
   });
 
   it("formats standardized API error responses", () => {
-    const err = createApiError("VALIDATION_ERROR", "Invalid input received", { field: "billAmount" });
+    const err = createApiError("VALIDATION_ERROR", "Invalid input received", {
+      field: "billAmount",
+    });
     expect(err.ok).toBe(false);
     expect(err.success).toBe(false);
     expect(err.error.code).toBe("VALIDATION_ERROR");
@@ -276,5 +276,104 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
     expect(html).toContain("Reference ID: req_test_12345");
     expect(html).toContain("Return to Home");
     expect(html).not.toContain("stack");
+  });
+
+  describe("XML Sitemap Schema & Sensitive Route Exclusion Guarantees", () => {
+    it("ensures public sitemap includes only indexable public pages", async () => {
+      const sitemapModule = await import("@/routes/sitemap[.]xml");
+      // @ts-expect-error server handlers access
+      const getHandler = sitemapModule.Route.options.server?.handlers?.GET;
+      expect(typeof getHandler).toBe("function");
+
+      const res = await getHandler();
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("application/xml; charset=utf-8");
+
+      const xml = await res.text();
+      expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+      expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+
+      // Must include canonical public discovery routes
+      expect(xml).toContain("<loc>https://pennygrade.com/</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.com/how-it-works</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.com/partners</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.com/offers</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.com/become-a-member</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.com/partner-with-us</loc>");
+
+      // MUST NOT include sensitive, customer, or admin routes
+      expect(xml).not.toContain("/admin");
+      expect(xml).not.toContain("/account");
+      expect(xml).not.toContain("/history");
+      expect(xml).not.toContain("/verification");
+      expect(xml).not.toContain("/p/");
+      expect(xml).not.toContain("/login");
+      expect(xml).not.toContain("/register");
+    });
+  });
+
+  describe("Critical Business Flow Error Handling & Validation", () => {
+    it("handles customer history queries and strictly enforces 2FA mobile verification", async () => {
+      const { getCustomerHistoryLogic } = await import("@/lib/v1-logic");
+
+      // Missing mobile number -> must be rejected
+      const missingMobile = getCustomerHistoryLogic({ membershipNumber: "PEN-7X4P-92LM", mobile: "" });
+      expect(missingMobile.ok).toBe(false);
+      expect(missingMobile.message).toContain("registered mobile");
+
+      // Wrong mobile number -> must be rejected with generic error (anti-enumeration)
+      const wrongMobile = getCustomerHistoryLogic({ membershipNumber: "PEN-7X4P-92LM", mobile: "9999999999" });
+      expect(wrongMobile.ok).toBe(false);
+      expect(wrongMobile.message).toContain("Unable to verify");
+
+      // Non-existent card with random mobile -> must be rejected
+      const nonExistent = getCustomerHistoryLogic({ membershipNumber: "PEN-0000-0000", mobile: "9876543210" });
+      expect(nonExistent.ok).toBe(false);
+      expect(nonExistent.message).toContain("Unable to verify");
+    });
+
+    it("handles membership verification edge cases cleanly", async () => {
+      const { verifyMemberInputLogic } = await import("@/lib/v1-logic");
+
+      // Empty input
+      const emptyRes = verifyMemberInputLogic("");
+      expect(emptyRes.ok).toBe(false);
+
+      // Malformed input
+      const malformedRes = verifyMemberInputLogic("xyz-123");
+      expect(malformedRes.ok).toBe(false);
+    });
+
+    it("verifies server-side discount calculation error conditions", async () => {
+      const { calculateDiscount } = await import("@/lib/v1-logic");
+      const sampleOffer = {
+        id: "off-test",
+        title: "15% Off",
+        discount_type: "PERCENTAGE" as const,
+        discount_value: 15,
+        max_discount: 300,
+        minimum_bill: 500,
+      };
+
+      // Negative bill
+      const neg = calculateDiscount(-100, sampleOffer);
+      expect(neg.eligible).toBe(false);
+      expect(neg.discount).toBe(0);
+
+      // Zero bill
+      const zero = calculateDiscount(0, sampleOffer);
+      expect(zero.eligible).toBe(false);
+
+      // Below minimum bill
+      const below = calculateDiscount(400, sampleOffer);
+      expect(below.eligible).toBe(false);
+      expect(below.message).toContain("minimum bill");
+
+      // Valid bill with max cap enforcement
+      const capped = calculateDiscount(5000, sampleOffer);
+      expect(capped.eligible).toBe(true);
+      expect(capped.discount).toBe(300); // capped at max_discount
+      expect(capped.finalAmount).toBe(4700);
+    });
   });
 });

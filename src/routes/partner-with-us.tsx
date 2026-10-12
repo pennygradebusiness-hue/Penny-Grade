@@ -120,8 +120,8 @@ function PartnerWithUsPage() {
       } else {
         toast.error("Could not submit partner inquiry. Please try again.");
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to submit inquiry");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to submit inquiry");
     } finally {
       setBusy(false);
     }
@@ -136,7 +136,9 @@ function PartnerWithUsPage() {
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
           {/* Breadcrumb & City Badge */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-6">
-            <Link to="/" className="hover:text-amber-600 transition-colors">Home</Link>
+            <Link to="/" className="hover:text-amber-600 transition-colors">
+              Home
+            </Link>
             <ChevronRight className="h-3 w-3" />
             <span className="font-semibold text-slate-800">Partner With Us</span>
             <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-900 shadow-2xs">
@@ -158,8 +160,12 @@ function PartnerWithUsPage() {
               </h1>
 
               <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">
-                Join prestigious venues like <strong className="text-slate-900 font-bold">ABC Café, Urban Brew, The Grand Stay, and FitZone</strong>. 
-                Welcome affluent, verified PennyGrade cardholders into your establishment with zero complex tech.
+                Join prestigious venues like{" "}
+                <strong className="text-slate-900 font-bold">
+                  ABC Café, Urban Brew, The Grand Stay, and FitZone
+                </strong>
+                . Welcome affluent, verified PennyGrade cardholders into your establishment with
+                zero complex tech.
               </p>
 
               {/* Key Merchant Value Pillars */}
@@ -170,7 +176,8 @@ function PartnerWithUsPage() {
                   </div>
                   <h4 className="mt-3 text-xs font-bold text-slate-900">Zero Hardware Setup</h4>
                   <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                    We provide a free premium acrylic QR standee. No POS integration or machines needed.
+                    We provide a free premium acrylic QR standee. No POS integration or machines
+                    needed.
                   </p>
                 </div>
 
@@ -180,7 +187,8 @@ function PartnerWithUsPage() {
                   </div>
                   <h4 className="mt-3 text-xs font-bold text-slate-900">Affluent Members</h4>
                   <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                    Attract local professionals, families, and students who dine out and spend regularly.
+                    Attract local professionals, families, and students who dine out and spend
+                    regularly.
                   </p>
                 </div>
 
@@ -190,7 +198,8 @@ function PartnerWithUsPage() {
                   </div>
                   <h4 className="mt-3 text-xs font-bold text-slate-900">Total Control</h4>
                   <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                    You choose your discount %, minimum bill requirement, and eligible days of the week.
+                    You choose your discount %, minimum bill requirement, and eligible days of the
+                    week.
                   </p>
                 </div>
               </div>
@@ -206,7 +215,8 @@ function PartnerWithUsPage() {
                   Permanent Counter Standee
                 </h3>
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                  Customer scans QR with their smartphone, enters bill total, and shows verified payable amount directly to counter staff.
+                  Customer scans QR with their smartphone, enters bill total, and shows verified
+                  payable amount directly to counter staff.
                 </p>
 
                 <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-800 font-medium">
@@ -249,11 +259,15 @@ function PartnerWithUsPage() {
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
                     <span className="text-slate-500 font-medium">Contact Person</span>
-                    <span className="font-semibold text-slate-900">{submittedInquiry.contactName}</span>
+                    <span className="font-semibold text-slate-900">
+                      {submittedInquiry.contactName}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
                     <span className="text-slate-500 font-medium">Registered Phone</span>
-                    <span className="font-semibold text-slate-900">+91 {submittedInquiry.mobile}</span>
+                    <span className="font-semibold text-slate-900">
+                      +91 {submittedInquiry.mobile}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 font-medium">Location</span>
@@ -267,14 +281,26 @@ function PartnerWithUsPage() {
                     Onboarding Timeline
                   </p>
                   <ol className="list-decimal list-inside space-y-1 text-slate-700">
-                    <li>Our partnership lead in Daltonganj will contact you within <strong>24–48 hours</strong>.</li>
-                    <li>We configure your venue page, discount rate, minimum bill, and generate your dedicated QR code.</li>
-                    <li>We deliver your free tabletop standee and publish your venue to all PennyGrade members!</li>
+                    <li>
+                      Our partnership lead in Daltonganj will contact you within{" "}
+                      <strong>24–48 hours</strong>.
+                    </li>
+                    <li>
+                      We configure your venue page, discount rate, minimum bill, and generate your
+                      dedicated QR code.
+                    </li>
+                    <li>
+                      We deliver your free tabletop standee and publish your venue to all PennyGrade
+                      members!
+                    </li>
                   </ol>
                 </div>
 
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <Button asChild className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md hover:from-amber-400 hover:to-amber-500 flex-1">
+                  <Button
+                    asChild
+                    className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md hover:from-amber-400 hover:to-amber-500 flex-1"
+                  >
                     <Link to="/partners">
                       View Existing Partners <ArrowRight className="h-4 w-4 ml-1" />
                     </Link>
@@ -299,7 +325,8 @@ function PartnerWithUsPage() {
                     Register Your Venue with PennyGrade
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    Fill in your outlet details below. Our team will review your submission and contact you to arrange setup.
+                    Fill in your outlet details below. Our team will review your submission and
+                    contact you to arrange setup.
                   </p>
                 </div>
 
@@ -491,7 +518,8 @@ function PartnerWithUsPage() {
                   </Button>
 
                   <p className="text-center text-[11px] text-slate-400">
-                    No upfront setup fees. Our representative will visit your location to verify and install your acrylic QR standee.
+                    No upfront setup fees. Our representative will visit your location to verify and
+                    install your acrylic QR standee.
                   </p>
                 </form>
               </div>
@@ -513,7 +541,9 @@ function PartnerWithUsPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Free Acrylic Counter Standee:</strong>
-                    <p className="text-slate-500 mt-0.5">Custom engraved QR standee delivered to your cashier counter at no charge.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      Custom engraved QR standee delivered to your cashier counter at no charge.
+                    </p>
                   </div>
                 </div>
 
@@ -523,7 +553,10 @@ function PartnerWithUsPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Featured Catalog Placement:</strong>
-                    <p className="text-slate-500 mt-0.5">High-visibility placement on PennyGrade directory, mobile landing, and member newsletters.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      High-visibility placement on PennyGrade directory, mobile landing, and member
+                      newsletters.
+                    </p>
                   </div>
                 </div>
 
@@ -533,7 +566,10 @@ function PartnerWithUsPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Zero Commission on Sales:</strong>
-                    <p className="text-slate-500 mt-0.5">We don't take a percentage of your food or room revenues. You keep 100% of the customer bill.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      We don't take a percentage of your food or room revenues. You keep 100% of the
+                      customer bill.
+                    </p>
                   </div>
                 </div>
 
@@ -543,7 +579,10 @@ function PartnerWithUsPage() {
                   </div>
                   <div>
                     <strong className="text-slate-800">Tamper-Proof Visual Verification:</strong>
-                    <p className="text-slate-500 mt-0.5">Dynamic glowing session screen with real-time countdown prevents duplicate or reused discounts.</p>
+                    <p className="text-slate-500 mt-0.5">
+                      Dynamic glowing session screen with real-time countdown prevents duplicate or
+                      reused discounts.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -556,7 +595,8 @@ function PartnerWithUsPage() {
                 Merchant Onboarding Desk
               </h3>
               <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-                Prefer to talk directly with our partnership director in Daltonganj? Call or message our direct merchant line.
+                Prefer to talk directly with our partnership director in Daltonganj? Call or message
+                our direct merchant line.
               </p>
 
               <div className="mt-4 space-y-2 text-xs">

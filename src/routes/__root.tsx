@@ -56,14 +56,19 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4" role="alert" aria-live="assertive">
+    <div
+      className="flex min-h-screen items-center justify-center bg-background px-4"
+      role="alert"
+      aria-live="assertive"
+    >
       <div className="max-w-md text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 font-bold text-xl">
           !
         </div>
         <h1 className="text-xl font-bold tracking-tight text-foreground">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          An unexpected error occurred while loading this page. Our technical team has been notified.
+          An unexpected error occurred while loading this page. Our technical team has been
+          notified.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
@@ -101,7 +106,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { title: "PennyGrade | Exclusive Membership Benefits" },
-        { name: "description", content: "One membership. Exclusive savings at trusted partner businesses." },
+        {
+          name: "description",
+          content: "One membership. Exclusive savings at trusted partner businesses.",
+        },
         { name: "author", content: "PennyGrade" },
         { property: "og:site_name", content: "PennyGrade" },
         { property: "og:type", content: "website" },

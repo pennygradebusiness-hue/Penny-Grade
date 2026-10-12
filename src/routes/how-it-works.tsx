@@ -203,7 +203,7 @@ function HowItWorks() {
           setEcosystemInView(true);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.15 },
     );
     observer.observe(ecosystemRef.current);
     return () => observer.disconnect();
@@ -267,7 +267,8 @@ function HowItWorks() {
 
             {/* Description */}
             <p className="mt-4 text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
-              Discover exclusive offers, verify your membership, and enjoy benefits at participating businesses with PennyGrade.
+              Discover exclusive offers, verify your membership, and enjoy benefits at participating
+              businesses with PennyGrade.
             </p>
           </div>
         </div>
@@ -301,14 +302,16 @@ function HowItWorks() {
                       onClick={() => scrollToStep(stepNum)}
                       className={cn(
                         "relative transition-all duration-300 cursor-pointer lg:pl-12 lg:min-h-[75vh] lg:flex lg:flex-col lg:justify-center",
-                        isActive ? "opacity-100" : "opacity-45 hover:opacity-75"
+                        isActive ? "opacity-100" : "opacity-45 hover:opacity-75",
                       )}
                     >
                       {/* Active Vertical Accent Bar on the timeline */}
                       <div
                         className={cn(
                           "hidden lg:block absolute left-3.5 top-0 bottom-0 w-[3px] -translate-x-[0.5px] transition-all duration-300 rounded-full",
-                          isActive ? "bg-amber-500 shadow-sm shadow-amber-500/50" : "bg-transparent"
+                          isActive
+                            ? "bg-amber-500 shadow-sm shadow-amber-500/50"
+                            : "bg-transparent",
                         )}
                       />
 
@@ -317,7 +320,7 @@ function HowItWorks() {
                         <span
                           className={cn(
                             "font-display text-sm font-extrabold tracking-tight transition-colors",
-                            isActive ? "text-amber-600" : "text-slate-400"
+                            isActive ? "text-amber-600" : "text-slate-400",
                           )}
                         >
                           {step.num}
@@ -331,7 +334,7 @@ function HowItWorks() {
                       <h2
                         className={cn(
                           "mt-2 font-display text-2xl font-bold tracking-tight transition-colors sm:text-3xl",
-                          isActive ? "text-slate-900" : "text-slate-600"
+                          isActive ? "text-slate-900" : "text-slate-600",
                         )}
                       >
                         {step.title}
@@ -400,7 +403,7 @@ function HowItWorks() {
                           "absolute inset-0 flex flex-col bg-white transition-all duration-500 ease-out",
                           currentStep === 1
                             ? "opacity-100 translate-y-0 scale-100 z-20 pointer-events-auto"
-                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none"
+                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none",
                         )}
                       >
                         {/* Top Location Bar */}
@@ -460,13 +463,17 @@ function HowItWorks() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-slate-900 truncate">Café Bliss</h4>
+                                <h4 className="text-xs font-bold text-slate-900 truncate">
+                                  Café Bliss
+                                </h4>
                                 <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
                                   20% OFF
                                 </span>
                               </div>
                               <p className="text-[10px] text-slate-500">Main Road • 0.4 km</p>
-                              <span className="text-[9px] font-bold text-amber-600">★ 4.8 (124 reviews)</span>
+                              <span className="text-[9px] font-bold text-amber-600">
+                                ★ 4.8 (124 reviews)
+                              </span>
                             </div>
                           </div>
 
@@ -479,13 +486,17 @@ function HowItWorks() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-slate-900 truncate">The Grand Hotel</h4>
+                                <h4 className="text-xs font-bold text-slate-900 truncate">
+                                  The Grand Hotel
+                                </h4>
                                 <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
                                   15% OFF
                                 </span>
                               </div>
                               <p className="text-[10px] text-slate-500">Station Road • 1.2 km</p>
-                              <span className="text-[9px] font-bold text-amber-600">★ 4.9 (88 reviews)</span>
+                              <span className="text-[9px] font-bold text-amber-600">
+                                ★ 4.9 (88 reviews)
+                              </span>
                             </div>
                           </div>
 
@@ -498,13 +509,17 @@ function HowItWorks() {
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-slate-900 truncate">FitZone Gym</h4>
+                                <h4 className="text-xs font-bold text-slate-900 truncate">
+                                  FitZone Gym
+                                </h4>
                                 <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
                                   25% OFF
                                 </span>
                               </div>
                               <p className="text-[10px] text-slate-500">Bypass Road • 2.0 km</p>
-                              <span className="text-[9px] font-bold text-amber-600">★ 4.7 (52 reviews)</span>
+                              <span className="text-[9px] font-bold text-amber-600">
+                                ★ 4.7 (52 reviews)
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -538,7 +553,7 @@ function HowItWorks() {
                           "absolute inset-0 flex flex-col bg-slate-50 transition-all duration-500 ease-out",
                           currentStep === 2
                             ? "opacity-100 translate-y-0 scale-100 z-20 pointer-events-auto"
-                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none"
+                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none",
                         )}
                       >
                         {/* Partner Outlet Header */}
@@ -548,8 +563,12 @@ function HowItWorks() {
                               CB
                             </div>
                             <div className="min-w-0">
-                              <h3 className="text-xs font-bold truncate leading-none">Café Bliss</h3>
-                              <span className="text-[9px] text-amber-300">Verified Partner Outlet</span>
+                              <h3 className="text-xs font-bold truncate leading-none">
+                                Café Bliss
+                              </h3>
+                              <span className="text-[9px] text-amber-300">
+                                Verified Partner Outlet
+                              </span>
                             </div>
                           </div>
                           <div className="mt-2 flex items-center justify-between rounded-md bg-white/10 px-2 py-1 text-[9px]">
@@ -569,7 +588,9 @@ function HowItWorks() {
                                 Active Member Privilege
                               </span>
                               <div className="mt-0.5 flex items-baseline gap-2">
-                                <strong className="text-sm font-black text-slate-900">Flat 20% OFF</strong>
+                                <strong className="text-sm font-black text-slate-900">
+                                  Flat 20% OFF
+                                </strong>
                                 <span className="text-[9px] text-slate-600">On total bill</span>
                               </div>
                             </div>
@@ -595,7 +616,11 @@ function HowItWorks() {
 
                             {/* Card Graphic */}
                             <div className="overflow-hidden rounded-xl border border-amber-300/40 shadow-sm">
-                              <img src={CARD_URL} alt="Card Preview" className="h-20 w-full object-cover" />
+                              <img
+                                src={CARD_URL}
+                                alt="Card Preview"
+                                className="h-20 w-full object-cover"
+                              />
                             </div>
                           </div>
 
@@ -614,7 +639,7 @@ function HowItWorks() {
                           "absolute inset-0 flex flex-col bg-slate-50 transition-all duration-500 ease-out",
                           currentStep === 3
                             ? "opacity-100 translate-y-0 scale-100 z-20 pointer-events-auto"
-                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none"
+                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none",
                         )}
                       >
                         {/* Header */}
@@ -636,7 +661,9 @@ function HowItWorks() {
                                 Entered Preliminary Bill
                               </span>
                               <div className="mt-0.5 flex items-baseline justify-between">
-                                <span className="font-display text-base font-bold text-slate-900">₹1,500.00</span>
+                                <span className="font-display text-base font-bold text-slate-900">
+                                  ₹1,500.00
+                                </span>
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold text-slate-600">
                                   Table #04
                                 </span>
@@ -654,7 +681,9 @@ function HowItWorks() {
                                 <span className="text-amber-600">-₹300.00</span>
                               </div>
                               <div className="border-t border-amber-200 pt-1.5 flex items-center justify-between text-[11px]">
-                                <span className="font-bold text-slate-900">Final Payable to Staff</span>
+                                <span className="font-bold text-slate-900">
+                                  Final Payable to Staff
+                                </span>
                                 <span className="font-display text-sm font-black text-emerald-700">
                                   ₹1,200.00
                                 </span>
@@ -683,7 +712,7 @@ function HowItWorks() {
                           "absolute inset-0 flex flex-col bg-slate-950 text-white transition-all duration-500 ease-out",
                           currentStep === 4
                             ? "opacity-100 translate-y-0 scale-100 z-20 pointer-events-auto"
-                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none"
+                            : "opacity-0 translate-y-3 scale-95 z-10 pointer-events-none",
                         )}
                       >
                         {/* Live Countdown Banner */}
@@ -701,7 +730,9 @@ function HowItWorks() {
                             <Clock className="h-3.5 w-3.5 text-emerald-400" />
                             <span>04:48</span>
                           </div>
-                          <span className="text-[8px] text-emerald-300">Valid for 5 minutes only</span>
+                          <span className="text-[8px] text-emerald-300">
+                            Valid for 5 minutes only
+                          </span>
                         </div>
 
                         {/* Verification Body */}
@@ -722,15 +753,21 @@ function HowItWorks() {
                             <div className="space-y-1 rounded-lg border border-white/10 bg-white/5 p-2 text-[10px]">
                               <div className="flex justify-between text-slate-400">
                                 <span>Member ID</span>
-                                <span className="font-mono font-bold text-white">PEN-7X4P-92LM</span>
+                                <span className="font-mono font-bold text-white">
+                                  PEN-7X4P-92LM
+                                </span>
                               </div>
                               <div className="flex justify-between text-slate-400">
                                 <span>Net Payable</span>
-                                <span className="font-mono font-bold text-emerald-400">₹1,200.00</span>
+                                <span className="font-mono font-bold text-emerald-400">
+                                  ₹1,200.00
+                                </span>
                               </div>
                               <div className="flex justify-between text-slate-400">
                                 <span>Token Hash</span>
-                                <span className="font-mono text-[8px] text-slate-400">SEC-992B-04E1</span>
+                                <span className="font-mono text-[8px] text-slate-400">
+                                  SEC-992B-04E1
+                                </span>
                               </div>
                             </div>
 
@@ -770,7 +807,12 @@ function HowItWorks() {
           <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="ecosystem-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(251, 191, 36, 0.2)" strokeWidth="0.8" />
+                <path
+                  d="M 40 0 L 0 0 0 40"
+                  fill="none"
+                  stroke="rgba(251, 191, 36, 0.2)"
+                  strokeWidth="0.8"
+                />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#ecosystem-pattern)" />
@@ -782,7 +824,7 @@ function HowItWorks() {
           <div
             className={cn(
               "mx-auto max-w-3xl text-center transition-all duration-700",
-              ecosystemInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              ecosystemInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
             )}
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-3.5 py-1 text-xs font-bold tracking-widest text-amber-300 uppercase">
@@ -798,7 +840,8 @@ function HowItWorks() {
             </h2>
 
             <p className="mt-4 text-sm font-medium leading-relaxed text-slate-300 sm:text-base">
-              A single physical PennyGrade card unlocks curated partner savings across dining, daily coffee, luxury stays, fitness, and everyday services.
+              A single physical PennyGrade card unlocks curated partner savings across dining, daily
+              coffee, luxury stays, fitness, and everyday services.
             </p>
           </div>
 
@@ -814,7 +857,7 @@ function HowItWorks() {
                   }}
                   className={cn(
                     "group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 p-4.5 backdrop-blur-2xs transition-all duration-500 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-500/10",
-                    ecosystemInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                    ecosystemInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
                   )}
                 >
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 border border-white/10 text-amber-400 shadow-inner group-hover:bg-amber-400 group-hover:text-slate-950 transition-colors">
@@ -825,14 +868,10 @@ function HowItWorks() {
                     {cat.name}
                   </h3>
 
-                  <p className="mt-0.5 text-xs text-slate-400 line-clamp-1">
-                    {cat.tagline}
-                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400 line-clamp-1">{cat.tagline}</p>
 
                   <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-2">
-                    <span className="text-[10px] font-bold text-amber-400">
-                      {cat.savings}
-                    </span>
+                    <span className="text-[10px] font-bold text-amber-400">{cat.savings}</span>
                     <ChevronRight className="h-3 w-3 text-slate-500 transition-transform group-hover:translate-x-1 group-hover:text-amber-400" />
                   </div>
                 </div>
@@ -862,7 +901,8 @@ function HowItWorks() {
               </span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-relaxed text-slate-300 sm:text-base">
-              From morning artisan coffee to celebratory rooftop dinners and weekend wellness retreats, PennyGrade is woven into the rhythm of your lifestyle.
+              From morning artisan coffee to celebratory rooftop dinners and weekend wellness
+              retreats, PennyGrade is woven into the rhythm of your lifestyle.
             </p>
           </div>
 
@@ -1041,13 +1081,19 @@ function HowItWorks() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-bold text-slate-900">Partner Counter Staff Experience</h3>
+                <h3 className="font-display text-lg font-bold text-slate-900">
+                  Partner Counter Staff Experience
+                </h3>
                 <p className="text-xs text-slate-500">Why merchants love PennyGrade</p>
               </div>
             </div>
             <p className="mt-4 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-              PennyGrade requires <strong>zero staff training, zero scanning equipment, and zero POS integration</strong>.
-              When a member shows their phone, staff glance at the screen to verify three clear details:
+              PennyGrade requires{" "}
+              <strong>
+                zero staff training, zero scanning equipment, and zero POS integration
+              </strong>
+              . When a member shows their phone, staff glance at the screen to verify three clear
+              details:
             </p>
             <ul className="mt-4 grid gap-2.5 text-xs font-bold text-slate-800 sm:grid-cols-3">
               <li className="flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 p-3">

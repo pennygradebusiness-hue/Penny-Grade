@@ -36,7 +36,8 @@ function Offers() {
         title="Current Member Offers:"
         highlight="Save Every Visit"
       >
-        All active partner privileges available to PennyGrade physical cardholders. Unlimited eligible redemptions across all outlets.
+        All active partner privileges available to PennyGrade physical cardholders. Unlimited
+        eligible redemptions across all outlets.
       </PageHero>
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -45,7 +46,8 @@ function Offers() {
           <div className="flex items-center gap-3">
             <Gift className="h-5 w-5 text-amber-500 shrink-0" />
             <span className="text-xs font-bold text-slate-900">
-              Showing {rows.length} verified member discount offers across participating partner outlets.
+              Showing {rows.length} verified member discount offers across participating partner
+              outlets.
             </span>
           </div>
           <span className="rounded-full bg-white px-3.5 py-1 text-[11px] font-extrabold text-slate-800 shadow-xs border border-slate-200">
@@ -90,13 +92,17 @@ function Offers() {
                     <p className="font-display text-2xl font-extrabold text-slate-900">
                       {offerHeadline(o)}
                     </p>
-                    <p className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider">Discount</p>
+                    <p className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider">
+                      Discount
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 text-xs font-semibold">
                   <span className="text-slate-500">
-                    {Number(o.minimum_bill) > 0 ? `Min. bill: ${inr(o.minimum_bill)}` : "No minimum bill required"}
+                    {Number(o.minimum_bill) > 0
+                      ? `Min. bill: ${inr(o.minimum_bill)}`
+                      : "No minimum bill required"}
                   </span>
                   <span className="inline-flex items-center gap-1 font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
                     Redeem at Outlet <ArrowRight className="h-3.5 w-3.5" />

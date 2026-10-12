@@ -123,9 +123,7 @@ export function buildPageHead({
     });
   }
 
-  const links: Array<{ rel: string; href: string }> = [
-    { rel: "canonical", href: canonicalUrl },
-  ];
+  const links: Array<{ rel: string; href: string }> = [{ rel: "canonical", href: canonicalUrl }];
 
   const scripts: Array<{ type: string; children: string }> = [];
 
@@ -159,10 +157,7 @@ export function buildOrganizationSchema() {
     logo: `${origin}/pennygrade-logo.jpg`,
     description:
       "PennyGrade is a smart physical card discount membership network providing verified in-person savings across dining, retail, wellness, and hotels.",
-    sameAs: [
-      "https://twitter.com/pennygrade",
-      "https://instagram.com/pennygrade",
-    ],
+    sameAs: ["https://twitter.com/pennygrade", "https://instagram.com/pennygrade"],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Support",

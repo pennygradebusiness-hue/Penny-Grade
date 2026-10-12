@@ -78,15 +78,18 @@ export const Route = createFileRoute("/sitemap.xml")({
           }
         }
 
-        // If store didn't have partners or only few, attempt Supabase read
+        // If store didn't have partners, attempt Supabase read with timeout protection
         const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
         const supabaseKey =
           process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-        if (supabaseUrl && supabaseKey) {
+        if (supabaseUrl && supabaseKey && (!store.partners || store.partners.size === 0)) {
           try {
             const sb = createClient<Database>(supabaseUrl, supabaseKey, {
               auth: { persistSession: false },
+              global: {
+                fetch: (url, opts) => fetch(url, { ...opts, signal: AbortSignal.timeout(1500) }),
+              },
             });
             const { data, error } = await sb
               .from("partners")

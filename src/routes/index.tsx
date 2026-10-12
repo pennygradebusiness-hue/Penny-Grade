@@ -24,7 +24,12 @@ import {
 import { SiteLayout, PartnerCard } from "@/components/site";
 import { LOGO_URL, PhysicalCardPreview } from "@/components/brand";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { categoriesQuery, partnersQuery, categoryIcon } from "@/lib/queries";
 import {
   buildPageHead,
@@ -55,7 +60,9 @@ export const Route = createFileRoute("/")({
     <SiteLayout>
       <div className="py-20 text-center">
         <div className="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-amber-500 border-t-transparent" />
-        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Loading PennyGrade...</p>
+        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Loading PennyGrade...
+        </p>
       </div>
     </SiteLayout>
   ),
@@ -116,7 +123,9 @@ export default function Home() {
             </h1>
 
             <p className="mt-5 max-w-xl text-base sm:text-lg font-medium leading-relaxed text-slate-600">
-              Flash your physical PennyGrade card at 120+ top cafés, dining spots, salons, and retail outlets across Daltonganj. Enjoy guaranteed discounts directly on your bill — zero apps to download, zero logins, and unlimited 6-month access.
+              Flash your physical PennyGrade card at 120+ top cafés, dining spots, salons, and
+              retail outlets across Daltonganj. Enjoy guaranteed discounts directly on your bill —
+              zero apps to download, zero logins, and unlimited 6-month access.
             </p>
 
             {/* 4-column Hero Stats Strip (Real PennyGrade Details) */}
@@ -124,28 +133,36 @@ export default function Home() {
               <div className="flex items-center gap-2.5">
                 <Store className="h-6 w-6 text-amber-500 shrink-0" />
                 <div>
-                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">120+</strong>
+                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
+                    120+
+                  </strong>
                   <span className="text-[12px] font-bold text-slate-500">Partner Outlets</span>
                 </div>
               </div>
               <div className="flex items-center gap-2.5">
                 <MapPin className="h-6 w-6 text-amber-500 shrink-0" />
                 <div>
-                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">Daltonganj</strong>
+                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
+                    Daltonganj
+                  </strong>
                   <span className="text-[12px] font-bold text-slate-500">Palamu, Jharkhand</span>
                 </div>
               </div>
               <div className="flex items-center gap-2.5">
                 <Gift className="h-6 w-6 text-amber-500 shrink-0" />
                 <div>
-                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">₹500</strong>
+                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
+                    ₹500
+                  </strong>
                   <span className="text-[12px] font-bold text-slate-500">6-Month Pass</span>
                 </div>
               </div>
               <div className="flex items-center gap-2.5">
                 <ShieldCheck className="h-6 w-6 text-amber-500 shrink-0" />
                 <div>
-                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">100%</strong>
+                  <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
+                    100%
+                  </strong>
                   <span className="text-[12px] font-bold text-slate-500">Offline & Private</span>
                 </div>
               </div>
@@ -188,8 +205,12 @@ export default function Home() {
                   <Percent className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="block text-[11px] font-extrabold text-slate-900">Up to 30% Off</span>
-                  <span className="block text-[9px] font-semibold text-slate-500">Dining & Retail</span>
+                  <span className="block text-[11px] font-extrabold text-slate-900">
+                    Up to 30% Off
+                  </span>
+                  <span className="block text-[9px] font-semibold text-slate-500">
+                    Dining & Retail
+                  </span>
                 </div>
               </div>
 
@@ -199,8 +220,12 @@ export default function Home() {
                   <ShieldCheck className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="block text-[11px] font-extrabold text-slate-900">100% Offline Card</span>
-                  <span className="block text-[9px] font-semibold text-slate-500">Zero App · Instant Scan</span>
+                  <span className="block text-[11px] font-extrabold text-slate-900">
+                    100% Offline Card
+                  </span>
+                  <span className="block text-[9px] font-semibold text-slate-500">
+                    Zero App · Instant Scan
+                  </span>
                 </div>
               </div>
 
@@ -266,7 +291,9 @@ export default function Home() {
                   <b.icon className="h-6 w-6 text-amber-500" />
                 </div>
                 <h3 className="font-display text-[15px] font-bold text-slate-900">{b.title}</h3>
-                <p className="mt-2 text-[12px] font-medium leading-relaxed text-slate-500">{b.desc}</p>
+                <p className="mt-2 text-[12px] font-medium leading-relaxed text-slate-500">
+                  {b.desc}
+                </p>
               </article>
             ))}
           </div>
@@ -303,7 +330,8 @@ export default function Home() {
                   Carry Your Physical Card
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Receive your exclusive PennyGrade membership card featuring your private cryptographic member number.
+                  Receive your exclusive PennyGrade membership card featuring your private
+                  cryptographic member number.
                 </p>
               </div>
             </article>
@@ -321,7 +349,8 @@ export default function Home() {
                   Explore Partner Businesses
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Browse verified restaurants, shopping outlets, salons, gyms, hotels and family entertainment venues.
+                  Browse verified restaurants, shopping outlets, salons, gyms, hotels and family
+                  entertainment venues.
                 </p>
               </div>
             </article>
@@ -339,7 +368,8 @@ export default function Home() {
                   Visit the Partner Outlet
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Step in and enjoy dining, shopping, self-care or leisure with family and friends at any partner location.
+                  Step in and enjoy dining, shopping, self-care or leisure with family and friends
+                  at any partner location.
                 </p>
               </div>
             </article>
@@ -357,7 +387,8 @@ export default function Home() {
                   Scan the Counter QR Standee
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  At billing time, simply scan the permanent PennyGrade QR standee displayed on the billing counter.
+                  At billing time, simply scan the permanent PennyGrade QR standee displayed on the
+                  billing counter.
                 </p>
               </div>
             </article>
@@ -375,7 +406,8 @@ export default function Home() {
                   Enter Card Number & Bill
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Type your physical membership code and your total bill amount. No account passwords or logins needed.
+                  Type your physical membership code and your total bill amount. No account
+                  passwords or logins needed.
                 </p>
               </div>
             </article>
@@ -393,7 +425,8 @@ export default function Home() {
                   Live Cryptographic Verification
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Server verifies your membership, calculates eligible discount, and starts a live 5-minute verified session screen.
+                  Server verifies your membership, calculates eligible discount, and starts a live
+                  5-minute verified session screen.
                 </p>
               </div>
             </article>
@@ -411,7 +444,8 @@ export default function Home() {
                   Staff Applies Your Discount
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Staff glances at the live countdown screen and applies the verified discount to your bill immediately.
+                  Staff glances at the live countdown screen and applies the verified discount to
+                  your bill immediately.
                 </p>
               </div>
             </article>
@@ -429,7 +463,8 @@ export default function Home() {
                   Save & Repeat!
                 </h3>
                 <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Pay the remaining discounted total using Cash, UPI, or Card. Enjoy unlimited discount visits throughout your 6-month membership!
+                  Pay the remaining discounted total using Cash, UPI, or Card. Enjoy unlimited
+                  discount visits throughout your 6-month membership!
                 </p>
               </div>
             </article>
@@ -444,7 +479,8 @@ export default function Home() {
               <div>
                 <strong className="block text-sm font-extrabold text-slate-900">Important:</strong>
                 <p className="text-xs font-medium text-slate-600 sm:text-sm">
-                  QR code is displayed at the merchant billing counter. No customer application download or online registration required.
+                  QR code is displayed at the merchant billing counter. No customer application
+                  download or online registration required.
                 </p>
               </div>
             </div>
@@ -501,7 +537,9 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-6 border-t border-white/10 pt-4">
-                <span className="text-xs uppercase tracking-wider text-amber-400 font-bold">6-Month Membership</span>
+                <span className="text-xs uppercase tracking-wider text-amber-400 font-bold">
+                  6-Month Membership
+                </span>
                 <div className="font-display text-4xl font-extrabold text-white">₹500</div>
                 <Link
                   to="/become-a-member"
@@ -570,7 +608,9 @@ export default function Home() {
                 <Crown className="h-3.5 w-3.5 text-amber-500" />
                 <span>VIP Physical Member Pass</span>
               </div>
-              <p className="mt-0.5 text-[11px] text-slate-500">Anti-counterfeit cryptographic member ID</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                Anti-counterfeit cryptographic member ID
+              </p>
             </div>
           </div>
         </div>
@@ -583,28 +623,36 @@ export default function Home() {
             <div className="flex items-center justify-center gap-4 text-center sm:text-left">
               <Users className="h-8 w-8 text-amber-500 shrink-0" />
               <div>
-                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">120+</strong>
+                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                  120+
+                </strong>
                 <span className="text-xs font-bold text-slate-500">Partner Businesses</span>
               </div>
             </div>
             <div className="flex items-center justify-center gap-4 text-center sm:text-left">
               <MapPin className="h-8 w-8 text-amber-500 shrink-0" />
               <div>
-                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">Daltonganj</strong>
+                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                  Daltonganj
+                </strong>
                 <span className="text-xs font-bold text-slate-500">Palamu, Jharkhand</span>
               </div>
             </div>
             <div className="flex items-center justify-center gap-4 text-center sm:text-left">
               <Gift className="h-8 w-8 text-amber-500 shrink-0" />
               <div>
-                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">Unlimited</strong>
+                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                  Unlimited
+                </strong>
                 <span className="text-xs font-bold text-slate-500">Eligible Usage</span>
               </div>
             </div>
             <div className="flex items-center justify-center gap-4 text-center sm:text-left">
               <ShieldCheck className="h-8 w-8 text-amber-500 shrink-0" />
               <div>
-                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">Thousands</strong>
+                <strong className="block font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                  Thousands
+                </strong>
                 <span className="text-xs font-bold text-slate-500">Happy Members</span>
               </div>
             </div>
@@ -655,30 +703,39 @@ export default function Home() {
               <div>
                 <div className="text-amber-500 text-lg">★★★★★</div>
                 <p className="mt-4 text-xs font-semibold leading-relaxed text-slate-800 sm:text-sm">
-                  "Saved more than ₹1,200 in my first two weeks eating out with friends! PennyGrade is my go-to membership card whenever I step out."
+                  "Saved more than ₹1,200 in my first two weeks eating out with friends! PennyGrade
+                  is my go-to membership card whenever I step out."
                 </p>
               </div>
-              <strong className="mt-6 block text-xs font-bold text-slate-500">— Rahul Singh (Member)</strong>
+              <strong className="mt-6 block text-xs font-bold text-slate-500">
+                — Rahul Singh (Member)
+              </strong>
             </article>
 
             <article className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-card hover:border-amber-300 transition-all">
               <div>
                 <div className="text-amber-500 text-lg">★★★★★</div>
                 <p className="mt-4 text-xs font-semibold leading-relaxed text-slate-800 sm:text-sm">
-                  "The live 5-minute counter verification is super smooth. No buggy apps to download and the staff applies the discount instantly."
+                  "The live 5-minute counter verification is super smooth. No buggy apps to download
+                  and the staff applies the discount instantly."
                 </p>
               </div>
-              <strong className="mt-6 block text-xs font-bold text-slate-500">— Neha Agarwal (Member)</strong>
+              <strong className="mt-6 block text-xs font-bold text-slate-500">
+                — Neha Agarwal (Member)
+              </strong>
             </article>
 
             <article className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-card hover:border-amber-300 transition-all">
               <div>
                 <div className="text-amber-500 text-lg">★★★★★</div>
                 <p className="mt-4 text-xs font-semibold leading-relaxed text-slate-800 sm:text-sm">
-                  "As a café owner, PennyGrade has brought us high-value repeat customers without any complex billing integration. Highly recommended!"
+                  "As a café owner, PennyGrade has brought us high-value repeat customers without
+                  any complex billing integration. Highly recommended!"
                 </p>
               </div>
-              <strong className="mt-6 block text-xs font-bold text-slate-500">— Amit Tiwari (Partner Business Owner)</strong>
+              <strong className="mt-6 block text-xs font-bold text-slate-500">
+                — Amit Tiwari (Partner Business Owner)
+              </strong>
             </article>
           </div>
         </div>
@@ -696,7 +753,9 @@ export default function Home() {
                     <Store className="h-6 w-6" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-600">For Retailers & Outlets</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                      For Retailers & Outlets
+                    </span>
                     <h3 className="font-display text-2xl font-extrabold text-slate-900">
                       Grow Your Business with PennyGrade
                     </h3>
@@ -704,7 +763,8 @@ export default function Home() {
                 </div>
 
                 <p className="mt-4 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                  Partner with PennyGrade to increase your daily footfall and attract verified paying customers across Daltonganj and Palamu.
+                  Partner with PennyGrade to increase your daily footfall and attract verified
+                  paying customers across Daltonganj and Palamu.
                 </p>
 
                 <ul className="mt-6 grid grid-cols-2 gap-3 text-xs font-bold text-slate-800">
@@ -746,7 +806,10 @@ export default function Home() {
             </article>
 
             {/* Right Panel: FAQ Accordion */}
-            <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8" id="faq">
+            <article
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8"
+              id="faq"
+            >
               <h3 className="font-display text-2xl font-extrabold text-slate-900">
                 Frequently Asked Questions
               </h3>
@@ -787,7 +850,8 @@ export default function Home() {
                 Ready to Start Saving?
               </h2>
               <p className="mt-1.5 max-w-lg text-xs font-medium text-slate-400 sm:text-sm">
-                Join thousands of smart shoppers and enjoy guaranteed discounts across your favorite places in the city.
+                Join thousands of smart shoppers and enjoy guaranteed discounts across your favorite
+                places in the city.
               </p>
             </div>
           </div>

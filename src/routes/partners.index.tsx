@@ -94,10 +94,31 @@ export const Route = createFileRoute("/partners/")({
 /* -------------------------------------------------------------------------- */
 
 const SEARCH_SYNONYMS: Record<string, string[]> = {
-  coffee: ["café", "cafe", "bakery", "espresso", "latte", "cappuccino", "tea", "beverage", "breakfast"],
+  coffee: [
+    "café",
+    "cafe",
+    "bakery",
+    "espresso",
+    "latte",
+    "cappuccino",
+    "tea",
+    "beverage",
+    "breakfast",
+  ],
   cafe: ["coffee", "bakery", "beverage", "tea", "snack"],
   café: ["coffee", "bakery", "beverage", "tea", "snack"],
-  food: ["restaurant", "dining", "cuisine", "dinner", "lunch", "meal", "biryani", "thali", "eats", "dhaba"],
+  food: [
+    "restaurant",
+    "dining",
+    "cuisine",
+    "dinner",
+    "lunch",
+    "meal",
+    "biryani",
+    "thali",
+    "eats",
+    "dhaba",
+  ],
   dining: ["restaurant", "cafe", "bistro", "food", "dinner", "lunch"],
   restaurant: ["food", "dining", "dinner", "lunch", "meal", "cuisine"],
   stay: ["hotel", "room", "resort", "inn", "lodge", "suite", "accommodation"],
@@ -245,7 +266,10 @@ function Partners() {
   // Click outside to dismiss autocomplete
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     }
@@ -265,7 +289,7 @@ function Partners() {
 
   const cities = useMemo(
     () => [...new Set(partners.map((p) => p.city).filter(Boolean))] as string[],
-    [partners]
+    [partners],
   );
 
   // Dynamic Autocomplete suggestions derived strictly from available data
@@ -369,7 +393,8 @@ function Partners() {
       // 7. Offer Type Filter
       if (offerTypeFilter !== "all") {
         if (!primaryOffer) return false;
-        if (offerTypeFilter === "percentage" && primaryOffer.discount_type !== "PERCENTAGE") return false;
+        if (offerTypeFilter === "percentage" && primaryOffer.discount_type !== "PERCENTAGE")
+          return false;
         if (offerTypeFilter === "fixed" && primaryOffer.discount_type !== "FIXED") return false;
       }
 
@@ -431,7 +456,15 @@ function Partners() {
     if (featuredOnly) count++;
     if (withOfferOnly) count++;
     return count;
-  }, [selectedCategory, selectedCity, discountMin, minBillFilter, offerTypeFilter, featuredOnly, withOfferOnly]);
+  }, [
+    selectedCategory,
+    selectedCity,
+    discountMin,
+    minBillFilter,
+    offerTypeFilter,
+    featuredOnly,
+    withOfferOnly,
+  ]);
 
   const clearAllFilters = () => {
     setSearchInput("");
@@ -457,7 +490,7 @@ function Partners() {
     }
   };
 
-  const handleIntentClick = (intent: typeof INTENT_PRESETS[0]) => {
+  const handleIntentClick = (intent: (typeof INTENT_PRESETS)[0]) => {
     setSearchInput(intent.query);
     setSelectedCategory(intent.categorySlug);
     syncToUrl({ q: intent.query, category: intent.categorySlug });
@@ -499,7 +532,9 @@ function Partners() {
                 </h1>
 
                 <p className="mt-4 max-w-xl text-sm sm:text-base font-medium leading-relaxed text-slate-300">
-                  Discover local restaurants, cafés, hotels, salons, fashion boutiques and lifestyle venues across Daltonganj. Unlock exclusive guaranteed benefits with your PennyGrade membership.
+                  Discover local restaurants, cafés, hotels, salons, fashion boutiques and lifestyle
+                  venues across Daltonganj. Unlock exclusive guaranteed benefits with your
+                  PennyGrade membership.
                 </p>
 
                 {/* Prominent Smart Search Input with Autocomplete */}
@@ -637,7 +672,7 @@ function Partners() {
                             "flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border transition-all shadow-sm",
                             isSelected
                               ? "bg-[#c25e36] border-[#e07548] text-white shadow-lg shadow-[#c25e36]/30"
-                              : "bg-slate-900/90 border-slate-800 text-slate-300 hover:border-amber-400/50 hover:bg-slate-800 hover:text-white"
+                              : "bg-slate-900/90 border-slate-800 text-slate-300 hover:border-amber-400/50 hover:bg-slate-800 hover:text-white",
                           )}
                         >
                           <Icon className="h-5 w-5 sm:h-6 sm:w-6 transition-transform group-hover:scale-110" />
@@ -645,7 +680,9 @@ function Partners() {
                         <span
                           className={cn(
                             "text-[11px] sm:text-xs font-semibold tracking-tight transition-colors",
-                            isSelected ? "text-amber-300 font-bold" : "text-slate-400 group-hover:text-slate-200"
+                            isSelected
+                              ? "text-amber-300 font-bold"
+                              : "text-slate-400 group-hover:text-slate-200",
                           )}
                         >
                           {cat.label}
@@ -799,7 +836,7 @@ function Partners() {
                 "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold transition-all shadow-2xs cursor-pointer",
                 !selectedCategory || selectedCategory === "all"
                   ? "bg-[#c25e36] text-white shadow-md shadow-[#c25e36]/25"
-                  : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:text-slate-900"
+                  : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:text-slate-900",
               )}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
@@ -818,7 +855,7 @@ function Partners() {
                     "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold transition-all shadow-2xs cursor-pointer",
                     isSelected
                       ? "bg-[#c25e36] text-white shadow-md shadow-[#c25e36]/25"
-                      : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:text-slate-900"
+                      : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:text-slate-900",
                   )}
                 >
                   <span>{c.name}</span>
@@ -840,7 +877,7 @@ function Partners() {
                 "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold transition-all shadow-2xs cursor-pointer",
                 featuredOnly
                   ? "bg-slate-900 text-white"
-                  : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                  : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
               )}
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-500" />
@@ -859,7 +896,7 @@ function Partners() {
                 "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold transition-all shadow-2xs cursor-pointer",
                 withOfferOnly
                   ? "bg-slate-900 text-white"
-                  : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                  : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
               )}
             >
               <Gift className="h-3.5 w-3.5 text-amber-500" />
@@ -948,7 +985,9 @@ function Partners() {
 
               {offerTypeFilter !== "all" && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-800">
-                  <span>Type: {offerTypeFilter === "percentage" ? "Percentage (%)" : "Flat (₹)"}</span>
+                  <span>
+                    Type: {offerTypeFilter === "percentage" ? "Percentage (%)" : "Flat (₹)"}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setOfferTypeFilter("all")}
@@ -998,7 +1037,8 @@ function Partners() {
                 </h3>
                 <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-slate-600 leading-relaxed">
                   We couldn't find any businesses matching{" "}
-                  {debouncedQuery ? `"${debouncedQuery}"` : "your criteria"} with the selected filters.
+                  {debouncedQuery ? `"${debouncedQuery}"` : "your criteria"} with the selected
+                  filters.
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -1050,7 +1090,10 @@ function Partners() {
         {/* 5. FILTER BOTTOM SHEET / SIDE DRAWER                               */}
         {/* ================================================================== */}
         <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-          <SheetContent side="bottom" className="sm:max-w-lg sm:rounded-t-3xl max-h-[85vh] overflow-y-auto p-6">
+          <SheetContent
+            side="bottom"
+            className="sm:max-w-lg sm:rounded-t-3xl max-h-[85vh] overflow-y-auto p-6"
+          >
             <SheetHeader className="text-left pb-4 border-b border-slate-100">
               <div className="flex items-center justify-between">
                 <SheetTitle className="font-display text-lg font-bold text-slate-900">
@@ -1083,7 +1126,7 @@ function Partners() {
                       "rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
                       !selectedCategory
                         ? "bg-[#c25e36] text-white"
-                        : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                        : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
                     )}
                   >
                     All Categories
@@ -1097,7 +1140,7 @@ function Partners() {
                         "rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
                         selectedCategory === c.slug
                           ? "bg-[#c25e36] text-white"
-                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
                       )}
                     >
                       {c.name}
@@ -1145,7 +1188,7 @@ function Partners() {
                         "rounded-lg py-2 text-xs font-bold transition-all cursor-pointer",
                         discountMin === d.val
                           ? "bg-slate-900 text-white"
-                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
                       )}
                     >
                       {d.label}
@@ -1173,7 +1216,7 @@ function Partners() {
                         "rounded-lg py-2 text-xs font-bold transition-all cursor-pointer",
                         minBillFilter === b.val
                           ? "bg-slate-900 text-white"
-                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
                       )}
                     >
                       {b.label}
@@ -1201,7 +1244,7 @@ function Partners() {
                         "rounded-lg py-2 text-xs font-bold transition-all cursor-pointer",
                         offerTypeFilter === t.val
                           ? "bg-slate-900 text-white"
-                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-amber-400",
                       )}
                     >
                       {t.label}
@@ -1228,7 +1271,9 @@ function Partners() {
                     onChange={(e) => setWithOfferOnly(e.target.checked)}
                     className="h-4 w-4 rounded border-slate-300 text-[#c25e36] focus:ring-amber-400"
                   />
-                  <span className="text-xs font-bold text-slate-800">Only With Active Member Offers</span>
+                  <span className="text-xs font-bold text-slate-800">
+                    Only With Active Member Offers
+                  </span>
                 </label>
               </div>
             </div>
