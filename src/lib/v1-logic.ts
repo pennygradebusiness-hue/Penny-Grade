@@ -259,11 +259,26 @@ export function getCustomerHistoryLogic(params: {
 
   let foundMember: V1Member | null = null;
   for (const m of store.members.values()) {
-    if (m.membership_number === normalizedNum) {
+    const matchesNum =
+      m.membership_number === normalizedNum ||
+      (m.card_number && normalizeMembershipNumber(m.card_number) === normalizedNum);
+    if (matchesNum) {
       if (normalizeMobile(m.mobile) === normalizedMob) {
         foundMember = m;
       }
       break;
+    }
+  }
+
+  if (!foundMember) {
+    for (const card of store.cards.values()) {
+      if (normalizeMembershipNumber(card.card_number) === normalizedNum && card.membership_id) {
+        const m = store.members.get(card.membership_id);
+        if (m && normalizeMobile(m.mobile) === normalizedMob) {
+          foundMember = m;
+        }
+        break;
+      }
     }
   }
 

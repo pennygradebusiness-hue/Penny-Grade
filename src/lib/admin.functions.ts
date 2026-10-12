@@ -20,6 +20,7 @@ import {
   verifyAdminLoginCredentialsLogic,
   firstTimeSetPasswordLogic,
 } from "./v1-logic";
+import { requireAdminAuth } from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
 
 const memberSchema = z.object({
@@ -36,6 +37,7 @@ const memberSchema = z.object({
 export const createMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => memberSchema.parse(d))
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     if (data.expiry_date < data.start_date) {
       throw new Error("Expiry date must be after start date");
     }
@@ -95,13 +97,13 @@ export const createMember = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: "Created Member",
         target_type: "member",
         target_id: memberId,
         metadata: { name: member.full_name, membership_number: member.membership_number },
         created_at: now,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -120,12 +122,29 @@ export const generateCardBatch = createServerFn({ method: "POST" })
     z.object({ count: z.number().int().min(1).max(2000) }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const createdCards: string[] = [];
     const now = new Date().toISOString();
 
+    const existingCodes = new Set<string>();
+    for (const c of store.cards.values()) {
+      existingCodes.add(c.card_number);
+    }
+    for (const m of store.members.values()) {
+      existingCodes.add(m.membership_number);
+      if (m.card_number) existingCodes.add(m.card_number);
+    }
+
     for (let i = 0; i < data.count; i++) {
       const cardId = safeRandomUUID();
-      const cardNumber = generatePenCode();
+      let cardNumber = generatePenCode();
+      let attempts = 0;
+      while (existingCodes.has(cardNumber) && attempts < 100) {
+        cardNumber = generatePenCode();
+        attempts++;
+      }
+      existingCodes.add(cardNumber);
+
       const card: V1PhysicalCard = {
         id: cardId,
         card_number: cardNumber,
@@ -142,13 +161,13 @@ export const generateCardBatch = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Generated Batch (${createdCards.length} Cards)`,
         target_type: "cards",
         target_id: `batch-${Date.now()}`,
         metadata: { count: createdCards.length },
         created_at: now,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -162,6 +181,7 @@ export const generateCardBatch = createServerFn({ method: "POST" })
 
 // Admin Get Cards
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdminAuth();
   const cardsList = Array.from(store.cards.values()).map((c) => {
     let memberName = "";
     let membershipNumber = "";
@@ -182,6 +202,7 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
 
 // Admin Get Members
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdminAuth();
   return Array.from(store.members.values()).sort((a, b) =>
     b.created_at.localeCompare(a.created_at)
   );
@@ -196,6 +217,7 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const member = store.members.get(data.id);
     if (!member) throw new Error("Member not found");
     member.status = data.status;
@@ -204,13 +226,13 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Updated Member Status to ${data.status}`,
         target_type: "member",
         target_id: member.id,
         metadata: { member: member.full_name, status: data.status },
         created_at: member.updated_at,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -223,6 +245,7 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
 export const deleteMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const member = store.members.get(data.id);
     if (!member) throw new Error("Member not found");
 
@@ -239,13 +262,13 @@ export const deleteMember = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Deleted Member: ${member.full_name} (${member.membership_number})`,
         target_type: "member",
         target_id: data.id,
         metadata: { name: member.full_name, membership_number: member.membership_number },
         created_at: new Date().toISOString(),
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -260,6 +283,7 @@ export const renewMember = createServerFn({ method: "POST" })
     z.object({ id: z.string(), durationDays: z.number().optional() }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const member = store.members.get(data.id);
     if (!member) throw new Error("Member not found");
 
@@ -273,13 +297,13 @@ export const renewMember = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: "Renewed Membership",
         target_type: "member",
         target_id: member.id,
         metadata: { member: member.full_name, new_expiry: member.expiry_date },
         created_at: member.updated_at,
-        who: "Manager",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -298,6 +322,7 @@ export const assignCardToMember = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const member = store.members.get(data.memberId);
     if (!member) throw new Error("Member not found");
 
@@ -328,13 +353,13 @@ export const assignCardToMember = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: "Assigned Physical Card",
         target_type: "card",
         target_id: newCard.id,
         metadata: { card_number: newCard.card_number, member: member.full_name },
         created_at: now,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -345,6 +370,7 @@ export const assignCardToMember = createServerFn({ method: "POST" })
 
 // Admin Get Admin Users (Server Function)
 export const getAdminUsers = createServerFn({ method: "GET" }).handler(async (): Promise<V1AdminUser[]> => {
+  requireAdminAuth();
   const storeUsers: V1AdminUser[] = (store.adminUsers || []).map((u) => ({
     id: u.id,
     user_id: u.user_id,
@@ -438,6 +464,7 @@ export const addAdmin = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    requireAdminAuth(["super_admin"]);
     return addAdminLogic(data);
   });
 
@@ -450,6 +477,7 @@ export const resetAdminPassword = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    requireAdminAuth(["super_admin"]);
     return resetAdminPasswordLogic(data);
   });
 
@@ -482,6 +510,7 @@ export const firstTimeSetPassword = createServerFn({ method: "POST" })
 export const removeAdminRole = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth(["super_admin"]);
     if (!store.adminUsers) return { ok: true };
     const target = store.adminUsers.find((u) => u.id === data.id);
     store.adminUsers = store.adminUsers.filter((u) => u.id !== data.id);
@@ -489,13 +518,13 @@ export const removeAdminRole = createServerFn({ method: "POST" })
     if (target && store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Revoked role ${target.role.replace(/_/g, " ")} from ${target.email}`,
         target_type: "user_role",
         target_id: data.id,
         metadata: { email: target.email, role: target.role },
         created_at: new Date().toISOString(),
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -516,6 +545,7 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
     z.object({ sinceDays: z.number().optional() }).optional().parse(d)
   )
   .handler(async ({ data }) => {
+    requireAdminAuth();
     const days = data?.sinceDays ?? 365;
     const since = new Date(Date.now() - days * 864e5).toISOString();
 
@@ -570,6 +600,7 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
 
 // Admin Get Audit Logs (Server Function)
 export const getAdminAuditLogs = createServerFn({ method: "GET" }).handler(async (): Promise<V1AuditLog[]> => {
+  requireAdminAuth();
   const storeAudits: V1AuditLog[] = (store.auditLogs || []).map((a) => ({
     id: a.id,
     admin_user_id: a.admin_user_id,
@@ -684,15 +715,16 @@ export const recordAdminAuditFn = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const auditEntry: V1AuditLog = {
       id: safeRandomUUID(),
-      admin_user_id: "admin-user",
+      admin_user_id: admin.id,
       action: data.action,
       target_type: data.target_type,
       target_id: data.target_id ?? null,
       metadata: data.metadata ?? {},
       created_at: new Date().toISOString(),
-      who: data.who || "Admin",
+      who: data.who || admin.full_name || admin.email,
     };
     if (!store.auditLogs) store.auditLogs = [];
     store.auditLogs.unshift(auditEntry);
@@ -777,6 +809,7 @@ export const submitMemberApplication = createServerFn({ method: "POST" })
   });
 
 export const getMemberApplications = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdminAuth();
   const apps = store.memberApplications || [];
   return [...apps].sort((a, b) => b.created_at.localeCompare(a.created_at));
 });
@@ -790,6 +823,7 @@ export const updateMemberApplicationStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     if (!store.memberApplications) return { ok: false, message: "No applications found" };
     const app = store.memberApplications.find((a) => a.id === data.id);
     if (!app) throw new Error("Application not found");
@@ -803,13 +837,13 @@ export const updateMemberApplicationStatus = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Updated Member Application (${app.application_number}) to ${data.status}`,
         target_type: "member_application",
         target_id: app.id,
         metadata: { applicant: app.full_name, status: data.status },
         created_at: app.updated_at,
-        who: "Admin Staff",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -823,6 +857,7 @@ export const approveAndIssueMemberCard = createServerFn({ method: "POST" })
     z.object({ applicationId: z.string(), cardId: z.string().optional() }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     if (!store.memberApplications) throw new Error("No applications");
     const app = store.memberApplications.find((a) => a.id === data.applicationId);
     if (!app) throw new Error("Application not found");
@@ -888,13 +923,13 @@ export const approveAndIssueMemberCard = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Approved Application & Issued Card ${assignedCardNumber} to ${app.full_name}`,
         target_type: "member",
         target_id: memberId,
         metadata: { membership_number: membershipNumber, card_number: assignedCardNumber },
         created_at: now,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -977,6 +1012,7 @@ export const submitPartnerApplication = createServerFn({ method: "POST" })
   });
 
 export const getPartnerApplications = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdminAuth();
   const apps = store.partnerApplications || [];
   return [...apps].sort((a, b) => b.created_at.localeCompare(a.created_at));
 });
@@ -990,6 +1026,7 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     if (!store.partnerApplications) return { ok: false, message: "No applications found" };
     const app = store.partnerApplications.find((a) => a.id === data.id);
     if (!app) throw new Error("Application not found");
@@ -1003,13 +1040,13 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Updated Partner Inquiry (${app.business_name}) to ${data.status}`,
         target_type: "partner_application",
         target_id: app.id,
         metadata: { business: app.business_name, status: data.status },
         created_at: app.updated_at,
-        who: "Admin Staff",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -1020,6 +1057,7 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 // ---------------- PARTNERS MANAGEMENT ----------------
 
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdminAuth();
   if (!store.partners || store.partners.size === 0) {
     store.partners = seedPartners();
     saveStoreToDisk();
@@ -1053,6 +1091,7 @@ const savePartnerSchema = z.object({
 export const savePartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePartnerSchema.parse(d))
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     const now = new Date().toISOString();
     if (!store.partners || store.partners.size === 0) {
       store.partners = seedPartners();
@@ -1092,13 +1131,13 @@ export const savePartner = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: existing ? `Updated Partner: ${partner.business_name}` : `Created Partner: ${partner.business_name}`,
         target_type: "partner",
         target_id: partnerId,
         metadata: { name: partner.business_name, slug: partner.slug, status: partner.status },
         created_at: now,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -1115,6 +1154,7 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     if (!store.partners || store.partners.size === 0) {
       store.partners = seedPartners();
     }
@@ -1128,13 +1168,13 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Updated Partner ${partner.business_name} (Status: ${partner.status}, Featured: ${partner.featured})`,
         target_type: "partner",
         target_id: partner.id,
         metadata: { name: partner.business_name, status: partner.status, featured: partner.featured },
         created_at: partner.updated_at,
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 
@@ -1145,6 +1185,7 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
 export const deletePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
     if (!store.partners || store.partners.size === 0) {
       store.partners = seedPartners();
     }
@@ -1156,13 +1197,13 @@ export const deletePartner = createServerFn({ method: "POST" })
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
-        admin_user_id: "admin-super",
+        admin_user_id: admin.id,
         action: `Deleted Partner: ${partner.business_name}`,
         target_type: "partner",
         target_id: data.id,
         metadata: { name: partner.business_name, slug: partner.slug },
         created_at: new Date().toISOString(),
-        who: "Super Admin",
+        who: admin.full_name || admin.email,
       });
     }
 

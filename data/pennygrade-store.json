@@ -1,21 +1,20 @@
 {
   "members": [
     [
-      "mem-samir-001",
+      "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
       {
-        "id": "mem-samir-001",
+        "id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
         "membership_number": "PEN-7X4P-92LM",
         "full_name": "Samir Pandey",
         "mobile": "9876543210",
-        "email": "pennygradebusiness@gmail.com",
-        "plan_id": "f5aef446-7c6e-4781-9fdd-e5fa4dc1c935",
-        "plan_name": "PennyGrade Annual Membership",
+        "email": "samirjee187@gmail.com",
+        "plan_id": "fd6de953-c15d-4b7f-aae4-b97b6d21b043",
+        "plan_name": "PennyGrade 6-Month Membership",
         "start_date": "2026-10-12",
         "expiry_date": "2027-10-12",
         "status": "ACTIVE",
-        "created_at": "2026-10-12T10:23:54.846Z",
-        "updated_at": "2026-10-12T10:23:54.846Z",
-        "card_id": "card-samir-001",
+        "created_at": "2026-10-12T15:04:48.984Z",
+        "updated_at": "2026-10-12T15:04:48.984Z",
         "card_number": "PEN-7X4P-92LM"
       }
     ]
@@ -26,11 +25,11 @@
       {
         "id": "card-samir-001",
         "card_number": "PEN-7X4P-92LM",
-        "membership_id": "mem-samir-001",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
         "status": "ACTIVE",
-        "issued_at": "2026-10-12T10:23:54.846Z",
+        "issued_at": "2026-10-12T15:04:48.984Z",
         "created_at": "2026-10-12T10:23:54.846Z",
-        "updated_at": "2026-10-12T10:23:54.846Z"
+        "updated_at": "2026-10-12T15:04:48.984Z"
       }
     ],
     [
@@ -1561,31 +1560,6 @@
       }
     ],
     [
-      "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
-      {
-        "id": "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
-        "business_name": "Urban Brew",
-        "slug": "urban-brew",
-        "category_id": "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
-        "category_name": "Cafés",
-        "description": "Artisanal coffee roasters and cozy work-friendly café with fast Wi-Fi.",
-        "logo_url": "",
-        "cover_image_url": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&q=70",
-        "phone": "+91 98200 22222",
-        "email": "contact@urbanbrew.in",
-        "website": "",
-        "address": "45 Station Road",
-        "city": "Daltonganj",
-        "latitude": 24.043,
-        "longitude": 84.071,
-        "business_hours": "Mon–Sun · 9:00 AM – 10:30 PM",
-        "status": "ACTIVE",
-        "featured": false,
-        "created_at": "2026-10-11T06:08:58.426Z",
-        "updated_at": "2026-10-11T06:08:58.426Z"
-      }
-    ],
-    [
       "9d919438-8783-49dc-a755-a9e873473614",
       {
         "id": "9d919438-8783-49dc-a755-a9e873473614",
@@ -1636,31 +1610,6 @@
       }
     ],
     [
-      "32ac0228-708f-4617-9c51-f876365f658b",
-      {
-        "id": "32ac0228-708f-4617-9c51-f876365f658b",
-        "business_name": "FitZone",
-        "slug": "fitzone",
-        "category_id": "d8b33df5-ccbc-45c1-a4ea-dce08d1ca9b0",
-        "category_name": "Fitness",
-        "description": "Strength, cardio and group classes with certified coaches.",
-        "logo_url": "",
-        "cover_image_url": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=70",
-        "phone": "+91 98200 55555",
-        "email": "join@fitzone.in",
-        "website": "",
-        "address": "7 Stadium Road",
-        "city": "Daltonganj",
-        "latitude": 24.04,
-        "longitude": 84.07,
-        "business_hours": "Mon–Sat · 5:30 AM – 11:00 PM",
-        "status": "ACTIVE",
-        "featured": true,
-        "created_at": "2026-10-11T06:08:58.426Z",
-        "updated_at": "2026-10-11T06:08:58.426Z"
-      }
-    ],
-    [
       "96406673-ccd2-4948-9936-a5b3c9ad0292",
       {
         "id": "96406673-ccd2-4948-9936-a5b3c9ad0292",
@@ -1688,10 +1637,31 @@
   ],
   "sessions": [
     [
-      "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
+      "c483ff83-aa9c-415e-99f4-210116fd3537",
       {
-        "id": "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
-        "membership_id": "mem-samir-001",
+        "id": "c483ff83-aa9c-415e-99f4-210116fd3537",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+        "membership_number": "PEN-FFB2-FQ98",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T15:18:18.229Z",
+        "created_at": "2026-10-12T15:13:18.229Z"
+      }
+    ],
+    [
+      "b8bacd25-2148-430d-8d93-a5c92c7ee5fe",
+      {
+        "id": "b8bacd25-2148-430d-8d93-a5c92c7ee5fe",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
         "membership_number": "PEN-7X4P-92LM",
         "member_name": "Samir Pandey",
         "partner_id": "partner-abc",
@@ -1704,15 +1674,15 @@
         "discount_amount": 200,
         "final_amount": 1800,
         "status": "ACTIVE",
-        "expires_at": "2026-10-12T14:18:13.949Z",
-        "created_at": "2026-10-12T14:13:13.949Z"
+        "expires_at": "2026-10-12T15:20:01.846Z",
+        "created_at": "2026-10-12T15:15:01.846Z"
       }
     ],
     [
-      "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
+      "3b7f82a4-39a3-4a86-963b-4ddd6480cc01",
       {
-        "id": "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
-        "membership_id": "mem-samir-001",
+        "id": "3b7f82a4-39a3-4a86-963b-4ddd6480cc01",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
         "membership_number": "PEN-7X4P-92LM",
         "member_name": "Samir Pandey",
         "partner_id": "partner-abc",
@@ -1725,15 +1695,15 @@
         "discount_amount": 200,
         "final_amount": 1800,
         "status": "ACTIVE",
-        "expires_at": "2026-10-12T14:19:24.839Z",
-        "created_at": "2026-10-12T14:14:24.839Z"
+        "expires_at": "2026-10-12T15:22:23.123Z",
+        "created_at": "2026-10-12T15:17:23.123Z"
       }
     ],
     [
-      "362921aa-4fea-41ec-a566-6fd3d0442cd1",
+      "5d0a6e34-e644-4515-a9e6-ca8725a22dfc",
       {
-        "id": "362921aa-4fea-41ec-a566-6fd3d0442cd1",
-        "membership_id": "mem-samir-001",
+        "id": "5d0a6e34-e644-4515-a9e6-ca8725a22dfc",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
         "membership_number": "PEN-7X4P-92LM",
         "member_name": "Samir Pandey",
         "partner_id": "partner-abc",
@@ -1746,36 +1716,15 @@
         "discount_amount": 200,
         "final_amount": 1800,
         "status": "ACTIVE",
-        "expires_at": "2026-10-12T14:36:14.703Z",
-        "created_at": "2026-10-12T14:31:14.703Z"
+        "expires_at": "2026-10-12T15:28:09.137Z",
+        "created_at": "2026-10-12T15:23:09.137Z"
       }
     ],
     [
-      "b94330a3-ed3a-4edc-835c-72722a16f9ed",
+      "15eaeb2f-accb-4fe6-8e6b-1ee61fd070b3",
       {
-        "id": "b94330a3-ed3a-4edc-835c-72722a16f9ed",
-        "membership_id": "mem-samir-001",
-        "membership_number": "PEN-7X4P-92LM",
-        "member_name": "PennyGrade Member",
-        "partner_id": "partner-abc",
-        "partner_name": "ABC Café",
-        "partner_slug": "abc-cafe",
-        "offer_id": "offer-abc-10",
-        "discount_type": "PERCENTAGE",
-        "discount_value": 10,
-        "bill_amount": 2000,
-        "discount_amount": 200,
-        "final_amount": 1800,
-        "status": "ACTIVE",
-        "expires_at": "2026-10-12T15:02:31.755Z",
-        "created_at": "2026-10-12T14:57:31.755Z"
-      }
-    ],
-    [
-      "45147cce-f2db-4f59-b9f9-419ba380ef23",
-      {
-        "id": "45147cce-f2db-4f59-b9f9-419ba380ef23",
-        "membership_id": "mem-samir-001",
+        "id": "15eaeb2f-accb-4fe6-8e6b-1ee61fd070b3",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
         "membership_number": "PEN-7X4P-92LM",
         "member_name": "Samir Pandey",
         "partner_id": "partner-abc",
@@ -1788,16 +1737,58 @@
         "discount_amount": 200,
         "final_amount": 1800,
         "status": "ACTIVE",
-        "expires_at": "2026-10-12T15:03:02.307Z",
-        "created_at": "2026-10-12T14:58:02.307Z"
+        "expires_at": "2026-10-12T15:28:50.371Z",
+        "created_at": "2026-10-12T15:23:50.371Z"
+      }
+    ],
+    [
+      "0e8482d7-4e24-4a79-98a6-85497320c779",
+      {
+        "id": "0e8482d7-4e24-4a79-98a6-85497320c779",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T15:30:47.459Z",
+        "created_at": "2026-10-12T15:25:47.459Z"
+      }
+    ],
+    [
+      "e6db019b-eb54-4618-93ce-45c75c90a5ae",
+      {
+        "id": "e6db019b-eb54-4618-93ce-45c75c90a5ae",
+        "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T15:31:23.499Z",
+        "created_at": "2026-10-12T15:26:23.499Z"
       }
     ]
   ],
   "logs": [
     {
-      "id": "bdb1b3f1-beea-402f-b5d8-bb0d0f9b1f06",
-      "verification_session_id": "45147cce-f2db-4f59-b9f9-419ba380ef23",
-      "membership_id": "mem-samir-001",
+      "id": "28edb055-5fe0-4c9d-a99d-c9c31b1f9c71",
+      "verification_session_id": "e6db019b-eb54-4618-93ce-45c75c90a5ae",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
       "partner_name": "ABC Café",
@@ -1807,12 +1798,12 @@
       "discount_amount": 200,
       "final_amount": 1800,
       "status": "VERIFIED",
-      "created_at": "2026-10-12T14:58:02.307Z"
+      "created_at": "2026-10-12T15:26:23.499Z"
     },
     {
-      "id": "53166c35-441c-4c60-bafc-fd2564b67a50",
-      "verification_session_id": "b94330a3-ed3a-4edc-835c-72722a16f9ed",
-      "membership_id": "mem-samir-001",
+      "id": "2861bc39-4b01-4e59-824c-e69d60ac516b",
+      "verification_session_id": "0e8482d7-4e24-4a79-98a6-85497320c779",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
       "partner_name": "ABC Café",
@@ -1822,12 +1813,12 @@
       "discount_amount": 200,
       "final_amount": 1800,
       "status": "VERIFIED",
-      "created_at": "2026-10-12T14:57:31.755Z"
+      "created_at": "2026-10-12T15:25:47.459Z"
     },
     {
-      "id": "f95dd1b2-ae5c-4ecf-9008-fdef8ded6ea8",
-      "verification_session_id": "362921aa-4fea-41ec-a566-6fd3d0442cd1",
-      "membership_id": "mem-samir-001",
+      "id": "ed73acdd-7d4a-498c-8212-340b206d68b4",
+      "verification_session_id": "15eaeb2f-accb-4fe6-8e6b-1ee61fd070b3",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
       "partner_name": "ABC Café",
@@ -1837,12 +1828,12 @@
       "discount_amount": 200,
       "final_amount": 1800,
       "status": "VERIFIED",
-      "created_at": "2026-10-12T14:31:14.703Z"
+      "created_at": "2026-10-12T15:23:50.371Z"
     },
     {
-      "id": "efed175c-852e-4150-9913-6feb1f9f733c",
-      "verification_session_id": "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
-      "membership_id": "mem-samir-001",
+      "id": "d7a2dc07-a2df-48a6-8483-d3870eae4222",
+      "verification_session_id": "5d0a6e34-e644-4515-a9e6-ca8725a22dfc",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
       "partner_name": "ABC Café",
@@ -1852,12 +1843,12 @@
       "discount_amount": 200,
       "final_amount": 1800,
       "status": "VERIFIED",
-      "created_at": "2026-10-12T14:14:24.839Z"
+      "created_at": "2026-10-12T15:23:09.137Z"
     },
     {
-      "id": "28eae221-c417-4638-9681-4b38bf33e77b",
-      "verification_session_id": "5a5de096-61bb-438a-8c89-bbac0f98c2e1",
-      "membership_id": "mem-samir-001",
+      "id": "28f3abe2-f4f3-4abb-a11c-0285d274c60f",
+      "verification_session_id": "3b7f82a4-39a3-4a86-963b-4ddd6480cc01",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
       "membership_number": "PEN-7X4P-92LM",
       "partner_id": "partner-abc",
       "partner_name": "ABC Café",
@@ -1867,7 +1858,37 @@
       "discount_amount": 200,
       "final_amount": 1800,
       "status": "VERIFIED",
-      "created_at": "2026-10-12T14:13:13.949Z"
+      "created_at": "2026-10-12T15:17:23.123Z"
+    },
+    {
+      "id": "f0eb9759-6cab-44db-98ec-229978ba96e2",
+      "verification_session_id": "b8bacd25-2148-430d-8d93-a5c92c7ee5fe",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T15:15:01.846Z"
+    },
+    {
+      "id": "e3e6659b-299d-47aa-9d0e-d78464360083",
+      "verification_session_id": "c483ff83-aa9c-415e-99f4-210116fd3537",
+      "membership_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+      "membership_number": "PEN-FFB2-FQ98",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T15:13:18.229Z"
     },
     {
       "id": "log-seed-1",
@@ -2082,73 +2103,206 @@
   ],
   "auditLogs": [
     {
-      "id": "c3cc9d89-46ca-4d99-812f-45d946e0b87c",
+      "id": "0c391586-afa0-4f00-8f78-b89fa6968909",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
       "target_type": "user_role",
-      "target_id": "8c01ccbe-1d2c-4971-8fc3-e3c106647d06",
+      "target_id": "b29649c1-247a-4a64-8504-9d392a82dc6d",
       "metadata": {
         "email": "newsuper@pennygrade.com",
         "role": "super_admin",
         "name": "Vikram Singhania"
       },
-      "created_at": "2026-10-12T14:58:02.323Z",
+      "created_at": "2026-10-12T15:26:23.518Z",
       "who": "Super Admin"
     },
     {
-      "id": "47702db3-b129-4e1f-ad4b-5be3824fb667",
+      "id": "fec10fb6-b8db-4b18-b188-44e14f2407c7",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
       "target_type": "user_role",
-      "target_id": "74a3640b-24f6-42dd-9698-e6adb1828850",
+      "target_id": "a9e92626-973b-4356-89f6-5c5a9be1c953",
       "metadata": {
         "email": "newsuper@pennygrade.com",
         "role": "super_admin",
         "name": "Vikram Singhania"
       },
-      "created_at": "2026-10-12T14:57:31.773Z",
+      "created_at": "2026-10-12T15:25:47.481Z",
       "who": "Super Admin"
     },
     {
-      "id": "61e68bfc-55ab-4828-ba07-02e9f0038c36",
+      "id": "577793e5-3f41-4049-acf8-0df405f1d0e5",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
       "target_type": "user_role",
-      "target_id": "16befe14-be06-4e20-9a5c-ff80f4a87a9a",
+      "target_id": "2e5c4362-6452-43f5-9b4a-bced0f3649fb",
       "metadata": {
         "email": "newsuper@pennygrade.com",
         "role": "super_admin",
         "name": "Vikram Singhania"
       },
-      "created_at": "2026-10-12T14:31:14.722Z",
+      "created_at": "2026-10-12T15:23:50.393Z",
       "who": "Super Admin"
     },
     {
-      "id": "a7698b95-f3f7-4cf9-8d3e-f6bd718166ae",
+      "id": "f8cc8aa1-b0e2-4411-9f84-3c80d0f12c23",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
       "target_type": "user_role",
-      "target_id": "a5baf44b-27d5-4bd7-828a-44f08c7e2462",
+      "target_id": "588f3f72-f4d6-4f58-a72c-e0fd760ae93f",
       "metadata": {
         "email": "newsuper@pennygrade.com",
         "role": "super_admin",
         "name": "Vikram Singhania"
       },
-      "created_at": "2026-10-12T14:14:24.860Z",
+      "created_at": "2026-10-12T15:23:09.152Z",
       "who": "Super Admin"
     },
     {
-      "id": "81016b50-814a-4edd-801e-b22ee90d9765",
+      "id": "53ab610b-82e5-476a-9cf9-4bbb4f9f499f",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
       "target_type": "user_role",
-      "target_id": "e7f4e76c-deec-4bd7-b4b2-f49eaadbef87",
+      "target_id": "4fb28df7-403c-4f04-b851-0f473245ba6f",
       "metadata": {
         "email": "newsuper@pennygrade.com",
         "role": "super_admin",
         "name": "Vikram Singhania"
       },
-      "created_at": "2026-10-12T14:13:13.964Z",
+      "created_at": "2026-10-12T15:17:23.142Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "ab377f6d-3283-47c4-900a-c282d0efbce0",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "a0e86f33-6c4f-459e-8297-5f21e8d4509c",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T15:15:01.865Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "7c035f1a-4dc6-448e-8ae6-71843b184718",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "f550a7a2-24d8-465e-b39d-f152d9a68f50",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T15:13:18.247Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "31b43a3c-2597-4982-af2b-63e97e9a4ccc",
+      "admin_user_id": "admin-super",
+      "action": "Created Member",
+      "target_type": "member",
+      "target_id": "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+      "metadata": {
+        "name": "Samir Pandey",
+        "membership_number": "PEN-FFB2-FQ98"
+      },
+      "created_at": "2026-10-12T15:04:48.984Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "28fcd744-765a-4681-a2dd-121b831059bb",
+      "admin_user_id": "admin-super",
+      "action": "Deleted Member: Samir Pandey (PEN-7X4P-92LM)",
+      "target_type": "member",
+      "target_id": "mem-samir-001",
+      "metadata": {
+        "name": "Samir Pandey",
+        "membership_number": "PEN-7X4P-92LM"
+      },
+      "created_at": "2026-10-12T15:04:28.027Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "e76d50c2-1f0c-44bc-b0d4-9c1c3df49609",
+      "admin_user_id": "admin-super",
+      "action": "Deleted Partner: Urban Brew",
+      "target_type": "partner",
+      "target_id": "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
+      "metadata": {
+        "name": "Urban Brew",
+        "slug": "urban-brew"
+      },
+      "created_at": "2026-10-12T15:03:52.599Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "9ae3e8e6-f63f-46c1-aaf2-45509db686d3",
+      "admin_user_id": "admin-super",
+      "action": "Deleted Partner: FitZone",
+      "target_type": "partner",
+      "target_id": "32ac0228-708f-4617-9c51-f876365f658b",
+      "metadata": {
+        "name": "FitZone",
+        "slug": "fitzone"
+      },
+      "created_at": "2026-10-12T15:02:48.291Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "4f33f330-b998-4b2f-9560-a4d468e56eba",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to pennygradebusiness@gmail.com",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com",
+        "role": "super_admin",
+        "name": "penny grade"
+      },
+      "created_at": "2026-10-12T13:57:03.463Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "d0011a00-3a16-48f6-b25e-b4a21aaaa49b",
+      "admin_user_id": "admin-super",
+      "action": "Revoked role membership manager from priya.cards@pennygrade.com",
+      "target_type": "user_role",
+      "target_id": "admin-user-3",
+      "metadata": {
+        "email": "priya.cards@pennygrade.com",
+        "role": "membership_manager"
+      },
+      "created_at": "2026-10-12T13:56:36.043Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "bd6a2373-160e-42c0-acf2-daa567e4604d",
+      "admin_user_id": "admin-super",
+      "action": "Revoked role manager from rajesh.manager@pennygrade.com",
+      "target_type": "user_role",
+      "target_id": "admin-user-2",
+      "metadata": {
+        "email": "rajesh.manager@pennygrade.com",
+        "role": "manager"
+      },
+      "created_at": "2026-10-12T13:56:30.483Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "24fe3583-d4aa-434c-9adc-426b135a8f69",
+      "admin_user_id": "admin-super",
+      "action": "Revoked role support from amit.support@pennygrade.com",
+      "target_type": "user_role",
+      "target_id": "admin-user-4",
+      "metadata": {
+        "email": "amit.support@pennygrade.com",
+        "role": "support"
+      },
+      "created_at": "2026-10-12T13:56:25.116Z",
       "who": "Super Admin"
     },
     {
@@ -2312,48 +2466,22 @@
   ],
   "adminUsers": [
     {
-      "id": "8c01ccbe-1d2c-4971-8fc3-e3c106647d06",
-      "user_id": "14fe7f01-a765-40ac-aa58-0df1b82944a9",
+      "id": "b29649c1-247a-4a64-8504-9d392a82dc6d",
+      "user_id": "ae74b547-d7c5-438b-b863-361f3df80feb",
       "full_name": "Vikram Singhania",
       "email": "newsuper@pennygrade.com",
       "role": "super_admin",
       "temporary_password": "Perm@Password2026!",
       "is_password_set": true,
-      "created_at": "2026-10-12T14:58:02.323Z"
+      "created_at": "2026-10-12T15:26:23.518Z"
     },
     {
-      "id": "admin-primary-owner",
-      "user_id": "uid-primary-owner",
-      "full_name": "PennyGrade Business",
+      "id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "user_id": "d463573a-617a-440f-97e1-1129131312d9",
+      "full_name": "penny grade",
       "email": "pennygradebusiness@gmail.com",
       "role": "super_admin",
-      "temporary_password": "admin123",
-      "is_password_set": true,
-      "created_at": "2026-09-12T10:23:54.846Z"
-    },
-    {
-      "id": "admin-user-2",
-      "user_id": "uid-rajesh-002",
-      "full_name": "Rajesh Sharma",
-      "email": "rajesh.manager@pennygrade.com",
-      "role": "manager",
-      "created_at": "2026-09-22T10:23:54.846Z"
-    },
-    {
-      "id": "admin-user-3",
-      "user_id": "uid-priya-003",
-      "full_name": "Priya Patel",
-      "email": "priya.cards@pennygrade.com",
-      "role": "membership_manager",
-      "created_at": "2026-09-28T10:23:54.846Z"
-    },
-    {
-      "id": "admin-user-4",
-      "user_id": "uid-amit-004",
-      "full_name": "Amit Verma",
-      "email": "amit.support@pennygrade.com",
-      "role": "support",
-      "created_at": "2026-10-05T10:23:54.846Z"
+      "created_at": "2026-10-12T13:57:03.463Z"
     }
   ],
   "memberApplications": [
