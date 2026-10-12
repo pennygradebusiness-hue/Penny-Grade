@@ -32,7 +32,15 @@ export function SiteHeader() {
   const [selectedCity, setSelectedCity] = useState("Daltonganj");
   const navigate = useNavigate();
 
-  const links = [
+  const desktopLinks = [
+    { to: "/partners", label: "Partners" },
+    { to: "/offers", label: "Offers" },
+    { to: "/how-it-works", label: "How It Works" },
+    { to: "/partner-with-us", label: "Partner With Us" },
+    { to: "/history", label: "History" },
+  ];
+
+  const mobileLinks = [
     { to: "/", label: "Home" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
@@ -48,22 +56,22 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#ececf1] bg-white/95 text-foreground backdrop-blur-md">
-      <div className="mx-auto flex min-h-[76px] max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-[#ececf1] bg-white/95 text-foreground backdrop-blur-md transition-all">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10">
         {/* Brand */}
-        <Wordmark />
+        <Wordmark className="shrink-0" />
 
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-6 lg:flex">
-          {links.map((l) => (
+        {/* Desktop Nav - Spacious & Uncrowded */}
+        <nav className="hidden items-center gap-7 lg:flex xl:gap-9">
+          {desktopLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               activeOptions={{ exact: l.to === "/" }}
-              className="relative py-2 text-[13px] font-semibold text-slate-600 transition-colors hover:text-amber-600"
+              className="relative rounded-lg px-2.5 py-1.5 text-[13.5px] font-semibold text-slate-600 transition-all hover:bg-amber-50/70 hover:text-amber-600 xl:text-[14.5px]"
               activeProps={{
                 className:
-                  "!text-slate-900 font-bold after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-[3px] after:rounded-full after:bg-gradient-to-r after:from-amber-400 after:to-amber-600",
+                  "!text-slate-900 font-extrabold bg-amber-50/90 after:content-[''] after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:rounded-full after:bg-gradient-to-r after:from-amber-400 after:to-amber-500",
               }}
             >
               {l.label}
@@ -71,14 +79,14 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        {/* Nav Actions */}
-        <div className="hidden items-center gap-3 lg:flex">
+        {/* Nav Actions - Spacious Cluster */}
+        <div className="hidden items-center gap-3 lg:flex xl:gap-4.5">
           {/* Exclusive City Pill */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setCityOpen(!cityOpen)}
-              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-amber-300/80 bg-amber-50/70 px-3 text-[12px] font-bold text-amber-900 shadow-2xs transition-colors hover:bg-amber-100/80"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50/70 px-3.5 py-1 text-[12px] font-bold text-amber-900 shadow-2xs transition-colors hover:bg-amber-100/80 cursor-pointer"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -86,13 +94,13 @@ export function SiteHeader() {
               </span>
               <MapPin className="h-3.5 w-3.5 text-amber-600" />
               <span>Daltonganj</span>
-              <span className="rounded-md bg-amber-200/70 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-amber-800">
+              <span className="rounded-md bg-amber-200/80 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-amber-900">
                 Live
               </span>
             </button>
 
             {cityOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl z-50 text-xs">
+              <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl z-50 text-xs">
                 <div className="flex items-center gap-2 font-bold text-slate-900">
                   <MapPin className="h-4 w-4 text-amber-500" />
                   <span>Daltonganj, Jharkhand</span>
@@ -107,18 +115,20 @@ export function SiteHeader() {
             )}
           </div>
 
+          <div className="hidden h-5 w-px bg-slate-200/80 xl:block" />
+
           {user ? (
             <>
               <Link
                 to="/admin"
-                className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 text-[13px] font-bold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 text-[13px] font-bold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
                 Admin Console
               </Link>
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                className="text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
                 onClick={signOut}
               >
                 Sign out
@@ -128,9 +138,9 @@ export function SiteHeader() {
             <>
               <Link
                 to="/become-a-member"
-                className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 text-[13px] font-bold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 text-[13px] font-extrabold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <CreditCard className="h-3.5 w-3.5 mr-1.5" /> Get Card (₹500)
+                <CreditCard className="h-4 w-4 mr-1.5" /> Get Card (₹500)
               </Link>
             </>
           )}
@@ -138,7 +148,7 @@ export function SiteHeader() {
 
         {/* Mobile menu toggle */}
         <button
-          className="rounded-lg p-2 text-navy hover:bg-muted lg:hidden"
+          className="rounded-lg p-2 text-navy hover:bg-muted lg:hidden cursor-pointer"
           onClick={() => setOpen(!open)}
           aria-label="Toggle navigation"
         >
@@ -150,12 +160,12 @@ export function SiteHeader() {
       {open && (
         <div className="border-t border-[#ececf1] bg-white px-4 pb-6 pt-2 shadow-lg lg:hidden">
           <nav className="flex flex-col space-y-1">
-            {links.map((l) => (
+            {mobileLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-base font-semibold text-foreground hover:bg-muted hover:text-gold"
+                className="rounded-lg px-3 py-2.5 text-base font-semibold text-foreground hover:bg-muted hover:text-amber-600 transition-colors"
               >
                 {l.label}
               </Link>

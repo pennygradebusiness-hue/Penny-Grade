@@ -209,13 +209,13 @@ function AdminLayout() {
 
       {/* Main Content View with Top Navbar */}
       <div className="min-w-0 flex-1 flex flex-col">
-        {/* Top Navbar with the most important operational options */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#ececf1] bg-white/95 px-4 sm:px-6 backdrop-blur-md">
+        {/* Top Navbar with generous breathing room */}
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#ececf1] bg-white/95 px-4 sm:px-6 lg:px-8 backdrop-blur-md">
           {/* Left: Mobile Toggle & Brand for Mobile */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className="p-2 lg:hidden text-slate-700 hover:bg-slate-100 rounded-lg"
+              className="p-2 lg:hidden text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
               aria-label="Toggle menu"
             >
               <Menu className="h-5 w-5" />
@@ -224,18 +224,18 @@ function AdminLayout() {
               <Wordmark to="/admin" />
             </div>
             <span className="hidden xl:inline-flex font-display text-sm font-bold text-navy">
-              Console
+              Operations Console
             </span>
           </div>
 
-          {/* Center: Most Important Options directly in Navbar */}
-          <nav className="hidden lg:flex items-center gap-1.5">
+          {/* Center: Core operational links with comfortable spacing */}
+          <nav className="hidden lg:flex items-center gap-2.5 xl:gap-3.5">
             {NAVBAR_PRIMARY_NAV.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
                 activeOptions={{ exact: n.to === "/admin" }}
-                className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all"
+                className="flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all"
                 activeProps={{
                   className: "!bg-amber-500/15 !text-amber-950 !font-extrabold border border-amber-500/30 shadow-xs",
                 }}

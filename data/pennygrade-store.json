@@ -1576,9 +1576,45 @@
         "expires_at": "2026-10-12T14:19:24.839Z",
         "created_at": "2026-10-12T14:14:24.839Z"
       }
+    ],
+    [
+      "362921aa-4fea-41ec-a566-6fd3d0442cd1",
+      {
+        "id": "362921aa-4fea-41ec-a566-6fd3d0442cd1",
+        "membership_id": "mem-samir-001",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-12T14:36:14.703Z",
+        "created_at": "2026-10-12T14:31:14.703Z"
+      }
     ]
   ],
   "logs": [
+    {
+      "id": "f95dd1b2-ae5c-4ecf-9008-fdef8ded6ea8",
+      "verification_session_id": "362921aa-4fea-41ec-a566-6fd3d0442cd1",
+      "membership_id": "mem-samir-001",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-12T14:31:14.703Z"
+    },
     {
       "id": "efed175c-852e-4150-9913-6feb1f9f733c",
       "verification_session_id": "ad3afce7-e1cd-4bf3-9acc-a046cf75a5a8",
@@ -1822,6 +1858,20 @@
   ],
   "auditLogs": [
     {
+      "id": "61e68bfc-55ab-4828-ba07-02e9f0038c36",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
+      "target_type": "user_role",
+      "target_id": "16befe14-be06-4e20-9a5c-ff80f4a87a9a",
+      "metadata": {
+        "email": "newsuper@pennygrade.com",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-12T14:31:14.722Z",
+      "who": "Super Admin"
+    },
+    {
       "id": "a7698b95-f3f7-4cf9-8d3e-f6bd718166ae",
       "admin_user_id": "admin-super",
       "action": "Granted role super admin to newsuper@pennygrade.com with initial credentials",
@@ -2010,14 +2060,14 @@
   ],
   "adminUsers": [
     {
-      "id": "a5baf44b-27d5-4bd7-828a-44f08c7e2462",
-      "user_id": "d2cfbff3-a6b2-4c3a-9282-f7ed446ca799",
+      "id": "16befe14-be06-4e20-9a5c-ff80f4a87a9a",
+      "user_id": "6307c41c-ab5f-4e6e-99ba-2103498a7e41",
       "full_name": "Vikram Singhania",
       "email": "newsuper@pennygrade.com",
       "role": "super_admin",
       "temporary_password": "Perm@Password2026!",
       "is_password_set": true,
-      "created_at": "2026-10-12T14:14:24.860Z"
+      "created_at": "2026-10-12T14:31:14.722Z"
     },
     {
       "id": "admin-user-1",
