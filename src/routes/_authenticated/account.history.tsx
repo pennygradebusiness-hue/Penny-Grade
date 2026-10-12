@@ -5,7 +5,7 @@ import { myHistoryQuery } from "@/lib/member";
 import { inr } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/account/history")({
-  head: () => ({ meta: [{ title: "Verification History | PennyGrade" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Verification History | PennyGrade" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: History,
 });
 

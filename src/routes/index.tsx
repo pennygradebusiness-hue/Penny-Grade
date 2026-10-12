@@ -26,23 +26,26 @@ import { LOGO_URL, PhysicalCardPreview } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { categoriesQuery, partnersQuery, categoryIcon } from "@/lib/queries";
+import {
+  buildPageHead,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+  buildFaqSchema,
+} from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "PennyGrade | India's Physical Card Discount Membership" },
-      {
-        name: "description",
-        content:
-          "Save more on Dining, Shopping, Wellness & Entertainment with guaranteed in-person member discounts across your city. ₹500 / 6 months.",
-      },
-      { property: "og:title", content: "PennyGrade | India's Smart Physical Card Discount Membership" },
-      {
-        property: "og:description",
-        content: "One physical membership card. Guaranteed savings at partner cafés, restaurants, salons, and stores.",
-      },
-    ],
-  }),
+  head: () =>
+    buildPageHead({
+      title: "PennyGrade | Physical Card Discount Membership & Partner Privileges",
+      description:
+        "Save more on dining, shopping, wellness and hotels with guaranteed in-person member discounts at verified local partner businesses in Daltonganj. ₹500 / 6 months.",
+      path: "/",
+      jsonLd: [
+        buildOrganizationSchema(),
+        buildWebSiteSchema(),
+        buildFaqSchema(FAQ.map((f) => ({ question: f.q, answer: f.a }))),
+      ],
+    }),
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(partnersQuery),

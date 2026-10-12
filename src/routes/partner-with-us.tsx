@@ -25,8 +25,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitPartnerApplication } from "@/lib/admin.functions";
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const Route = createFileRoute("/partner-with-us")({
+  head: () =>
+    buildPageHead({
+      title: "Partner With Us | Merchant Onboarding | PennyGrade",
+      description:
+        "Join the PennyGrade partner merchant network. Attract high-intent repeat customers to your café, restaurant, salon, hotel, or store with zero hardware and zero POS changes.",
+      path: "/partner-with-us",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Partner With Us", path: "/partner-with-us" },
+      ]),
+    }),
   component: PartnerWithUsPage,
 });
 

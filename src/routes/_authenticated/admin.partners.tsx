@@ -69,8 +69,27 @@ function Partners() {
   const q = useQuery({
     queryKey: ["admin", "partners"],
     queryFn: async () => {
-      const res = await fetchPartnersFn();
-      return (res ?? []) as V1Partner[];
+      try {
+        const res = await fetchPartnersFn();
+        if (res && res.length > 0) return res as V1Partner[];
+      } catch (err) {
+        console.warn("fetchPartnersFn failed, falling back to Supabase query:", err);
+      }
+      try {
+        const { data: dbData } = await supabase
+          .from("partners")
+          .select("*, category:categories(id, name, slug)")
+          .order("business_name");
+        if (dbData && dbData.length > 0) {
+          return dbData.map((p: any) => ({
+            ...p,
+            category_name: p.category?.name || "General",
+          })) as V1Partner[];
+        }
+      } catch (sbErr) {
+        console.error("Direct Supabase query failed:", sbErr);
+      }
+      return [] as V1Partner[];
     },
   });
 
@@ -102,6 +121,11 @@ function Partners() {
   const upd = async (id: string, patch: { status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }, action: string) => {
     try {
       await updatePartnerStatusFn({ data: { id, ...patch } });
+      try {
+        await supabase.from("partners").update(patch as any).eq("id", id);
+      } catch {
+        // ignore
+      }
       toast.success(action);
       refresh();
     } catch (err: any) {
@@ -141,6 +165,33 @@ function Partners() {
           featured: !!f.featured,
         },
       });
+      try {
+        const sbPayload: any = {
+          business_name: f.business_name.trim(),
+          slug: f.slug?.trim() || slugify(f.business_name),
+          category_id: f.category_id,
+          description: f.description || "",
+          logo_url: f.logo_url || null,
+          cover_image_url: f.cover_image_url || null,
+          phone: f.phone || null,
+          email: f.email || null,
+          website: f.website || null,
+          address: f.address || null,
+          city: f.city || "Daltonganj",
+          latitude: num(f.latitude),
+          longitude: num(f.longitude),
+          business_hours: f.business_hours || null,
+          status: (f.status || "ACTIVE") as any,
+          featured: Boolean(f.featured),
+        };
+        if (id) {
+          await supabase.from("partners").update(sbPayload).eq("id", id);
+        } else {
+          await supabase.from("partners").insert(sbPayload);
+        }
+      } catch {
+        // ignore
+      }
       toast.success(id ? "Partner updated successfully" : "Partner created successfully");
       setEdit(null);
       refresh();
@@ -153,6 +204,11 @@ function Partners() {
     if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
     try {
       await deletePartnerFn({ data: { id } });
+      try {
+        await supabase.from("partners").delete().eq("id", id);
+      } catch {
+        // ignore
+      }
       toast.success(`Partner "${name}" deleted`);
       refresh();
     } catch (err: any) {

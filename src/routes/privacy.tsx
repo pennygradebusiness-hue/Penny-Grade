@@ -1,15 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteLayout, PageHero } from "@/components/site";
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({
-    meta: [
-      { title: "Privacy Policy | PennyGrade" },
-      { name: "description", content: "How PennyGrade collects and protects member information." },
-      { property: "og:title", content: "PennyGrade Privacy Policy" },
-      { property: "og:description", content: "How PennyGrade collects and protects member information." },
-    ],
-  }),
+  head: () =>
+    buildPageHead({
+      title: "Privacy Policy | PennyGrade Customer Data Protection",
+      description:
+        "Learn how PennyGrade protects member information, ensures zero contact sharing with venue staff, and maintains strict data privacy standards.",
+      path: "/privacy",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Privacy Policy", path: "/privacy" },
+      ]),
+    }),
   component: () => (
     <SiteLayout>
       <PageHero title="Privacy Policy" breadcrumbs={[{ label: "Privacy Policy" }]} />

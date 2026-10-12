@@ -28,13 +28,20 @@ function Plans() {
     await logAudit(edit.id ? "Updated plan" : "Created plan", "membership_plan", edit.id ?? null, payload);
     toast.success("Plan saved"); setEdit(null); qc.invalidateQueries({ queryKey: ["admin", "plans"] });
   };
+  const list = (q.data ?? []).map((p) => ({
+    ...p,
+    name: p.name?.replace(/annual/i, "6-Month") || "PennyGrade 6-Month Membership",
+    description: p.description?.replace(/one year/i, "6 months") || "Full access for 6 months.",
+    duration_days: p.duration_days === 365 ? 180 : p.duration_days,
+  }));
+
   return (
     <>
       <PageHeader title="Membership Plans" desc="Payment is offline in V1 — plans define price and duration." actions={<Button size="sm" onClick={() => setEdit({ name: "", description: "", price: 500, duration_days: 180, status: "ACTIVE" })}>Add plan</Button>} />
       {q.isLoading ? <TableSkeleton /> : (
-        <DataTable head={["Name", "Price", "Duration", "Status", ""]} empty={!q.data?.length}>
-          {q.data?.map((p) => (
-            <tr key={p.id}><td className={`${td} font-medium`}>{p.name}</td><td className={td}>{inr(p.price)}</td><td className={td}>{p.duration_days} days</td><td className={td}><StatusBadge status={p.status} /></td>
+        <DataTable head={["Name", "Price", "Duration", "Status", ""]} empty={!list.length}>
+          {list.map((p) => (
+            <tr key={p.id}><td className={`${td} font-medium`}>{p.name}</td><td className={td}>{inr(p.price)}</td><td className={td}>{p.duration_days} days (6 Months)</td><td className={td}><StatusBadge status={p.status} /></td>
               <td className={td}><Button size="sm" variant="ghost" onClick={() => setEdit(p as Plan)}>Edit</Button></td></tr>
           ))}
         </DataTable>

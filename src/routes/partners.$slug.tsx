@@ -27,36 +27,70 @@ import { partnerQuery } from "@/lib/queries";
 import { inr, formatDays, offerHeadline, offerSub, fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { buildPageHead, buildBreadcrumbSchema, buildLocalBusinessSchema } from "@/lib/seo";
+
 export const Route = createFileRoute("/partners/$slug")({
   loader: async ({ context, params }) => {
     const p = await context.queryClient.ensureQueryData(partnerQuery(params.slug));
     if (!p) throw notFound();
     return {
+      slug: p.slug,
       name: p.business_name,
       desc: p.description,
       img: p.cover_image_url,
       offer: p.offers[0] ? offerHeadline(p.offers[0]) : null,
+      address: p.address,
+      city: p.city,
+      phone: p.phone,
+      website: p.website,
+      category_name: p.category?.name,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      business_hours: p.business_hours,
     };
   },
-  head: ({ loaderData }) => {
-    if (!loaderData)
-      return { meta: [{ title: "Partner not found | PennyGrade" }, { name: "robots", content: "noindex" }] };
-    const title = `${loaderData.name}${loaderData.offer ? ` — ${loaderData.offer}` : ""} | PennyGrade`;
-    const desc = loaderData.desc ?? `Exclusive PennyGrade member discount at ${loaderData.name}.`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-        { property: "og:title", content: title },
-        { property: "og:description", content: desc },
-        ...(loaderData.img
-          ? [
-              { property: "og:image", content: loaderData.img },
-              { name: "twitter:image", content: loaderData.img },
-            ]
-          : []),
+  head: ({ loaderData, params }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: "Partner Not Found | PennyGrade" },
+          { name: "robots", content: "noindex, nofollow" },
+        ],
+      };
+    }
+    const title = `${loaderData.name}${loaderData.offer ? ` — ${loaderData.offer}` : ""} | PennyGrade Partner`;
+    const desc =
+      loaderData.desc ||
+      `Enjoy exclusive verified in-person member discounts at ${loaderData.name} in ${loaderData.city || "Daltonganj"} with PennyGrade.`;
+
+    return buildPageHead({
+      title,
+      description: desc,
+      path: `/partners/${params.slug}`,
+      image: loaderData.img || undefined,
+      type: "business.business",
+      jsonLd: [
+        buildBreadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Partners", path: "/partners" },
+          { name: loaderData.name, path: `/partners/${params.slug}` },
+        ]),
+        buildLocalBusinessSchema({
+          business_name: loaderData.name,
+          slug: loaderData.slug || params.slug,
+          description: loaderData.desc,
+          cover_image_url: loaderData.img,
+          address: loaderData.address,
+          city: loaderData.city,
+          phone: loaderData.phone,
+          website: loaderData.website,
+          category_name: loaderData.category_name,
+          latitude: loaderData.latitude,
+          longitude: loaderData.longitude,
+          business_hours: loaderData.business_hours,
+        }),
       ],
-    };
+    });
   },
   notFoundComponent: () => (
     <SiteLayout>
@@ -69,10 +103,28 @@ export const Route = createFileRoute("/partners/$slug")({
       </div>
     </SiteLayout>
   ),
-  errorComponent: () => (
+  errorComponent: ({ reset }) => (
     <SiteLayout>
-      <div className="py-24 text-center font-bold text-slate-900">
-        Unable to load this partner. Please try again.
+      <div className="mx-auto max-w-md px-4 py-24 text-center">
+        <h2 className="text-xl font-bold text-slate-900">Unable to load this partner</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          We encountered an issue retrieving this partner's details.
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => reset()}
+            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 cursor-pointer"
+          >
+            Retry
+          </button>
+          <Link
+            to="/partners"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+          >
+            All Partners
+          </Link>
+        </div>
       </div>
     </SiteLayout>
   ),
@@ -324,7 +376,7 @@ function PartnerPage() {
                 <h3 className="font-display text-lg font-bold text-slate-900">About This Partner</h3>
                 <p className="mt-3 text-xs sm:text-sm font-medium leading-relaxed text-slate-600">
                   {p.description ||
-                    `${p.business_name} is an official verified PennyGrade partner outlet. Members enjoy guaranteed in-person discounts on every eligible visit across the year.`}
+                    `${p.business_name} is an official verified PennyGrade partner outlet. Members enjoy guaranteed in-person discounts on every eligible visit throughout their 6-month card validity.`}
                 </p>
 
                 {/* Outlet Contact & Hours Grid */}

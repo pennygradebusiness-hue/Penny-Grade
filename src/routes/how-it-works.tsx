@@ -30,24 +30,20 @@ import {
 import { SiteLayout } from "@/components/site";
 import { CARD_URL } from "@/components/brand";
 import { cn } from "@/lib/utils";
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const Route = createFileRoute("/how-it-works")({
-  head: () => ({
-    meta: [
-      { title: "How It Works | PennyGrade" },
-      {
-        name: "description",
-        content:
-          "Discover exclusive offers, verify your membership, and enjoy benefits at participating businesses with PennyGrade.",
-      },
-      { property: "og:title", content: "How PennyGrade Works | One Membership. A World of Benefits." },
-      {
-        property: "og:description",
-        content:
-          "Discover exclusive offers, verify your membership, and enjoy benefits at participating businesses with PennyGrade.",
-      },
-    ],
-  }),
+  head: () =>
+    buildPageHead({
+      title: "How It Works | PennyGrade Physical Card Discounts",
+      description:
+        "Learn how PennyGrade works: obtain your physical card, scan the venue counter QR code, and enjoy instant verified discounts on your billing amount.",
+      path: "/how-it-works",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "How It Works", path: "/how-it-works" },
+      ]),
+    }),
   component: HowItWorks,
 });
 

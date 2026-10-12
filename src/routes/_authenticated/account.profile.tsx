@@ -13,7 +13,7 @@ import { myMemberQuery } from "@/lib/member";
 import { effectiveStatus, fmtDate, maskId } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/account/profile")({
-  head: () => ({ meta: [{ title: "Profile | PennyGrade" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Profile | PennyGrade" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: Profile,
 });
 

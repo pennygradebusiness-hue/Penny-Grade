@@ -36,7 +36,7 @@ export const Route = createFileRoute("/p/$partnerSlug")({
           : "Partner not found | PennyGrade",
       },
       { name: "description", content: "Verify your PennyGrade member discount at the billing counter." },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   notFoundComponent: () => (

@@ -9,6 +9,7 @@
  */
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default (defineConfig as any)({
   server: {
     port: 8080,

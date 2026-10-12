@@ -9,7 +9,7 @@ import { categoriesQuery, partnersQuery, categoryIcon } from "@/lib/queries";
 import { effectiveStatus, inr, offerHeadline } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/account/")({
-  head: () => ({ meta: [{ title: "My Account | PennyGrade" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "My Account | PennyGrade" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: Dashboard,
 });
 

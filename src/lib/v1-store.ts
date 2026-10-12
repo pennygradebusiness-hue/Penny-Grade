@@ -409,11 +409,12 @@ function loadStoreFromDisk(): PennyGradeStore | null {
   try {
     if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, "utf-8");
+      if (!raw || !raw.trim()) return null;
       const parsed = JSON.parse(raw);
       const partners = new Map<string, V1Partner>(parsed.partners || []);
-      if (partners.size === 0) {
-        const seeded = seedPartners();
-        for (const [k, v] of seeded.entries()) {
+      const seeded = seedPartners();
+      for (const [k, v] of seeded.entries()) {
+        if (!partners.has(k)) {
           partners.set(k, v);
         }
       }

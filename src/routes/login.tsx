@@ -10,7 +10,7 @@ export const Route = createFileRoute("/login")({
     meta: [
       { title: "Customer Login Deprecated | PennyGrade V1" },
       { name: "description", content: "PennyGrade V1 does not require customer login. Members use their physical card number directly." },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: LoginDeprecated,

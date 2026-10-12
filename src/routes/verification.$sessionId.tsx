@@ -12,7 +12,7 @@ export const Route = createFileRoute("/verification/$sessionId")({
   head: () => ({
     meta: [
       { title: "Live Verification | PennyGrade" },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: VerificationScreen,

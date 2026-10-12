@@ -57,24 +57,21 @@ const searchSchema = z.object({
   sort: z.string().optional(),
 });
 
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
+
 export const Route = createFileRoute("/partners/")({
   validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: "Partner Businesses | PennyGrade" },
-      {
-        name: "description",
-        content:
-          "Discover restaurants, cafés, hotels, salons and more in Daltonganj. Unlock exclusive benefits with your PennyGrade membership.",
-      },
-      { property: "og:title", content: "Partner Businesses | PennyGrade Perks" },
-      {
-        property: "og:description",
-        content:
-          "Explore verified restaurants, cafés, hotels, salons and more with exclusive PennyGrade member discounts.",
-      },
-    ],
-  }),
+  head: () =>
+    buildPageHead({
+      title: "Partner Directory | Verified Discounts in Daltonganj | PennyGrade",
+      description:
+        "Explore verified partner restaurants, cafés, hotels, salons, and retail outlets in Daltonganj. Unlock exclusive in-person discounts with your PennyGrade membership.",
+      path: "/partners",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Partners", path: "/partners" },
+      ]),
+    }),
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(partnersQuery),

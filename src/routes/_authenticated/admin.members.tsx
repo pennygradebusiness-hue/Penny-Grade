@@ -375,7 +375,7 @@ function Members() {
                 <td className={td}>{m.email || "—"}</td>
                 <td className={`${td} font-mono text-xs font-semibold`}>{m.membership_number}</td>
                 <td className={`${td} font-mono text-xs text-muted-foreground`}>{m.card_number || "—"}</td>
-                <td className={td}>{m.plan_name || "6-Month"}</td>
+                <td className={td}>{m.plan_name?.replace(/annual/i, "6-Month") || "6-Month"}</td>
                 <td className={td}>{m.start_date}</td>
                 <td className={td}>{m.expiry_date}</td>
                 <td className={td}><StatusBadge status={st} /></td>
@@ -453,7 +453,7 @@ function Members() {
                 ["Assigned Card", view.card_number || "—"],
                 ["Email", view.email || "—"],
                 ["Mobile", view.mobile || "—"],
-                ["Plan", view.plan_name || "PennyGrade 6-Month Membership"],
+                ["Plan", view.plan_name?.replace(/annual/i, "6-Month") || "PennyGrade 6-Month Membership"],
                 ["Start Date", fmtDate(view.start_date)],
                 ["Expiry Date", fmtDate(view.expiry_date)],
                 ["Status", effectiveStatus(view)],
@@ -502,9 +502,9 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
   const [busy, setBusy] = useState(false);
 
   const plan = plans.data?.find((p) => p.id === (f.plan_id || plans.data?.[0]?.id));
-  const autoExpiry = (start: string, days = plan?.duration_days ?? 180) => {
+  const autoExpiry = (start: string) => {
     const d = new Date(start);
-    d.setDate(d.getDate() + days);
+    d.setDate(d.getDate() + 180); // Strict 6-Month validity (180 days)
     return d.toISOString().slice(0, 10);
   };
 
@@ -557,11 +557,11 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
               {plans.data && plans.data.length > 0 ? (
                 plans.data.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (₹{p.price})
+                    {p.name.replace(/annual/i, "6-Month")} (₹{p.price} · 6 Months)
                   </option>
                 ))
               ) : (
-                <option value="f5aef446-7c6e-4781-9fdd-e5fa4dc1c935">PennyGrade 6-Month Membership (₹500)</option>
+                <option value="f5aef446-7c6e-4781-9fdd-e5fa4dc1c935">PennyGrade 6-Month Membership (₹500 · 6 Months)</option>
               )}
             </Select>
           </F>

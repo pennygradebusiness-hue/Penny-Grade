@@ -6,22 +6,20 @@ import { EmptyState } from "@/components/brand";
 import { partnersQuery } from "@/lib/queries";
 import { inr, offerHeadline, offerSub } from "@/lib/format";
 
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
+
 export const Route = createFileRoute("/offers")({
-  head: () => ({
-    meta: [
-      { title: "Current Member Offers | PennyGrade" },
-      {
-        name: "description",
-        content:
-          "Every active PennyGrade member discount across partner cafés, restaurants, hotels, salons and retail stores.",
-      },
-      { property: "og:title", content: "PennyGrade Member Offers | Guaranteed In-Person Savings" },
-      {
-        property: "og:description",
-        content: "Browse current exclusive discounts available for PennyGrade physical cardholders.",
-      },
-    ],
-  }),
+  head: () =>
+    buildPageHead({
+      title: "Current Member Offers | PennyGrade Partner Discounts",
+      description:
+        "Browse all active PennyGrade member discount offers across partner cafés, restaurants, hotels, salons, and retail stores in Daltonganj.",
+      path: "/offers",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Offers", path: "/offers" },
+      ]),
+    }),
   loader: ({ context }) => context.queryClient.ensureQueryData(partnersQuery),
   component: Offers,
 });

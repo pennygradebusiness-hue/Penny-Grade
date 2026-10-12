@@ -45,6 +45,9 @@ export const Route = createFileRoute("/_authenticated/admin")({
         if (match) raw = decodeURIComponent(match[1]);
       }
       if (raw) {
+        if (typeof document !== "undefined") {
+          document.cookie = `pennygrade_admin_session=${encodeURIComponent(raw)}; path=/; max-age=604800; SameSite=Lax`;
+        }
         try {
           const parsed = JSON.parse(raw);
           return { roles: [parsed.role || "super_admin"] };
@@ -56,7 +59,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
     throw redirect({ to: "/admin/login" });
   },
-  head: () => ({ meta: [{ title: "Admin | PennyGrade" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Admin | PennyGrade" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: AdminLayout,
 });
 

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/admin/login")({
   head: () => ({
     meta: [
       { title: "Admin Login | PennyGrade" },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: AdminLogin,

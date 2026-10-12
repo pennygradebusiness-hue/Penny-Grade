@@ -28,7 +28,7 @@ export const Route = createFileRoute("/history")({
         content:
           "View your PennyGrade discount verification history using your membership number and registered mobile.",
       },
-      { property: "og:title", content: "PennyGrade Member History | Secure Audit" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: HistoryPage,

@@ -24,8 +24,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitMemberApplication } from "@/lib/admin.functions";
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const Route = createFileRoute("/become-a-member")({
+  head: () =>
+    buildPageHead({
+      title: "Become a Member | Apply for PennyGrade Physical Card",
+      description:
+        "Apply for your PennyGrade physical membership card. Enjoy exclusive verified in-person discounts across cafés, restaurants, salons, and stores in Daltonganj. ₹500 for 6 months.",
+      path: "/become-a-member",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Become a Member", path: "/become-a-member" },
+      ]),
+    }),
   component: BecomeAMemberPage,
 });
 

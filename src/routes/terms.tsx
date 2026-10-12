@@ -1,15 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteLayout, PageHero } from "@/components/site";
+import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({
-    meta: [
-      { title: "Terms & Conditions | PennyGrade" },
-      { name: "description", content: "Terms governing PennyGrade memberships and partner benefits." },
-      { property: "og:title", content: "PennyGrade Terms & Conditions" },
-      { property: "og:description", content: "Terms governing PennyGrade memberships and partner benefits." },
-    ],
-  }),
+  head: () =>
+    buildPageHead({
+      title: "Terms & Conditions | PennyGrade Membership",
+      description:
+        "Terms and conditions governing PennyGrade physical memberships, in-person discount verification rules, and partner venue guidelines.",
+      path: "/terms",
+      jsonLd: buildBreadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Terms & Conditions", path: "/terms" },
+      ]),
+    }),
   component: () => (
     <SiteLayout>
       <PageHero title="Terms & Conditions" breadcrumbs={[{ label: "Terms & Conditions" }]} />

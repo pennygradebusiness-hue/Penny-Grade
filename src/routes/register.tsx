@@ -10,7 +10,7 @@ export const Route = createFileRoute("/register")({
     meta: [
       { title: "PennyGrade Membership | Direct Card Verification" },
       { name: "description", content: "PennyGrade V1 operates via physical membership cards. No customer registration required." },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: RegisterNotice,

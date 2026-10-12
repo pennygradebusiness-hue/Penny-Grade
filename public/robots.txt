@@ -1,14 +1,29 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# PennyGrade Robots Crawling Directives
+# Authoritative Production Origin: https://pennygrade.com
 
 User-agent: *
 Allow: /
+Allow: /styles.css
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.svg$
+Allow: /*.ico$
+Allow: /*.webp$
+
+# Disallow Private & Ephemeral Application Paths
+Disallow: /admin
+Disallow: /admin/
+Disallow: /account
+Disallow: /account/
+Disallow: /verification
+Disallow: /verification/
+Disallow: /p/
+Disallow: /history
+Disallow: /login
+Disallow: /register
+
+# Sitemap Declaration
+Sitemap: https://pennygrade.com/sitemap.xml

@@ -1058,10 +1058,52 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  if (!store.partners || store.partners.size === 0) {
-    store.partners = seedPartners();
-    saveStoreToDisk();
+  if (!store.partners) store.partners = new Map();
+  const seeded = seedPartners();
+  for (const [k, v] of seeded.entries()) {
+    if (!store.partners.has(k)) {
+      store.partners.set(k, v);
+    }
   }
+
+  try {
+    const { pub } = await import("./public.functions");
+    const { data: dbPartners } = await pub()
+      .from("partners")
+      .select("*, category:categories(id, name, slug)");
+    if (dbPartners && dbPartners.length > 0) {
+      for (const p of dbPartners) {
+        if (!store.partners.has(p.id)) {
+          store.partners.set(p.id, {
+            id: p.id,
+            business_name: p.business_name,
+            slug: p.slug,
+            category_id: p.category_id || "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+            category_name: (p as any).category?.name || "General",
+            description: p.description || "",
+            logo_url: p.logo_url || "",
+            cover_image_url: p.cover_image_url || "",
+            phone: p.phone || "",
+            email: p.email || "",
+            website: p.website || "",
+            address: p.address || "",
+            city: p.city || "Daltonganj",
+            latitude: p.latitude ?? null,
+            longitude: p.longitude ?? null,
+            business_hours: p.business_hours || "",
+            status: p.status as "ACTIVE" | "INACTIVE" | "SUSPENDED",
+            featured: Boolean(p.featured),
+            created_at: p.created_at || new Date().toISOString(),
+            updated_at: p.updated_at || new Date().toISOString(),
+          });
+        }
+      }
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  saveStoreToDisk();
   return Array.from(store.partners.values()).sort((a, b) =>
     a.business_name.localeCompare(b.business_name)
   );
@@ -1128,6 +1170,36 @@ export const savePartner = createServerFn({ method: "POST" })
 
     store.partners.set(partnerId, partner);
 
+    try {
+      const { pub } = await import("./public.functions");
+      const sbPayload: any = {
+        id: partnerId,
+        business_name: partner.business_name,
+        slug: partner.slug,
+        category_id: partner.category_id,
+        description: partner.description || "",
+        logo_url: partner.logo_url || null,
+        cover_image_url: partner.cover_image_url || null,
+        phone: partner.phone || null,
+        email: partner.email || null,
+        website: partner.website || null,
+        address: partner.address || null,
+        city: partner.city || "Daltonganj",
+        latitude: partner.latitude,
+        longitude: partner.longitude,
+        business_hours: partner.business_hours || null,
+        status: partner.status,
+        featured: partner.featured,
+      };
+      if (existing) {
+        await pub().from("partners").update(sbPayload).eq("id", partnerId);
+      } else {
+        await pub().from("partners").insert(sbPayload);
+      }
+    } catch {
+      // Non-fatal
+    }
+
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
@@ -1165,6 +1237,16 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     if (data.featured !== undefined) partner.featured = data.featured;
     partner.updated_at = new Date().toISOString();
 
+    try {
+      const { pub } = await import("./public.functions");
+      const patch: any = {};
+      if (data.status !== undefined) patch.status = data.status;
+      if (data.featured !== undefined) patch.featured = data.featured;
+      await pub().from("partners").update(patch).eq("id", data.id);
+    } catch {
+      // Non-fatal
+    }
+
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
@@ -1193,6 +1275,13 @@ export const deletePartner = createServerFn({ method: "POST" })
     if (!partner) throw new Error("Partner not found");
 
     store.partners.delete(data.id);
+
+    try {
+      const { pub } = await import("./public.functions");
+      await pub().from("partners").delete().eq("id", data.id);
+    } catch {
+      // Non-fatal
+    }
 
     if (store.auditLogs) {
       store.auditLogs.unshift({
