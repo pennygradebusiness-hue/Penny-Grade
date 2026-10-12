@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as BecomeAMemberRouteImport } from './routes/become-a-member'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OffersRouteImport } from './routes/offers'
+import { Route as PartnerWithUsRouteImport } from './routes/partner-with-us'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -51,6 +54,16 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BecomeAMemberRoute = BecomeAMemberRouteImport.update({
+  id: '/become-a-member',
+  path: '/become-a-member',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
@@ -64,6 +77,11 @@ const LoginRoute = LoginRouteImport.update({
 const OffersRoute = OffersRouteImport.update({
   id: '/offers',
   path: '/offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerWithUsRoute = PartnerWithUsRouteImport.update({
+  id: '/partner-with-us',
+  path: '/partner-with-us',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -217,9 +235,12 @@ const AuthenticatedAdminVerificationsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/become-a-member': typeof BecomeAMemberRoute
+  '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
+  '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -250,9 +271,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/become-a-member': typeof BecomeAMemberRoute
+  '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
+  '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -284,9 +308,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/become-a-member': typeof BecomeAMemberRoute
+  '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/offers': typeof OffersRoute
+  '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -319,9 +346,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/become-a-member'
+    | '/history'
     | '/how-it-works'
     | '/login'
     | '/offers'
+    | '/partner-with-us'
     | '/privacy'
     | '/register'
     | '/sitemap.xml'
@@ -352,9 +382,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/become-a-member'
+    | '/history'
     | '/how-it-works'
     | '/login'
     | '/offers'
+    | '/partner-with-us'
     | '/privacy'
     | '/register'
     | '/sitemap.xml'
@@ -385,9 +418,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/become-a-member'
+    | '/history'
     | '/how-it-works'
     | '/login'
     | '/offers'
+    | '/partner-with-us'
     | '/privacy'
     | '/register'
     | '/sitemap.xml'
@@ -420,9 +456,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  BecomeAMemberRoute: typeof BecomeAMemberRoute
+  HistoryRoute: typeof HistoryRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
   OffersRoute: typeof OffersRoute
+  PartnerWithUsRoute: typeof PartnerWithUsRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -450,6 +489,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/become-a-member': {
+      id: '/become-a-member'
+      path: '/become-a-member'
+      fullPath: '/become-a-member'
+      preLoaderRoute: typeof BecomeAMemberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how-it-works': {
       id: '/how-it-works'
       path: '/how-it-works'
@@ -469,6 +522,13 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/offers'
       preLoaderRoute: typeof OffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner-with-us': {
+      id: '/partner-with-us'
+      path: '/partner-with-us'
+      fullPath: '/partner-with-us'
+      preLoaderRoute: typeof PartnerWithUsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -720,9 +780,12 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  BecomeAMemberRoute: BecomeAMemberRoute,
+  HistoryRoute: HistoryRoute,
   HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,
   OffersRoute: OffersRoute,
+  PartnerWithUsRoute: PartnerWithUsRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

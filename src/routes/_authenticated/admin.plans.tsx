@@ -30,7 +30,7 @@ function Plans() {
   };
   return (
     <>
-      <PageHeader title="Membership Plans" desc="Payment is offline in V1 — plans define price and duration." actions={<Button size="sm" onClick={() => setEdit({ name: "", description: "", price: 500, duration_days: 365, status: "ACTIVE" })}>Add plan</Button>} />
+      <PageHeader title="Membership Plans" desc="Payment is offline in V1 — plans define price and duration." actions={<Button size="sm" onClick={() => setEdit({ name: "", description: "", price: 500, duration_days: 180, status: "ACTIVE" })}>Add plan</Button>} />
       {q.isLoading ? <TableSkeleton /> : (
         <DataTable head={["Name", "Price", "Duration", "Status", ""]} empty={!q.data?.length}>
           {q.data?.map((p) => (

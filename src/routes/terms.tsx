@@ -12,7 +12,7 @@ export const Route = createFileRoute("/terms")({
   }),
   component: () => (
     <SiteLayout>
-      <PageHero title="Terms & Conditions" />
+      <PageHero title="Terms & Conditions" breadcrumbs={[{ label: "Terms & Conditions" }]} />
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-12 text-muted-foreground">
         <p>PennyGrade memberships are personal and non-transferable. Benefits apply only at active partner businesses and only within each offer's stated conditions.</p>
         <p>Discounts are applied by the partner at the time of billing on presentation of a valid live verification screen. Screenshots or expired verifications are not valid.</p>

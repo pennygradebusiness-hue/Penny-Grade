@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site";
-import { LOGO_URL, StatusBadge, EmptyState } from "@/components/brand";
+import { LOGO_URL, StatusBadge, EmptyState, PhysicalCardPreview } from "@/components/brand";
 import { cn } from "@/lib/utils";
 import { effectiveStatus, fmtDate, inr, maskId, relDay } from "@/lib/format";
 
@@ -31,23 +31,23 @@ export function AccountLayout({ children }: { children: React.ReactNode }) {
 type M = { membership_number: string; expiry_date: string; status: string } | null;
 
 export function MembershipCard({ name, membership, reveal }: { name: string; membership: M; reveal?: boolean }) {
+  const code = membership ? (reveal ? membership.membership_number : maskId(membership.membership_number)) : "PEN-7X4P-92LM";
   return (
-    <div className="relative aspect-[1.586/1] w-full max-w-md overflow-hidden rounded-2xl bg-navy-deep text-navy-foreground shadow-xl ring-1 ring-gold/30">
-      <img src={LOGO_URL} alt="" className="absolute -right-10 -top-6 h-[120%] w-auto opacity-60" />
-      <div className="relative flex h-full flex-col justify-between p-5 sm:p-6">
-        <div className="flex items-start justify-between">
-          <p className="font-display text-base font-semibold">Penny<span className="text-gold">Grade</span></p>
-          {membership && <StatusBadge status={effectiveStatus(membership)} />}
-        </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-gold">Premium Membership</p>
-          <p className="mt-1 font-mono text-lg tracking-[0.15em]">{membership ? (reveal ? membership.membership_number : maskId(membership.membership_number)) : "—"}</p>
-          <div className="mt-3 flex justify-between text-xs">
-            <div><p className="text-navy-muted">Member</p><p className="font-medium">{name || "—"}</p></div>
-            <div className="text-right"><p className="text-navy-muted">Valid until</p><p className="font-medium">{membership ? fmtDate(membership.expiry_date) : "—"}</p></div>
+    <div className="w-full max-w-md space-y-3">
+      <PhysicalCardPreview code={code} className="shadow-2xl" />
+      {membership && (
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-xs">
+          <div>
+            <p className="text-slate-400">Cardholder</p>
+            <p className="font-bold text-slate-900">{name || "—"}</p>
           </div>
+          <div className="text-right">
+            <p className="text-slate-400">Valid until</p>
+            <p className="font-bold text-amber-600">{fmtDate(membership.expiry_date)}</p>
+          </div>
+          <StatusBadge status={effectiveStatus(membership)} />
         </div>
-      </div>
+      )}
     </div>
   );
 }

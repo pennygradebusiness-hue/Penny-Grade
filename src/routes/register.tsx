@@ -1,75 +1,65 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
-import { toast } from "sonner";
+import { CreditCard, History, ArrowRight } from "lucide-react";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { safeRedirect } from "@/lib/use-session";
-
-const schema = z.object({
-  full_name: z.string().trim().min(2, "Please enter your full name").max(100),
-  mobile: z.string().trim().regex(/^\+?[0-9 ]{10,15}$/, "Enter a valid mobile number"),
-  email: z.string().trim().email("Enter a valid email").max(255),
-  password: z.string().min(8, "Password must be at least 8 characters").max(72),
-});
 
 export const Route = createFileRoute("/register")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Become a Member | PennyGrade" },
-      { name: "description", content: "Create your PennyGrade account to access exclusive partner discounts." },
-      { property: "og:title", content: "Join PennyGrade" },
-      { property: "og:description", content: "One membership. Exclusive benefits." },
+      { title: "PennyGrade Membership | Direct Card Verification" },
+      { name: "description", content: "PennyGrade V1 operates via physical membership cards. No customer registration required." },
+      { name: "robots", content: "noindex" },
     ],
   }),
-  component: Register,
+  component: RegisterNotice,
 });
 
-function Register() {
+function RegisterNotice() {
   const { redirect } = Route.useSearch();
-  const navigate = useNavigate();
-  const [f, setF] = useState({ full_name: "", mobile: "", email: "", password: "" });
-  const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsed = schema.safeParse(f);
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
-    setBusy(true);
-    const target = safeRedirect(redirect) ?? "/account";
-    const { data, error } = await supabase.auth.signUp({
-      email: parsed.data.email,
-      password: parsed.data.password,
-      options: { data: { full_name: parsed.data.full_name, mobile: parsed.data.mobile }, emailRedirectTo: `${window.location.origin}${target}` },
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    if (data.session) navigate({ to: target, replace: true });
-    else setSent(true);
-  };
-
-  if (sent) return (
-    <AuthShell title="Check your email" subtitle="We've sent a confirmation link. Once confirmed, log in — our team will activate your membership.">
-      <Button asChild className="w-full"><Link to="/login" search={{ redirect }}>Go to login</Link></Button>
-    </AuthShell>
-  );
-
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   return (
-    <AuthShell title="Become a Member" subtitle="Create your account. Membership is ₹500/year and activated by the PennyGrade team."
-      footer={<>Already a member? <Link to="/login" search={{ redirect }} className="font-medium text-foreground underline">Log in</Link></>}>
-      <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-1.5"><Label>Full name</Label><Input required value={f.full_name} onChange={set("full_name")} className="h-11" autoComplete="name" /></div>
-        <div className="space-y-1.5"><Label>Mobile</Label><Input required type="tel" value={f.mobile} onChange={set("mobile")} className="h-11" placeholder="+91 98765 43210" autoComplete="tel" /></div>
-        <div className="space-y-1.5"><Label>Email</Label><Input required type="email" value={f.email} onChange={set("email")} className="h-11" autoComplete="email" /></div>
-        <div className="space-y-1.5"><Label>Password</Label><Input required type="password" value={f.password} onChange={set("password")} className="h-11" autoComplete="new-password" /></div>
-        <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Creating account…" : "Create account"}</Button>
-      </form>
+    <AuthShell
+      title="Physical Card Membership"
+      subtitle="PennyGrade V1 does not require customer registration"
+      footer={
+        <>
+          Looking for administrator access?{" "}
+          <Link to="/admin/login" className="font-semibold text-gold underline">
+            Admin Sign In
+          </Link>
+        </>
+      }
+    >
+      <div className="space-y-4 text-center">
+        <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+          <p className="font-semibold text-foreground">How PennyGrade Works</p>
+          <p className="mt-1 leading-relaxed">
+            Members receive a physical PennyGrade card containing a unique ID (e.g. PEN-7X4P-92LM). No online password or customer signup is needed. Simply scan the permanent counter QR at any partner venue to redeem your discounts.
+          </p>
+        </div>
+
+        {redirect?.startsWith("/p/") && (
+          <Button asChild size="lg" className="w-full bg-gold font-bold text-accent-foreground hover:bg-gold-soft">
+            <a href={redirect} className="flex items-center justify-center gap-2">
+              Continue to Partner QR <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+        )}
+
+        <div className="space-y-2 pt-2">
+          <Button asChild size="lg" className="w-full bg-gold font-bold text-accent-foreground hover:bg-gold-soft">
+            <Link to="/partners">Explore Partner Directory</Link>
+          </Button>
+
+          <Button asChild variant="outline" size="lg" className="w-full">
+            <Link to="/history" className="flex items-center justify-center gap-2">
+              <History className="h-4 w-4" /> Check Member History
+            </Link>
+          </Button>
+        </div>
+      </div>
     </AuthShell>
   );
 }

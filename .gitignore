@@ -18,7 +18,13 @@ dist-ssr
 
 # Wrangler / Cloudflare
 .wrangler/
+# Environment variables & external tool metadata
+.env
+.env.*
+!.env.example
 .dev.vars
+.lovable/
+supabase/.temp/
 
 # Editor directories and files
 .vscode/*

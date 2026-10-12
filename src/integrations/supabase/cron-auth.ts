@@ -2,11 +2,11 @@
 export async function authenticateCronRequest(
   request: Request,
 ): Promise<Response | null> {
-  const currentSecret = process.env['LOVABLE_CRON_SECRET']
-  const previousSecret = process.env['LOVABLE_CRON_SECRET_PREVIOUS']
+  const currentSecret = process.env['CRON_SECRET'] ?? process.env['LOVABLE_CRON_SECRET']
+  const previousSecret = process.env['CRON_SECRET_PREVIOUS'] ?? process.env['LOVABLE_CRON_SECRET_PREVIOUS']
 
   if (!currentSecret) {
-    return new Response('Server configuration error', { status: 500 })
+    return new Response('Server configuration error: missing CRON_SECRET', { status: 500 })
   }
 
   const match = /^Bearer ([^\s,]+)$/.exec(

@@ -354,7 +354,7 @@ revoke execute on function public.create_verification(text, numeric) from anon;
 
 -- SEED (demo data — remove rows with business_name in demo list to clear)
 insert into public.membership_plans(name, description, price, duration_days) values
- ('PennyGrade Annual Membership','Full access to every PennyGrade partner benefit for one year.',500,365);
+ ('PennyGrade 6-Month Membership','Full access to every PennyGrade partner benefit for 6 months.',500,180);
 
 insert into public.categories(name, slug, icon, sort_order) values
  ('Cafés','cafes','Coffee',1),('Restaurants','restaurants','UtensilsCrossed',2),('Hotels','hotels','BedDouble',3),

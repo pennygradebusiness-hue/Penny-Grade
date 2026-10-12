@@ -12,7 +12,7 @@ export const Route = createFileRoute("/privacy")({
   }),
   component: () => (
     <SiteLayout>
-      <PageHero title="Privacy Policy" />
+      <PageHero title="Privacy Policy" breadcrumbs={[{ label: "Privacy Policy" }]} />
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-12 text-muted-foreground">
         <p>We store your name, email, mobile number and membership details to provide PennyGrade benefits. Verification activity is recorded for auditing and partner reporting.</p>
         <p>Partner staff only see what is on your live verification screen. We never share your contact details with partners.</p>
