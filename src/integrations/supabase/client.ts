@@ -48,18 +48,23 @@ function createSupabaseFetch(supabaseUrl: string, supabaseKey: string): typeof f
 const getClientStorage = () => (typeof window !== 'undefined' ? window.localStorage : undefined);
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
+  const projectId =
+    import.meta.env['VITE_SUPABASE_PROJECT_ID'] ||
+    process.env['SUPABASE_PROJECT_ID'] ||
+    process.env['VITE_SUPABASE_PROJECT_ID'];
+
   const SUPABASE_URL =
     import.meta.env['VITE_SUPABASE_URL'] ||
     process.env['SUPABASE_URL'] ||
     process.env['VITE_SUPABASE_URL'] ||
-    "https://gvdrpojyoznepohqrbpd.supabase.co";
+    (projectId ? `https://${projectId}.supabase.co` : undefined) ||
+    'https://placeholder.supabase.co';
+
   const SUPABASE_PUBLISHABLE_KEY =
     import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
     process.env['SUPABASE_PUBLISHABLE_KEY'] ||
     process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
-    "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6";
+    'placeholder-key';
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {

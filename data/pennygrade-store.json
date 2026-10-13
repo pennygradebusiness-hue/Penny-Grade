@@ -1531,6 +1531,18 @@
         "created_at": "2026-10-12T10:40:00.436Z",
         "updated_at": "2026-10-12T10:40:00.436Z"
       }
+    ],
+    [
+      "card-test-del-001",
+      {
+        "id": "card-test-del-001",
+        "card_number": "PEN-DEL1-TEST",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": "2026-10-13T23:55:26.422Z",
+        "created_at": "2026-10-13T23:55:26.422Z",
+        "updated_at": "2026-10-13T23:55:26.422Z"
+      }
     ]
   ],
   "partners": [
@@ -1773,9 +1785,116 @@
       }
     ]
   ],
-  "sessions": [],
-  "logs": [],
+  "sessions": [
+    [
+      "79f936dd-660f-4804-82ab-962492e712a5",
+      {
+        "id": "79f936dd-660f-4804-82ab-962492e712a5",
+        "membership_id": "608d1bb0-f63f-4812-a755-55ee853ac891",
+        "membership_number": "PEN-7X4P-92LM",
+        "member_name": "Samir Pandey",
+        "partner_id": "partner-abc",
+        "partner_name": "ABC Café",
+        "partner_slug": "abc-cafe",
+        "offer_id": "offer-abc-10",
+        "discount_type": "PERCENTAGE",
+        "discount_value": 10,
+        "bill_amount": 2000,
+        "discount_amount": 200,
+        "final_amount": 1800,
+        "status": "ACTIVE",
+        "expires_at": "2026-10-14T00:00:26.024Z",
+        "created_at": "2026-10-13T23:55:26.024Z"
+      }
+    ]
+  ],
+  "logs": [
+    {
+      "id": "e5965d4f-a1b9-4aaa-8db7-3528c1eec5ef",
+      "verification_session_id": "79f936dd-660f-4804-82ab-962492e712a5",
+      "membership_id": "608d1bb0-f63f-4812-a755-55ee853ac891",
+      "membership_number": "PEN-7X4P-92LM",
+      "partner_id": "partner-abc",
+      "partner_name": "ABC Café",
+      "offer_id": "offer-abc-10",
+      "offer_title": "10% Off",
+      "bill_amount": 2000,
+      "discount_amount": 200,
+      "final_amount": 1800,
+      "status": "VERIFIED",
+      "created_at": "2026-10-13T23:55:26.024Z"
+    }
+  ],
   "auditLogs": [
+    {
+      "id": "d4f65cd4-5254-459a-a744-43dff5faf134",
+      "admin_user_id": "admin-super",
+      "action": "Granted role super admin to newsuper@pennygrade.in with initial credentials",
+      "target_type": "user_role",
+      "target_id": "f10bd68f-cb5e-4fef-b770-9fb38cf12ca8",
+      "metadata": {
+        "email": "newsuper@pennygrade.in",
+        "role": "super_admin",
+        "name": "Vikram Singhania"
+      },
+      "created_at": "2026-10-13T23:55:26.046Z",
+      "who": "Super Admin"
+    },
+    {
+      "id": "116d7e89-112a-449d-8c4c-fc470ee9787e",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test Café XYZ & 1 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-xyz-123",
+      "metadata": {
+        "name": "Test Café XYZ",
+        "slug": "test-cafe-xyz",
+        "deletedOfferCount": 1
+      },
+      "created_at": "2026-10-13T23:55:25.972Z",
+      "who": "Super Admin Tester"
+    },
+    {
+      "id": "d60f1182-81b8-4e7c-b14c-aa0f47536ced",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test QR Cafe & 0 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-qr-999",
+      "metadata": {
+        "name": "Test QR Cafe",
+        "slug": "test-qr-cafe",
+        "deletedOfferCount": 0
+      },
+      "created_at": "2026-10-13T23:47:53.998Z",
+      "who": "Admin Tester"
+    },
+    {
+      "id": "e4630e34-fbbb-4ac7-b585-0434e29bd363",
+      "admin_user_id": "admin",
+      "action": "Deleted Offer: One-Off Special 50% Off",
+      "target_type": "offer",
+      "target_id": "test-single-offer-999",
+      "metadata": {
+        "title": "One-Off Special 50% Off",
+        "id": "test-single-offer-999"
+      },
+      "created_at": "2026-10-13T23:47:53.994Z",
+      "who": "Super Admin Tester"
+    },
+    {
+      "id": "ae6ea208-d60d-46bc-837f-d4ebc00da53f",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test Café XYZ & 1 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-xyz-123",
+      "metadata": {
+        "name": "Test Café XYZ",
+        "slug": "test-cafe-xyz",
+        "deletedOfferCount": 1
+      },
+      "created_at": "2026-10-13T23:47:53.655Z",
+      "who": "Super Admin Tester"
+    },
     {
       "id": "1921b3ea-38b8-43ba-b70f-a58a3c0adad1",
       "admin_user_id": "admin",
@@ -2739,6 +2858,16 @@
   ],
   "adminUsers": [
     {
+      "id": "f10bd68f-cb5e-4fef-b770-9fb38cf12ca8",
+      "user_id": "13530402-c5c1-4bfa-8036-d255f7ae08ac",
+      "full_name": "Vikram Singhania",
+      "email": "newsuper@pennygrade.in",
+      "role": "super_admin",
+      "temporary_password": "Perm@Password2026!",
+      "is_password_set": true,
+      "created_at": "2026-10-13T23:55:26.046Z"
+    },
+    {
       "id": "a6956859-262f-4eda-88b1-9dc42b42563b",
       "user_id": "68bb89d9-24be-4eff-84ab-ebb65032a7df",
       "full_name": "samir pandey",
@@ -2799,7 +2928,9 @@
     "test-partner-xyz-123",
     "test-cafe-xyz",
     "test-partner-qr-999",
-    "test-qr-cafe"
+    "test-qr-cafe",
+    "test-partner-to-delete",
+    "test-partner-outlet"
   ],
   "deletedOfferIds": [
     "offer-32ac0228-708f-4617-9c51-f876365f658b",
@@ -2825,12 +2956,16 @@
   "deletedMemberIds": [
     "64cca9a4-21f0-457b-9b8a-d3c648a11b07",
     "PEN-E7DD-WGMX",
-    "efb6b91b-4e1c-43b2-9474-f162fb33f1ca"
+    "efb6b91b-4e1c-43b2-9474-f162fb33f1ca",
+    "mem-test-del-001",
+    "PEN-DEL1-TEST"
   ],
   "deletedAdminUserIds": [
     "2649307f-3bf1-43a0-8349-43a53550d6b8",
     "c7bcb290-b8fa-4b57-88d1-ac8739ff4626",
-    "newsuper@pennygrade.com"
+    "newsuper@pennygrade.com",
+    "adm-test-revoke-001",
+    "temp.manager@pennygrade.in"
   ],
   "seededPartners": true,
   "seededOffers": true,

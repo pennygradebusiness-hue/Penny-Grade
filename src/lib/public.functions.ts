@@ -14,14 +14,23 @@ import {
 } from "./v1-store";
 
 export function pub() {
+  const projectId =
+    process.env.SUPABASE_PROJECT_ID ||
+    process.env.VITE_SUPABASE_PROJECT_ID ||
+    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_PROJECT_ID"]);
+
   const url =
     process.env.SUPABASE_URL ||
     process.env.VITE_SUPABASE_URL ||
-    "https://gvdrpojyoznepohqrbpd.supabase.co";
+    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_URL"]) ||
+    (projectId ? `https://${projectId}.supabase.co` : undefined) ||
+    "https://placeholder.supabase.co";
+
   const key =
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6";
+    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"]) ||
+    "placeholder-key";
 
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
