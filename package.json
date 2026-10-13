@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "PennyGrade - Membership & Partner Discount Verification Platform",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
   "sideEffects": false,
   "type": "module",
   "scripts": {

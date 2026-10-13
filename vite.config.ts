@@ -9,6 +9,10 @@
  */
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+if (process.env.NETLIFY === "true" && !process.env.NITRO_PRESET) {
+  process.env.NITRO_PRESET = "netlify";
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default (defineConfig as any)({
   server: {
