@@ -14,15 +14,28 @@ import {
 } from "./v1-store";
 
 export function pub() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    throw new Error("Missing Supabase configuration in environment variables");
-  }
+  const url =
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    "https://gvdrpojyoznepohqrbpd.supabase.co";
+  const key =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6";
+
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
 }
+
+const DEFAULT_CATEGORIES: PublicCategory[] = [
+  { id: "cat-dining", name: "Dining & Cafés", slug: "dining", icon: "UtensilsCrossed", sort_order: 1 },
+  { id: "cat-wellness", name: "Wellness & Salons", slug: "wellness", icon: "Scissors", sort_order: 2 },
+  { id: "cat-retail", name: "Shopping & Retail", slug: "retail", icon: "ShoppingBag", sort_order: 3 },
+  { id: "cat-entertainment", name: "Entertainment & Gaming", slug: "entertainment", icon: "Clapperboard", sort_order: 4 },
+  { id: "cat-fitness", name: "Gym & Fitness", slug: "fitness", icon: "Dumbbell", sort_order: 5 },
+  { id: "cat-hotels", name: "Hotels & Stays", slug: "hotels", icon: "BedDouble", sort_order: 6 },
+];
 
 const PARTNER_COLS =
   "id,business_name,slug,description,logo_url,cover_image_url,phone,email,website,address,city,latitude,longitude,business_hours,featured,category:categories(id,name,slug)";
@@ -51,9 +64,19 @@ function currentOffers(offers: PublicOffer[]) {
 }
 
 export const getCategories = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await pub().from("categories").select("id,name,slug,icon,sort_order").order("sort_order");
-  if (error) { console.error(error); return [] as PublicCategory[]; }
-  return data as PublicCategory[];
+  try {
+    const { data, error } = await pub()
+      .from("categories")
+      .select("id,name,slug,icon,sort_order")
+      .order("sort_order");
+    if (error || !data || data.length === 0) {
+      return DEFAULT_CATEGORIES;
+    }
+    return data as PublicCategory[];
+  } catch (err) {
+    console.warn("[getCategories] Falling back to default categories:", err);
+    return DEFAULT_CATEGORIES;
+  }
 });
 
 export const getPartners = createServerFn({ method: "GET" }).handler(async () => {

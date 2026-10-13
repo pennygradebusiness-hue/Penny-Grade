@@ -6,6 +6,13 @@
   NODE_VERSION = "20"
   PNPM_VERSION = "10.33.0"
   NITRO_PRESET = "netlify"
+  SUPABASE_URL = "https://gvdrpojyoznepohqrbpd.supabase.co"
+  SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6"
+  VITE_SUPABASE_URL = "https://gvdrpojyoznepohqrbpd.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6"
+  VITE_SUPABASE_PROJECT_ID = "gvdrpojyoznepohqrbpd"
+  SITE_URL = "https://pennygrade.in"
+  VITE_SITE_URL = "https://pennygrade.in"
 
 [[headers]]
   for = "/*"
