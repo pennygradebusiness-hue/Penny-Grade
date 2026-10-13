@@ -9,6 +9,7 @@ import {
   type V1Member,
   type V1PhysicalCard,
   type V1Partner,
+  type V1Offer,
   type V1AuditLog,
   type V1AdminUser,
   type V1MemberApplication,
@@ -19,6 +20,9 @@ import {
   resetAdminPasswordLogic,
   verifyAdminLoginCredentialsLogic,
   firstTimeSetPasswordLogic,
+  deletePartnerCascadeLogic,
+  deleteOfferCascadeLogic,
+  getFilteredOffersLogic,
 } from "./v1-logic";
 import { requireAdminAuth } from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
@@ -203,9 +207,13 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
 // Admin Get Members
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  return Array.from(store.members.values()).sort((a, b) =>
-    b.created_at.localeCompare(a.created_at)
-  );
+  if (!store.members) store.members = new Map();
+  if (!store.deletedMemberIds) store.deletedMemberIds = [];
+
+  const delMemberSet = new Set(store.deletedMemberIds);
+  return Array.from(store.members.values())
+    .filter((m) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
 });
 
 // Admin Update Member Status
@@ -246,34 +254,94 @@ export const deleteMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
-    const member = store.members.get(data.id);
-    if (!member) throw new Error("Member not found");
+    if (!store.members) store.members = new Map();
+    if (!store.cards) store.cards = new Map();
+    if (!store.deletedMemberIds) store.deletedMemberIds = [];
 
-    // Release assigned card back to AVAILABLE status if linked
-    if (member.card_id && store.cards.has(member.card_id)) {
+    const member = store.members.get(data.id);
+    const memberName = member?.full_name || "Member";
+    const memberNumber = member?.membership_number || "";
+
+    // 1. Add to deleted tracking list
+    if (!store.deletedMemberIds.includes(data.id)) {
+      store.deletedMemberIds.push(data.id);
+    }
+    if (memberNumber && !store.deletedMemberIds.includes(memberNumber)) {
+      store.deletedMemberIds.push(memberNumber);
+    }
+
+    // 2. Release assigned card back to AVAILABLE status if linked
+    if (member?.card_id && store.cards.has(member.card_id)) {
       const card = store.cards.get(member.card_id)!;
       card.membership_id = null;
       card.status = "AVAILABLE";
       card.updated_at = new Date().toISOString();
     }
+    for (const card of store.cards.values()) {
+      if (card.membership_id === data.id || (memberNumber && card.membership_id === memberNumber)) {
+        card.membership_id = null;
+        card.status = "AVAILABLE";
+        card.updated_at = new Date().toISOString();
+      }
+    }
 
+    // 3. Remove member from store
     store.members.delete(data.id);
+
+    // 4. Remove any active verification sessions for this member
+    if (store.sessions) {
+      for (const [sId, sess] of store.sessions.entries()) {
+        if (sess.membership_id === data.id || (memberNumber && sess.membership_number === memberNumber)) {
+          store.sessions.delete(sId);
+        }
+      }
+    }
+
+    // 5. Synchronize deletion with Supabase
+    try {
+      const { pub } = await import("./public.functions");
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
+
+      if (isUuid) {
+        await pub().from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", data.id);
+        await pub().from("verification_logs").delete().eq("membership_id", data.id);
+        await pub().from("memberships").delete().eq("id", data.id);
+      }
+
+      if (memberNumber) {
+        const { data: dbM } = await pub()
+          .from("memberships")
+          .select("id")
+          .eq("membership_number", memberNumber)
+          .maybeSingle();
+
+        if (dbM?.id) {
+          if (!store.deletedMemberIds.includes(dbM.id)) {
+            store.deletedMemberIds.push(dbM.id);
+          }
+          await pub().from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", dbM.id);
+          await pub().from("verification_logs").delete().eq("membership_id", dbM.id);
+          await pub().from("memberships").delete().eq("id", dbM.id);
+        }
+      }
+    } catch (sbErr) {
+      console.warn("[PennyGrade] Supabase member delete sync:", sbErr);
+    }
 
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
         admin_user_id: admin.id,
-        action: `Deleted Member: ${member.full_name} (${member.membership_number})`,
+        action: `Deleted Member: ${memberName} (${memberNumber || data.id})`,
         target_type: "member",
         target_id: data.id,
-        metadata: { name: member.full_name, membership_number: member.membership_number },
+        metadata: { name: memberName, membership_number: memberNumber },
         created_at: new Date().toISOString(),
         who: admin.full_name || admin.email,
       });
     }
 
     saveStoreToDisk();
-
     return { ok: true };
   });
 
@@ -371,16 +439,13 @@ export const assignCardToMember = createServerFn({ method: "POST" })
 // Admin Get Admin Users (Server Function)
 export const getAdminUsers = createServerFn({ method: "GET" }).handler(async (): Promise<V1AdminUser[]> => {
   requireAdminAuth();
-  const storeUsers: V1AdminUser[] = (store.adminUsers || []).map((u) => ({
-    id: u.id,
-    user_id: u.user_id,
-    full_name: u.full_name,
-    email: u.email,
-    role: u.role,
-    created_at: u.created_at,
-  }));
+  if (!store.adminUsers) store.adminUsers = [];
+  if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
 
-  if (!storeUsers.length) {
+  const delAdminSet = new Set(store.deletedAdminUserIds.map((x) => x.toLowerCase()));
+
+  // Only seed default admin users if store was never seeded before and is empty
+  if (!store.seededAdminUsers && store.adminUsers.length === 0) {
     const fallbackUsers: V1AdminUser[] = [
       {
         id: "admin-primary-owner",
@@ -388,36 +453,31 @@ export const getAdminUsers = createServerFn({ method: "GET" }).handler(async ():
         full_name: "PennyGrade Business",
         email: "pennygradebusiness@gmail.com",
         role: "super_admin",
-        created_at: new Date(Date.now() - 30 * 864e5).toISOString(),
-      },
-      {
-        id: "admin-user-2",
-        user_id: "uid-rajesh-002",
-        full_name: "Rajesh Sharma",
-        email: "rajesh.manager@pennygrade.com",
-        role: "manager",
-        created_at: new Date(Date.now() - 20 * 864e5).toISOString(),
-      },
-      {
-        id: "admin-user-3",
-        user_id: "uid-priya-003",
-        full_name: "Priya Patel",
-        email: "priya.cards@pennygrade.com",
-        role: "membership_manager",
-        created_at: new Date(Date.now() - 14 * 864e5).toISOString(),
-      },
-      {
-        id: "admin-user-4",
-        user_id: "uid-amit-004",
-        full_name: "Amit Verma",
-        email: "amit.support@pennygrade.com",
-        role: "support",
-        created_at: new Date(Date.now() - 7 * 864e5).toISOString(),
+        is_password_set: false,
+        created_at: new Date().toISOString(),
       },
     ];
-    storeUsers.push(...fallbackUsers);
-    if (store.adminUsers) store.adminUsers.push(...fallbackUsers);
+    store.adminUsers = fallbackUsers.filter(
+      (u) => !delAdminSet.has(u.id.toLowerCase()) && !delAdminSet.has(u.email.toLowerCase())
+    );
+    store.seededAdminUsers = true;
   }
+
+  const storeUsers: V1AdminUser[] = (store.adminUsers || [])
+    .filter(
+      (u) =>
+        !delAdminSet.has(u.id?.toLowerCase()) &&
+        !delAdminSet.has(u.user_id?.toLowerCase()) &&
+        !delAdminSet.has(u.email?.toLowerCase())
+    )
+    .map((u) => ({
+      id: u.id,
+      user_id: u.user_id,
+      full_name: u.full_name,
+      email: u.email,
+      role: u.role,
+      created_at: u.created_at,
+    }));
 
   try {
     const [{ data: r, error: rErr }, { data: p }] = await Promise.all([
@@ -427,17 +487,24 @@ export const getAdminUsers = createServerFn({ method: "GET" }).handler(async ():
 
     if (!rErr && r && r.length > 0) {
       const pm = new Map((p ?? []).map((x) => [x.user_id, x]));
-      const dbUsers: V1AdminUser[] = r.map((roleRec) => {
-        const prof = pm.get(roleRec.user_id);
-        return {
-          id: roleRec.id,
-          user_id: roleRec.user_id,
-          full_name: prof?.full_name || "Admin Staff",
-          email: prof?.email || "staff@pennygrade.com",
-          role: roleRec.role as V1AdminUser["role"],
-          created_at: roleRec.created_at,
-        };
-      });
+      const dbUsers: V1AdminUser[] = r
+        .filter(
+          (roleRec) =>
+            !delAdminSet.has(roleRec.id?.toLowerCase()) &&
+            !delAdminSet.has(roleRec.user_id?.toLowerCase())
+        )
+        .map((roleRec) => {
+          const prof = pm.get(roleRec.user_id);
+          return {
+            id: roleRec.id,
+            user_id: roleRec.user_id,
+            full_name: prof?.full_name || "Admin Staff",
+            email: prof?.email || "staff@pennygrade.in",
+            role: roleRec.role as V1AdminUser["role"],
+            created_at: roleRec.created_at,
+          };
+        })
+        .filter((d) => !delAdminSet.has(d.email.toLowerCase()));
 
       const seenEmails = new Set(storeUsers.map((u) => u.email.toLowerCase()));
       for (const d of dbUsers) {
@@ -511,9 +578,25 @@ export const removeAdminRole = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin"]);
-    if (!store.adminUsers) return { ok: true };
-    const target = store.adminUsers.find((u) => u.id === data.id);
-    store.adminUsers = store.adminUsers.filter((u) => u.id !== data.id);
+    if (!store.adminUsers) store.adminUsers = [];
+    if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
+
+    const target = store.adminUsers.find((u) => u.id === data.id || u.user_id === data.id);
+    const targetEmail = target?.email?.toLowerCase() || "";
+    const targetUserId = target?.user_id || data.id;
+
+    if (targetEmail === "pennygradebusiness@gmail.com" || data.id.toLowerCase() === "admin-primary-owner" || data.id.toLowerCase() === "pennygradebusiness@gmail.com") {
+      throw new Error("Action Forbidden: The primary system owner (pennygradebusiness@gmail.com) cannot be removed.");
+    }
+
+    // Track in deleted list so it never resurrects
+    if (!store.deletedAdminUserIds.includes(data.id)) store.deletedAdminUserIds.push(data.id);
+    if (targetUserId && !store.deletedAdminUserIds.includes(targetUserId)) store.deletedAdminUserIds.push(targetUserId);
+    if (targetEmail && !store.deletedAdminUserIds.includes(targetEmail)) store.deletedAdminUserIds.push(targetEmail);
+
+    store.adminUsers = store.adminUsers.filter(
+      (u) => u.id !== data.id && u.user_id !== data.id && (!targetEmail || u.email.toLowerCase() !== targetEmail)
+    );
 
     if (target && store.auditLogs) {
       store.auditLogs.unshift({
@@ -528,14 +611,20 @@ export const removeAdminRole = createServerFn({ method: "POST" })
       });
     }
 
-    saveStoreToDisk();
-
     try {
-      await supabase.from("user_roles").delete().eq("id", data.id);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
+      const isUserUuid = targetUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+      if (isUuid) {
+        await supabase.from("user_roles").delete().eq("id", data.id);
+      }
+      if (isUserUuid) {
+        await supabase.from("user_roles").delete().eq("user_id", targetUserId);
+      }
     } catch {
       // ignore
     }
 
+    saveStoreToDisk();
     return { ok: true };
   });
 
@@ -1059,11 +1148,19 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
   if (!store.partners) store.partners = new Map();
-  const seeded = seedPartners();
-  for (const [k, v] of seeded.entries()) {
-    if (!store.partners.has(k)) {
-      store.partners.set(k, v);
+  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
+
+  const delSet = new Set(store.deletedPartnerIds);
+
+  // Only seed default initial partners if store was never seeded before and is empty
+  if (!store.seededPartners && store.partners.size === 0) {
+    const seeded = seedPartners();
+    for (const [k, v] of seeded.entries()) {
+      if (!delSet.has(k) && !delSet.has(v.slug)) {
+        store.partners.set(k, v);
+      }
     }
+    store.seededPartners = true;
   }
 
   try {
@@ -1073,7 +1170,7 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
       .select("*, category:categories(id, name, slug)");
     if (dbPartners && dbPartners.length > 0) {
       for (const p of dbPartners) {
-        if (!store.partners.has(p.id)) {
+        if (!delSet.has(p.id) && !delSet.has(p.slug) && !store.partners.has(p.id)) {
           store.partners.set(p.id, {
             id: p.id,
             business_name: p.business_name,
@@ -1104,9 +1201,9 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
   }
 
   saveStoreToDisk();
-  return Array.from(store.partners.values()).sort((a, b) =>
-    a.business_name.localeCompare(b.business_name)
-  );
+  return Array.from(store.partners.values())
+    .filter((p) => !delSet.has(p.id) && !delSet.has(p.slug))
+    .sort((a, b) => a.business_name.localeCompare(b.business_name));
 });
 
 const savePartnerSchema = z.object({
@@ -1141,6 +1238,14 @@ export const savePartner = createServerFn({ method: "POST" })
 
     const partnerId = data.id || safeRandomUUID();
     const existing = store.partners.get(partnerId);
+
+    // Validate slug uniqueness on server
+    const targetSlug = data.slug.trim().toLowerCase();
+    for (const [id, p] of store.partners.entries()) {
+      if (id !== partnerId && p.slug.trim().toLowerCase() === targetSlug) {
+        throw new Error(`A partner with slug "${data.slug}" already exists. Please choose a unique slug.`);
+      }
+    }
 
     const partner: V1Partner = {
       id: partnerId,
@@ -1268,34 +1373,175 @@ export const deletePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
-    if (!store.partners || store.partners.size === 0) {
-      store.partners = seedPartners();
+    return await deletePartnerCascadeLogic(data.id, admin.full_name || admin.email);
+  });
+
+// Admin Get Offers
+export const getAdminOffers = createServerFn({ method: "GET" }).handler(async () => {
+  requireAdminAuth();
+  if (!store.offers) store.offers = new Map();
+  if (!store.deletedOfferIds) store.deletedOfferIds = [];
+  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
+
+  const delOfferSet = new Set(store.deletedOfferIds);
+  const delPartnerSet = new Set(store.deletedPartnerIds);
+
+  // Sync / pull from Supabase if available
+  try {
+    const { pub } = await import("./public.functions");
+    const { data: dbOffers } = await pub()
+      .from("offers")
+      .select("*, partner:partners(id, business_name, slug)")
+      .order("created_at", { ascending: false });
+
+    if (dbOffers) {
+      for (const o of dbOffers) {
+        if (!delOfferSet.has(o.id) && !delPartnerSet.has(o.partner_id)) {
+          if (!store.offers.has(o.id)) {
+            store.offers.set(o.id, {
+              id: o.id,
+              partner_id: o.partner_id,
+              title: o.title,
+              description: o.description,
+              discount_type: o.discount_type as any,
+              discount_value: Number(o.discount_value),
+              max_discount: o.max_discount ? Number(o.max_discount) : null,
+              minimum_bill: Number(o.minimum_bill),
+              valid_from: o.valid_from,
+              valid_until: o.valid_until,
+              valid_days: o.valid_days || [0, 1, 2, 3, 4, 5, 6],
+              terms_conditions: o.terms_conditions,
+              usage_limit_type: o.usage_limit_type as any,
+              status: o.status as any,
+              created_at: o.created_at,
+              updated_at: o.updated_at,
+              partner: o.partner ? { id: o.partner.id, business_name: o.partner.business_name, slug: o.partner.slug } : undefined,
+            });
+          }
+        }
+      }
     }
-    const partner = store.partners.get(data.id);
-    if (!partner) throw new Error("Partner not found");
+  } catch {
+    // ignore
+  }
 
-    store.partners.delete(data.id);
+  // Build filtered response
+  const result: V1Offer[] = [];
+  for (const offer of store.offers.values()) {
+    if (delOfferSet.has(offer.id) || delPartnerSet.has(offer.partner_id)) {
+      continue;
+    }
+    const partner = store.partners?.get(offer.partner_id);
+    result.push({
+      ...offer,
+      partner: offer.partner || (partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined),
+    });
+  }
 
+  return result.sort((a, b) => b.created_at.localeCompare(a.created_at));
+});
+
+const saveOfferSchema = z.object({
+  id: z.string().optional(),
+  partner_id: z.string().min(1, "Partner is required"),
+  title: z.string().trim().min(1, "Title is required"),
+  description: z.string().optional().default(""),
+  discount_type: z.enum(["PERCENTAGE", "FIXED"]),
+  discount_value: z.number().positive("Discount value must be positive"),
+  max_discount: z.number().nullable().optional(),
+  minimum_bill: z.number().nonnegative().default(0),
+  valid_from: z.string().nullable().optional(),
+  valid_until: z.string().nullable().optional(),
+  valid_days: z.array(z.number()).default([0, 1, 2, 3, 4, 5, 6]),
+  terms_conditions: z.string().optional().default(""),
+  usage_limit_type: z.literal("UNLIMITED").default("UNLIMITED"),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+// Admin Save (Create / Update) Offer
+export const saveOffer = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => saveOfferSchema.parse(d))
+  .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
+    if (!store.offers) store.offers = new Map();
+    if (!store.deletedOfferIds) store.deletedOfferIds = [];
+
+    const offerId = data.id || safeRandomUUID();
+    const now = new Date().toISOString();
+    const existing = store.offers.get(offerId);
+
+    const partner = store.partners?.get(data.partner_id);
+
+    const offer: V1Offer = {
+      id: offerId,
+      partner_id: data.partner_id,
+      title: data.title,
+      description: data.description || "",
+      discount_type: data.discount_type,
+      discount_value: data.discount_value,
+      max_discount: data.max_discount ?? null,
+      minimum_bill: data.minimum_bill,
+      valid_from: data.valid_from ?? null,
+      valid_until: data.valid_until ?? null,
+      valid_days: data.valid_days,
+      terms_conditions: data.terms_conditions || "",
+      usage_limit_type: "UNLIMITED",
+      status: data.status,
+      created_at: existing ? existing.created_at : now,
+      updated_at: now,
+      partner: partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined,
+    };
+
+    store.offers.set(offerId, offer);
+
+    // Sync to Supabase
     try {
       const { pub } = await import("./public.functions");
-      await pub().from("partners").delete().eq("id", data.id);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offerId);
+      if (isUuid) {
+        const payload = {
+          id: offerId,
+          partner_id: data.partner_id,
+          title: data.title,
+          description: data.description || null,
+          discount_type: data.discount_type,
+          discount_value: data.discount_value,
+          max_discount: data.max_discount ?? null,
+          minimum_bill: data.minimum_bill,
+          valid_from: data.valid_from || null,
+          valid_until: data.valid_until || null,
+          valid_days: data.valid_days,
+          terms_conditions: data.terms_conditions || null,
+          usage_limit_type: "UNLIMITED" as const,
+          status: data.status,
+        };
+        await pub().from("offers").upsert(payload);
+      }
     } catch {
-      // Non-fatal
+      // ignore
     }
 
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
         admin_user_id: admin.id,
-        action: `Deleted Partner: ${partner.business_name}`,
-        target_type: "partner",
-        target_id: data.id,
-        metadata: { name: partner.business_name, slug: partner.slug },
-        created_at: new Date().toISOString(),
+        action: existing ? `Updated Offer: ${offer.title}` : `Created Offer: ${offer.title}`,
+        target_type: "offer",
+        target_id: offerId,
+        metadata: { title: offer.title, partner_id: offer.partner_id },
+        created_at: now,
         who: admin.full_name || admin.email,
       });
     }
 
     saveStoreToDisk();
-    return { ok: true };
+    return { ok: true, offer };
+  });
+
+// Admin Delete Offer
+export const deleteOffer = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
+    return await deleteOfferCascadeLogic(data.id, admin.full_name || admin.email);
   });

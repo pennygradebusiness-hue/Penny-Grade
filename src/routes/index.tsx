@@ -108,12 +108,6 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
           {/* Left Column: Copy & Actions */}
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3.5 py-1 text-xs font-bold text-amber-900 shadow-2xs mb-4">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-            </div>
 
             <h1 className="font-display text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-[54px] leading-[1.06]">
               One Physical Card.{" "}
@@ -796,12 +790,12 @@ export default function Home() {
               </div>
 
               <div className="mt-8 border-t border-slate-200 pt-6">
-                <a
-                  href="mailto:support@pennygrade.com?subject=Partner%20Inquiry%20PennyGrade"
+                <Link
+                  to="/partner-with-us"
                   className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-slate-900 px-6 text-xs font-extrabold text-white shadow-sm transition-all hover:bg-slate-800"
                 >
                   Partner With Us <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
+                </Link>
               </div>
             </article>
 

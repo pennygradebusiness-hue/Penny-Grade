@@ -57,6 +57,9 @@ export const getCategories = createServerFn({ method: "GET" }).handler(async () 
 });
 
 export const getPartners = createServerFn({ method: "GET" }).handler(async () => {
+  const delSet = new Set(store.deletedPartnerIds || []);
+  const delOfferSet = new Set(store.deletedOfferIds || []);
+
   // Fetch existing offers from Supabase if available to attach
   const dbOffersMap = new Map<string, PublicOffer[]>();
   try {
@@ -65,9 +68,12 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
       .select(`id,slug,offers(${OFFER_COLS})`);
     if (dbPartners) {
       for (const p of dbPartners) {
-        if (p.offers && p.offers.length > 0) {
-          dbOffersMap.set(p.id, p.offers as unknown as PublicOffer[]);
-          dbOffersMap.set(p.slug, p.offers as unknown as PublicOffer[]);
+        if (!delSet.has(p.id) && !delSet.has(p.slug) && p.offers && p.offers.length > 0) {
+          const filteredOffers = (p.offers as unknown as PublicOffer[]).filter(
+            (o) => !delOfferSet.has(o.id)
+          );
+          dbOffersMap.set(p.id, filteredOffers);
+          dbOffersMap.set(p.slug, filteredOffers);
         }
       }
     }
@@ -75,31 +81,44 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
     // ignore
   }
 
+  // Also attach offers from store.offers
+  if (store.offers) {
+    for (const off of store.offers.values()) {
+      if (!delOfferSet.has(off.id) && !delSet.has(off.partner_id)) {
+        const po: PublicOffer = {
+          id: off.id,
+          title: off.title,
+          description: off.description || null,
+          discount_type: off.discount_type,
+          discount_value: off.discount_value,
+          max_discount: off.max_discount ?? null,
+          minimum_bill: off.minimum_bill,
+          valid_from: off.valid_from ?? null,
+          valid_until: off.valid_until ?? null,
+          valid_days: off.valid_days,
+          terms_conditions: off.terms_conditions ?? null,
+          usage_limit_type: off.usage_limit_type,
+        };
+        const list = dbOffersMap.get(off.partner_id) || [];
+        if (!list.some((x) => x.id === off.id)) {
+          list.push(po);
+          dbOffersMap.set(off.partner_id, list);
+        }
+      }
+    }
+  }
+
   if (store.partners && store.partners.size > 0) {
     const activePartners = Array.from(store.partners.values())
-      .filter((p) => p.status === "ACTIVE")
+      .filter((p) => p.status === "ACTIVE" && !delSet.has(p.id) && !delSet.has(p.slug))
       .sort((a, b) => {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
         return a.business_name.localeCompare(b.business_name);
       });
 
     return activePartners.map((p) => {
-      const offers = dbOffersMap.get(p.id) || dbOffersMap.get(p.slug) || [
-        {
-          id: `offer-${p.id}`,
-          title: "10% Off",
-          description: "Exclusive discount with PennyGrade membership",
-          discount_type: "PERCENTAGE" as const,
-          discount_value: 10,
-          max_discount: 500,
-          minimum_bill: 300,
-          valid_from: null,
-          valid_until: null,
-          valid_days: [0, 1, 2, 3, 4, 5, 6],
-          terms_conditions: "Valid on presentation of active PennyGrade membership.",
-          usage_limit_type: "UNLIMITED",
-        },
-      ];
+      const rawOffers = dbOffersMap.get(p.id) || dbOffersMap.get(p.slug) || [];
+      const offers = rawOffers.filter((o) => !delOfferSet.has(o.id));
 
       return {
         id: p.id,
@@ -133,15 +152,27 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
     .order("featured", { ascending: false })
     .order("business_name");
   if (error) { console.error(error); return [] as PublicPartner[]; }
-  return (data as unknown as PublicPartner[]).map((p) => ({ ...p, offers: currentOffers(p.offers ?? []) }));
+  return (data as unknown as PublicPartner[])
+    .filter((p) => !delSet.has(p.id) && !delSet.has(p.slug))
+    .map((p) => ({
+      ...p,
+      offers: currentOffers((p.offers ?? []).filter((o) => !delOfferSet.has(o.id))),
+    }));
 });
 
 export const getPartner = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(120) }).parse(d))
   .handler(async ({ data }) => {
+    const delSet = new Set(store.deletedPartnerIds || []);
+    const delOfferSet = new Set(store.deletedOfferIds || []);
+
+    if (delSet.has(data.slug)) {
+      return null;
+    }
+
     if (store.partners && store.partners.size > 0) {
       for (const p of store.partners.values()) {
-        if (p.slug === data.slug && p.status === "ACTIVE") {
+        if (p.slug === data.slug && p.status === "ACTIVE" && !delSet.has(p.id) && !delSet.has(p.slug)) {
           let offers: PublicOffer[] = [];
           try {
             const { data: dbP } = await pub()
@@ -149,29 +180,35 @@ export const getPartner = createServerFn({ method: "GET" })
               .select(`offers(${OFFER_COLS})`)
               .eq("slug", data.slug)
               .maybeSingle();
-            if (dbP?.offers) offers = dbP.offers as unknown as PublicOffer[];
+            if (dbP?.offers) offers = (dbP.offers as unknown as PublicOffer[]).filter((o) => !delOfferSet.has(o.id));
           } catch {
             // ignore
           }
 
-          if (offers.length === 0) {
-            offers = [
-              {
-                id: `offer-${p.id}`,
-                title: "10% Off",
-                description: "Exclusive discount with PennyGrade membership",
-                discount_type: "PERCENTAGE" as const,
-                discount_value: 10,
-                max_discount: 500,
-                minimum_bill: 300,
-                valid_from: null,
-                valid_until: null,
-                valid_days: [0, 1, 2, 3, 4, 5, 6],
-                terms_conditions: "Valid on presentation of active PennyGrade membership.",
-                usage_limit_type: "UNLIMITED",
-              },
-            ];
+          if (store.offers) {
+            for (const off of store.offers.values()) {
+              if (off.partner_id === p.id && !delOfferSet.has(off.id)) {
+                if (!offers.some((x) => x.id === off.id)) {
+                  offers.push({
+                    id: off.id,
+                    title: off.title,
+                    description: off.description || null,
+                    discount_type: off.discount_type,
+                    discount_value: off.discount_value,
+                    max_discount: off.max_discount ?? null,
+                    minimum_bill: off.minimum_bill,
+                    valid_from: off.valid_from ?? null,
+                    valid_until: off.valid_until ?? null,
+                    valid_days: off.valid_days,
+                    terms_conditions: off.terms_conditions ?? null,
+                    usage_limit_type: off.usage_limit_type,
+                  });
+                }
+              }
+            }
           }
+
+
 
           return {
             id: p.id,
@@ -194,7 +231,7 @@ export const getPartner = createServerFn({ method: "GET" })
               name: p.category_name || "General",
               slug: (p.category_name || "general").toLowerCase().replace(/\s+/g, "-"),
             },
-            offers: currentOffers(offers),
+            offers: currentOffers(offers.filter((o) => !delOfferSet.has(o.id))),
           };
         }
       }
@@ -207,6 +244,9 @@ export const getPartner = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) console.error(error);
     if (!p) return null;
+    if (store.deletedPartnerIds?.includes(p.id) || store.deletedPartnerIds?.includes(p.slug)) {
+      return null;
+    }
     const partner = p as unknown as PublicPartner;
     return { ...partner, offers: currentOffers(partner.offers ?? []) };
   });

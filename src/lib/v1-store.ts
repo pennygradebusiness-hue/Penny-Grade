@@ -134,6 +134,30 @@ export interface V1PartnerApplication {
   updated_at: string;
 }
 
+export interface V1Offer {
+  id: string;
+  partner_id: string;
+  title: string;
+  description?: string | null;
+  discount_type: "PERCENTAGE" | "FIXED";
+  discount_value: number;
+  max_discount: number | null;
+  minimum_bill: number;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  valid_days: number[];
+  terms_conditions?: string | null;
+  usage_limit_type: "UNLIMITED";
+  status: "ACTIVE" | "INACTIVE";
+  created_at: string;
+  updated_at: string;
+  partner?: {
+    id: string;
+    business_name: string;
+    slug?: string;
+  };
+}
+
 // Generate crypto-secure PEN-XXXX-XXXX
 export function generatePenCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -219,12 +243,20 @@ export interface PennyGradeStore {
   members: Map<string, V1Member>;
   cards: Map<string, V1PhysicalCard>;
   partners: Map<string, V1Partner>;
+  offers: Map<string, V1Offer>;
   sessions: Map<string, V1VerificationSession>;
   logs: V1VerificationLog[];
   auditLogs: V1AuditLog[];
   adminUsers: V1AdminUser[];
   memberApplications: V1MemberApplication[];
   partnerApplications: V1PartnerApplication[];
+  deletedPartnerIds: string[];
+  deletedOfferIds: string[];
+  deletedMemberIds: string[];
+  deletedAdminUserIds: string[];
+  seededPartners?: boolean;
+  seededOffers?: boolean;
+  seededAdminUsers?: boolean;
 }
 
 // Server in-memory store with persistence across server function invocations
@@ -247,15 +279,23 @@ export function saveStoreToDisk(): void {
       fs.mkdirSync(dir, { recursive: true });
     }
     const serialized = {
-      members: Array.from(s.members.entries()),
-      cards: Array.from(s.cards.entries()),
+      members: Array.from(s.members?.entries() || []),
+      cards: Array.from(s.cards?.entries() || []),
       partners: Array.from(s.partners?.entries() || []),
-      sessions: Array.from(s.sessions.entries()),
-      logs: s.logs,
-      auditLogs: s.auditLogs,
-      adminUsers: s.adminUsers,
+      offers: Array.from(s.offers?.entries() || []),
+      sessions: Array.from(s.sessions?.entries() || []),
+      logs: s.logs || [],
+      auditLogs: s.auditLogs || [],
+      adminUsers: s.adminUsers || [],
       memberApplications: s.memberApplications || [],
       partnerApplications: s.partnerApplications || [],
+      deletedPartnerIds: s.deletedPartnerIds || [],
+      deletedOfferIds: s.deletedOfferIds || [],
+      deletedMemberIds: s.deletedMemberIds || [],
+      deletedAdminUserIds: s.deletedAdminUserIds || [],
+      seededPartners: s.seededPartners ?? true,
+      seededOffers: s.seededOffers ?? true,
+      seededAdminUsers: s.seededAdminUsers ?? true,
     };
     fs.writeFileSync(STORE_PATH, JSON.stringify(serialized, null, 2), "utf-8");
   } catch (err) {
@@ -405,29 +445,258 @@ export function seedPartners(): Map<string, V1Partner> {
   return map;
 }
 
+export function seedOffers(): Map<string, V1Offer> {
+  const map = new Map<string, V1Offer>();
+  const initial: V1Offer[] = [
+    {
+      id: "cebaa271-929a-4fae-9f53-b5008ba5f6a0",
+      partner_id: "c55b653f-1445-44f8-896e-c0cd58dc2a31",
+      title: "10% Off",
+      description: "10% off your total bill",
+      discount_type: "PERCENTAGE",
+      discount_value: 10,
+      max_discount: 500,
+      minimum_bill: 500,
+      valid_from: null,
+      valid_until: null,
+      valid_days: [0, 1, 2, 3, 4, 5, 6],
+      terms_conditions: "Valid on dine-in bills only. Cannot be combined with other offers.",
+      usage_limit_type: "UNLIMITED",
+      status: "ACTIVE",
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+      partner: {
+        id: "c55b653f-1445-44f8-896e-c0cd58dc2a31",
+        business_name: "ABC Café",
+        slug: "abc-cafe",
+      },
+    },
+    {
+      id: "5a0e7b6c-2429-4c17-8e9b-a4aeb11b67bb",
+      partner_id: "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
+      title: "15% Off",
+      description: "15% off on all beverages and food",
+      discount_type: "PERCENTAGE",
+      discount_value: 15,
+      max_discount: 300,
+      minimum_bill: 300,
+      valid_from: null,
+      valid_until: null,
+      valid_days: [0, 1, 2, 3, 4, 5, 6],
+      terms_conditions: "Valid on dine-in and takeaway. Cannot be combined with other offers.",
+      usage_limit_type: "UNLIMITED",
+      status: "ACTIVE",
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+      partner: {
+        id: "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
+        business_name: "Urban Brew",
+        slug: "urban-brew",
+      },
+    },
+    {
+      id: "a8577aa3-f4ab-4008-87e0-421841a7925e",
+      partner_id: "9d919438-8783-49dc-a755-a9e873473614",
+      title: "20% Off Stays",
+      description: "20% off room bookings and dining",
+      discount_type: "PERCENTAGE",
+      discount_value: 20,
+      max_discount: 2000,
+      minimum_bill: 1500,
+      valid_from: null,
+      valid_until: null,
+      valid_days: [0, 1, 2, 3, 4, 5, 6],
+      terms_conditions: "Prior reservation required. Subject to availability.",
+      usage_limit_type: "UNLIMITED",
+      status: "ACTIVE",
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+      partner: {
+        id: "9d919438-8783-49dc-a755-a9e873473614",
+        business_name: "The Grand Stay",
+        slug: "the-grand-stay",
+      },
+    },
+    {
+      id: "a31dd0f9-7ee2-48b8-9388-571a55f39bbc",
+      partner_id: "d505adee-d353-4c15-873f-02346ef859d3",
+      title: "₹300 Off",
+      description: "₹300 off on services above ₹1000",
+      discount_type: "FIXED",
+      discount_value: 300,
+      max_discount: null,
+      minimum_bill: 1000,
+      valid_from: null,
+      valid_until: null,
+      valid_days: [0, 1, 2, 3, 4, 5, 6],
+      terms_conditions: "Valid on hair and skin services. Prior booking advised.",
+      usage_limit_type: "UNLIMITED",
+      status: "ACTIVE",
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+      partner: {
+        id: "d505adee-d353-4c15-873f-02346ef859d3",
+        business_name: "Glow Salon",
+        slug: "glow-salon",
+      },
+    },
+    {
+      id: "266fdb60-9098-4afc-b033-232b209f06e7",
+      partner_id: "32ac0228-708f-4617-9c51-f876365f658b",
+      title: "12% Off Memberships",
+      description: "12% off quarterly and annual gym memberships",
+      discount_type: "PERCENTAGE",
+      discount_value: 12,
+      max_discount: 1000,
+      minimum_bill: 2000,
+      valid_from: null,
+      valid_until: null,
+      valid_days: [0, 1, 2, 3, 4, 5, 6],
+      terms_conditions: "Valid on new gym memberships and renewals.",
+      usage_limit_type: "UNLIMITED",
+      status: "ACTIVE",
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+      partner: {
+        id: "32ac0228-708f-4617-9c51-f876365f658b",
+        business_name: "FitZone",
+        slug: "fitzone",
+      },
+    },
+    {
+      id: "c7df7a4d-8eb7-4680-9e23-b6b3d2db40e3",
+      partner_id: "96406673-ccd2-4948-9936-a5b3c9ad0292",
+      title: "10% Off",
+      description: "10% off total dining bill",
+      discount_type: "PERCENTAGE",
+      discount_value: 10,
+      max_discount: 500,
+      minimum_bill: 800,
+      valid_from: null,
+      valid_until: null,
+      valid_days: [0, 1, 2, 3, 4, 5, 6],
+      terms_conditions: "Valid on food and beverages. Dine-in only.",
+      usage_limit_type: "UNLIMITED",
+      status: "ACTIVE",
+      created_at: "2026-10-11T06:08:58.426Z",
+      updated_at: "2026-10-11T06:08:58.426Z",
+      partner: {
+        id: "96406673-ccd2-4948-9936-a5b3c9ad0292",
+        business_name: "Saffron Table",
+        slug: "saffron-table",
+      },
+    },
+  ];
+  for (const o of initial) {
+    map.set(o.id, o);
+  }
+  return map;
+}
+
 function loadStoreFromDisk(): PennyGradeStore | null {
   try {
     if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, "utf-8");
       if (!raw || !raw.trim()) return null;
       const parsed = JSON.parse(raw);
-      const partners = new Map<string, V1Partner>(parsed.partners || []);
-      const seeded = seedPartners();
-      for (const [k, v] of seeded.entries()) {
-        if (!partners.has(k)) {
-          partners.set(k, v);
+
+      const deletedPartnerIds: string[] = Array.isArray(parsed.deletedPartnerIds) ? parsed.deletedPartnerIds : [];
+      const deletedOfferIds: string[] = Array.isArray(parsed.deletedOfferIds) ? parsed.deletedOfferIds : [];
+      const deletedMemberIds: string[] = Array.isArray(parsed.deletedMemberIds) ? parsed.deletedMemberIds : [];
+      const deletedAdminUserIds: string[] = Array.isArray(parsed.deletedAdminUserIds) ? parsed.deletedAdminUserIds : [];
+      const seededPartners: boolean = parsed.seededPartners ?? true;
+      const seededOffers: boolean = parsed.seededOffers ?? true;
+      const seededAdminUsers: boolean = parsed.seededAdminUsers ?? true;
+
+      const delPartnerSet = new Set(deletedPartnerIds);
+      const delOfferSet = new Set(deletedOfferIds);
+      const delMemberSet = new Set(deletedMemberIds);
+      const delAdminSet = new Set(deletedAdminUserIds.map((x: string) => x.toLowerCase()));
+
+      // Load partners: ignore any in delPartnerSet
+      const partners = new Map<string, V1Partner>();
+      if (Array.isArray(parsed.partners)) {
+        for (const [k, v] of parsed.partners) {
+          if (!delPartnerSet.has(k) && !delPartnerSet.has((v as V1Partner)?.slug)) {
+            partners.set(k, v);
+          }
         }
       }
+
+      // Only seed initial default partners if store was never seeded before and is empty
+      if (!parsed.seededPartners && partners.size === 0) {
+        const seeded = seedPartners();
+        for (const [k, v] of seeded.entries()) {
+          if (!delPartnerSet.has(k) && !delPartnerSet.has(v.slug)) {
+            partners.set(k, v);
+          }
+        }
+      }
+
+      // Load offers: ignore any in delOfferSet OR belonging to deleted partner
+      const offers = new Map<string, V1Offer>();
+      if (Array.isArray(parsed.offers)) {
+        for (const [k, v] of parsed.offers) {
+          const offer = v as V1Offer;
+          if (
+            !delOfferSet.has(k) &&
+            !delOfferSet.has(offer?.id) &&
+            !delPartnerSet.has(offer?.partner_id)
+          ) {
+            offers.set(k, offer);
+          }
+        }
+      }
+
+      // Only seed initial default offers if store was never seeded before and is empty
+      if (!parsed.seededOffers && offers.size === 0) {
+        const seeded = seedOffers();
+        for (const [k, v] of seeded.entries()) {
+          if (!delOfferSet.has(k) && !delPartnerSet.has(v.partner_id)) {
+            offers.set(k, v);
+          }
+        }
+      }
+
+      // Load members: ignore any in delMemberSet
+      const members = new Map<string, V1Member>();
+      if (Array.isArray(parsed.members)) {
+        for (const [k, v] of parsed.members) {
+          if (!delMemberSet.has(k) && !delMemberSet.has((v as V1Member)?.membership_number)) {
+            members.set(k, v);
+          }
+        }
+      }
+
+      // Load admin users: ignore any in delAdminSet
+      let adminUsers: V1AdminUser[] = [];
+      if (Array.isArray(parsed.adminUsers)) {
+        adminUsers = parsed.adminUsers.filter(
+          (u: V1AdminUser) =>
+            !delAdminSet.has(u.id?.toLowerCase()) &&
+            !delAdminSet.has(u.user_id?.toLowerCase()) &&
+            !delAdminSet.has(u.email?.toLowerCase())
+        );
+      }
+
       return {
-        members: new Map(parsed.members || []),
+        members,
         cards: new Map(parsed.cards || []),
         partners,
+        offers,
         sessions: new Map(parsed.sessions || []),
         logs: parsed.logs || [],
         auditLogs: parsed.auditLogs || [],
-        adminUsers: parsed.adminUsers || [],
+        adminUsers,
         memberApplications: parsed.memberApplications || [],
         partnerApplications: parsed.partnerApplications || [],
+        deletedPartnerIds,
+        deletedOfferIds,
+        deletedMemberIds,
+        deletedAdminUserIds,
+        seededPartners,
+        seededOffers,
+        seededAdminUsers,
       };
     }
   } catch (err) {
@@ -437,8 +706,6 @@ function loadStoreFromDisk(): PennyGradeStore | null {
 }
 
 function seedAdminUsers(): V1AdminUser[] {
-  const nowMs = Date.now();
-  const dayMs = 864e5;
   return [
     {
       id: "admin-primary-owner",
@@ -446,60 +713,63 @@ function seedAdminUsers(): V1AdminUser[] {
       full_name: "PennyGrade Business",
       email: "pennygradebusiness@gmail.com",
       role: "super_admin",
-      temporary_password: "admin123",
-      created_at: new Date(nowMs - 30 * dayMs).toISOString(),
-    },
-    {
-      id: "admin-user-2",
-      user_id: "uid-rajesh-002",
-      full_name: "Rajesh Sharma",
-      email: "rajesh.manager@pennygrade.com",
-      role: "manager",
-      temporary_password: "Penny@2026",
-      created_at: new Date(nowMs - 20 * dayMs).toISOString(),
-    },
-    {
-      id: "admin-user-3",
-      user_id: "uid-priya-003",
-      full_name: "Priya Patel",
-      email: "priya.cards@pennygrade.com",
-      role: "membership_manager",
-      temporary_password: "Penny@2026",
-      created_at: new Date(nowMs - 14 * dayMs).toISOString(),
-    },
-    {
-      id: "admin-user-4",
-      user_id: "uid-amit-004",
-      full_name: "Amit Verma",
-      email: "amit.support@pennygrade.com",
-      role: "support",
-      temporary_password: "Penny@2026",
-      created_at: new Date(nowMs - 7 * dayMs).toISOString(),
+      is_password_set: false,
+      created_at: new Date().toISOString(),
     },
   ];
 }
 
 function initStore(): PennyGradeStore {
-  if (globalThis.__pennyGradeStore) {
-    return globalThis.__pennyGradeStore;
-  }
-
   // 1. Try to load saved store from disk
   const fromDisk = loadStoreFromDisk();
   if (fromDisk && fromDisk.cards && fromDisk.cards.size >= 25) {
-    // If cards exist on disk, use them directly
-    if (!fromDisk.partners || fromDisk.partners.size === 0) {
+    if (!fromDisk.deletedPartnerIds) fromDisk.deletedPartnerIds = [];
+    if (!fromDisk.deletedOfferIds) fromDisk.deletedOfferIds = [];
+    if (!fromDisk.deletedMemberIds) fromDisk.deletedMemberIds = [];
+    if (!fromDisk.deletedAdminUserIds) fromDisk.deletedAdminUserIds = [];
+
+    // If partners empty and never seeded, seed once
+    if (!fromDisk.seededPartners && (!fromDisk.partners || fromDisk.partners.size === 0)) {
       fromDisk.partners = seedPartners();
+      fromDisk.seededPartners = true;
     }
-    // Ensure applications arrays are defined
+
+    // Initialize offers
+    if (!fromDisk.offers) {
+      fromDisk.offers = new Map();
+    }
+    if (!fromDisk.seededOffers && fromDisk.offers.size === 0) {
+      const seeded = seedOffers();
+      const delPartnerSet = new Set(fromDisk.deletedPartnerIds);
+      const delOfferSet = new Set(fromDisk.deletedOfferIds);
+      for (const [k, v] of seeded.entries()) {
+        if (!delOfferSet.has(k) && !delPartnerSet.has(v.partner_id)) {
+          fromDisk.offers.set(k, v);
+        }
+      }
+      fromDisk.seededOffers = true;
+    }
+
+    // Clean up any stale offers belonging to deleted partners
+    for (const [id, o] of Array.from(fromDisk.offers.entries())) {
+      if (fromDisk.deletedPartnerIds.includes(o.partner_id) || fromDisk.deletedOfferIds.includes(id)) {
+        fromDisk.offers.delete(id);
+        if (!fromDisk.deletedOfferIds.includes(id)) {
+          fromDisk.deletedOfferIds.push(id);
+        }
+      }
+    }
+
     if (!fromDisk.memberApplications) fromDisk.memberApplications = [];
     if (!fromDisk.partnerApplications) fromDisk.partnerApplications = [];
-    if (!fromDisk.adminUsers || fromDisk.adminUsers.length === 0) {
+    if (!fromDisk.seededAdminUsers && (!fromDisk.adminUsers || fromDisk.adminUsers.length === 0)) {
       fromDisk.adminUsers = seedAdminUsers();
+      fromDisk.seededAdminUsers = true;
     } else {
-      // Cleanse old samir@pennygrade.com and ensure primary owner is pennygradebusiness@gmail.com
-      fromDisk.adminUsers = fromDisk.adminUsers.filter((u) => u.email.toLowerCase() !== "samir@pennygrade.com");
-      if (!fromDisk.adminUsers.some((u) => u.email.toLowerCase() === "pennygradebusiness@gmail.com")) {
+      // Ensure primary owner exists if not explicitly revoked
+      fromDisk.adminUsers = fromDisk.adminUsers.filter((u) => u.email.toLowerCase() !== "samir@pennygrade.in");
+      const delAdminSet = new Set((fromDisk.deletedAdminUserIds || []).map((x) => x.toLowerCase()));
+      if (!delAdminSet.has("pennygradebusiness@gmail.com") && !fromDisk.adminUsers.some((u) => u.email.toLowerCase() === "pennygradebusiness@gmail.com")) {
         fromDisk.adminUsers.unshift({
           id: "admin-primary-owner",
           user_id: "uid-primary-owner",
@@ -580,77 +850,8 @@ function initStore(): PennyGradeStore {
   const logs: V1VerificationLog[] = [];
   const auditLogs: V1AuditLog[] = seedAuditList();
   const adminUsers: V1AdminUser[] = seedAdminUsers();
-  const memberApplications: V1MemberApplication[] = [
-    {
-      id: "app-mem-001",
-      application_number: "PGM-2026-0812",
-      full_name: "Vikramaditya Singh",
-      mobile: "9835123456",
-      email: "vikram.singh@gmail.com",
-      city: "Daltonganj",
-      plan_name: "PennyGrade 6-Month Membership",
-      delivery_preference: "Physical Card Handover at Red Cross Mor",
-      payment_preference: "Pay on Card Delivery",
-      notes: "Looking forward to using at ABC Café and FitZone",
-      status: "PENDING_VERIFICATION",
-      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-      updated_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    },
-    {
-      id: "app-mem-002",
-      application_number: "PGM-2026-0811",
-      full_name: "Ananya Mukherjee",
-      mobile: "9431187654",
-      email: "ananya.m@outlook.com",
-      city: "Daltonganj",
-      plan_name: "PennyGrade 6-Month Membership",
-      delivery_preference: "Courier to College Road",
-      payment_preference: "UPI Verification",
-      notes: "Interested in Glow Salon and restaurant discounts",
-      status: "CONTACTED",
-      created_at: new Date(Date.now() - 3600000 * 26).toISOString(),
-      updated_at: new Date(Date.now() - 3600000 * 12).toISOString(),
-    },
-  ];
-
-  const partnerApplications: V1PartnerApplication[] = [
-    {
-      id: "app-ptr-001",
-      application_number: "PGP-2026-0301",
-      business_name: "Mocha Delight Bakery",
-      category_name: "Cafés",
-      contact_name: "Deepak Agrawal",
-      mobile: "9123456780",
-      email: "deepak@mochadelight.com",
-      city: "Daltonganj",
-      address: "Main Market, Near Clock Tower",
-      proposed_discount: "15% Off on Bakery & Beverages",
-      minimum_bill: "₹300",
-      business_hours: "9:00 AM – 10:00 PM",
-      notes: "High footfall bakery, want to install acrylic QR standee at counter.",
-      status: "PENDING_REVIEW",
-      created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
-      updated_at: new Date(Date.now() - 3600000 * 8).toISOString(),
-    },
-    {
-      id: "app-ptr-002",
-      application_number: "PGP-2026-0300",
-      business_name: "Iron Core Gym & Crossfit",
-      category_name: "Fitness",
-      contact_name: "Suresh Yadav",
-      mobile: "9934123890",
-      email: "suresh@ironcoregym.in",
-      city: "Daltonganj",
-      address: "Shahpur Road, By-Pass",
-      proposed_discount: "20% Off on Monthly & Annual Packages",
-      minimum_bill: "₹1,000",
-      business_hours: "5:30 AM – 9:30 PM",
-      notes: "Wish to attract corporate and student crowd with PennyGrade.",
-      status: "CONTACTED",
-      created_at: new Date(Date.now() - 3600000 * 30).toISOString(),
-      updated_at: new Date(Date.now() - 3600000 * 10).toISOString(),
-    },
-  ];
+  const memberApplications: V1MemberApplication[] = [];
+  const partnerApplications: V1PartnerApplication[] = [];
 
   // Seed default Samir Pandey member matching acceptance criteria
   const today = new Date().toISOString().slice(0, 10);
@@ -706,52 +907,24 @@ function initStore(): PennyGradeStore {
     });
   }
 
-  // Seed initial realistic verification logs across multiple partners
-  const seededPartners = [
-    { id: "partner-abc", name: "ABC Café", offer: "10% Off", discPct: 0.1 },
-    { id: "partner-biryani", name: "Royal Biryani House", offer: "15% Off", discPct: 0.15 },
-    { id: "partner-gym", name: "Urban Fitness", offer: "20% Off", discPct: 0.2 },
-    { id: "partner-brew", name: "The Grand Brew", offer: "10% Off", discPct: 0.1 },
-    { id: "partner-bawarchi", name: "Bawarchi Express", offer: "12% Off", discPct: 0.12 },
-  ];
-
-  const nowMs = Date.now();
-  const dayMs = 864e5;
-  const sampleBills = [1500, 2400, 850, 3200, 1100, 1850, 2900, 950, 4100, 1600, 2200, 1350, 3600, 890];
-
-  sampleBills.forEach((bill, idx) => {
-    const p = seededPartners[idx % seededPartners.length];
-    const discount = Math.round(bill * p.discPct);
-    const finalAmt = bill - discount;
-    const createdAt = new Date(nowMs - (idx * 2.5 + 0.5) * dayMs).toISOString();
-
-    logs.push({
-      id: `log-seed-${idx + 1}`,
-      verification_session_id: safeRandomUUID(),
-      membership_id: defaultMemberId,
-      membership_number: "PEN-7X4P-92LM",
-      partner_id: p.id,
-      partner_name: p.name,
-      offer_id: `offer-seed-${p.id}`,
-      offer_title: p.offer,
-      bill_amount: bill,
-      discount_amount: discount,
-      final_amount: finalAmt,
-      status: "VERIFIED",
-      created_at: createdAt,
-    });
-  });
-
   globalThis.__pennyGradeStore = {
     members,
     cards,
     partners: seedPartners(),
+    offers: seedOffers(),
     sessions,
     logs,
     auditLogs,
     adminUsers,
     memberApplications,
     partnerApplications,
+    deletedPartnerIds: [],
+    deletedOfferIds: [],
+    deletedMemberIds: [],
+    deletedAdminUserIds: [],
+    seededPartners: true,
+    seededOffers: true,
+    seededAdminUsers: true,
   };
 
   // Save to disk immediately

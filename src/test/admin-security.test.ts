@@ -89,4 +89,31 @@ describe("PennyGrade Comprehensive Security & Hardening Tests", () => {
       }
     });
   });
+
+  describe("Administrative Authentication & Ownership Hardening", () => {
+    it("strictly rejects the removed mock credentials (admin@pennygrade.in / admin123)", async () => {
+      const { verifyAdminLoginCredentialsLogic } = await import("@/lib/v1-logic");
+      const res = verifyAdminLoginCredentialsLogic({
+        email: "admin@pennygrade.in",
+        password: "admin123",
+      });
+      expect(res.ok).toBe(false);
+      expect(res.message).toBe("Invalid administrator credentials.");
+    });
+
+    it("prevents demotion of the primary owner (pennygradebusiness@gmail.com)", async () => {
+      const { addAdminLogic } = await import("@/lib/v1-logic");
+      expect(() => {
+        addAdminLogic({
+          email: "pennygradebusiness@gmail.com",
+          role: "manager",
+        });
+      }).toThrow(/primary system owner/);
+    });
+
+    it("guarantees verification logs and sessions are cleanly initialized with zero mock data", () => {
+      expect(store.logs.length).toBe(0);
+      expect(store.sessions.size).toBe(0);
+    });
+  });
 });

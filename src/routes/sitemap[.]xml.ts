@@ -57,16 +57,26 @@ export const Route = createFileRoute("/sitemap.xml")({
           { loc: `${origin}/partner-with-us`, priority: "0.8", changefreq: "weekly" },
           { loc: `${origin}/terms`, priority: "0.3", changefreq: "monthly" },
           { loc: `${origin}/privacy`, priority: "0.3", changefreq: "monthly" },
+          { loc: `${origin}/merchant-agreement`, priority: "0.3", changefreq: "monthly" },
+          { loc: `${origin}/membership-terms`, priority: "0.3", changefreq: "monthly" },
+          { loc: `${origin}/disclaimer`, priority: "0.3", changefreq: "monthly" },
         ];
 
-        // 2. Dynamically load verified, ACTIVE partner outlets
+        // 2. Dynamically load verified, ACTIVE partner outlets (filtering out any deleted partners)
         const partnerEntries: SitemapUrlEntry[] = [];
         const seenSlugs = new Set<string>();
+        const delPartnerSet = new Set(store.deletedPartnerIds || []);
 
         // Check in-memory store first
         if (store.partners && store.partners.size > 0) {
           for (const partner of store.partners.values()) {
-            if (partner.status === "ACTIVE" && partner.slug && !seenSlugs.has(partner.slug)) {
+            if (
+              partner.status === "ACTIVE" &&
+              partner.slug &&
+              !delPartnerSet.has(partner.id) &&
+              !delPartnerSet.has(partner.slug) &&
+              !seenSlugs.has(partner.slug)
+            ) {
               seenSlugs.add(partner.slug);
               partnerEntries.push({
                 loc: `${origin}/partners/${escapeXml(partner.slug)}`,
@@ -93,12 +103,12 @@ export const Route = createFileRoute("/sitemap.xml")({
             });
             const { data, error } = await sb
               .from("partners")
-              .select("slug,updated_at,status")
+              .select("id,slug,updated_at,status")
               .eq("status", "ACTIVE");
 
             if (!error && data) {
               for (const p of data) {
-                if (p.slug && !seenSlugs.has(p.slug)) {
+                if (p.slug && !delPartnerSet.has(p.id) && !delPartnerSet.has(p.slug) && !seenSlugs.has(p.slug)) {
                   seenSlugs.add(p.slug);
                   partnerEntries.push({
                     loc: `${origin}/partners/${escapeXml(p.slug)}`,

@@ -40,7 +40,7 @@ export function getSiteUrl(): string {
     rawUrl = process.env.VITE_SITE_URL || process.env.SITE_URL;
   }
 
-  const base = rawUrl ? rawUrl.trim() : "https://pennygrade.com";
+  const base = rawUrl ? rawUrl.trim() : "https://pennygrade.in";
   // Normalize: ensure HTTPS in production / strip trailing slash
   return base.replace(/\/+$/, "");
 }
@@ -161,7 +161,8 @@ export function buildOrganizationSchema() {
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Support",
-      email: "support@pennygrade.com",
+      email: "pennygradebusiness@gmail.com",
+      telephone: "+91-93568-97893",
       areaServed: "IN",
       availableLanguage: ["English", "Hindi"],
     },

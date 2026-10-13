@@ -40,8 +40,8 @@ export const Route = createFileRoute("/_authenticated")({
         }
         try {
           const parsed = JSON.parse(raw);
-          if (parsed && (parsed.email || parsed.role === "super_admin")) {
-            return { user: { id: parsed.id ?? "admin-local", email: parsed.email ?? "admin@pennygrade.com" } };
+          if (parsed && parsed.id && parsed.email) {
+            return { user: { id: parsed.id, email: parsed.email } };
           }
         } catch {
           // ignore

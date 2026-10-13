@@ -520,18 +520,18 @@ function BecomeAMemberPage() {
 
               <div className="mt-4 space-y-2 text-xs">
                 <a
-                  href="tel:+919919897039"
+                  href="tel:+919356897893"
                   className="flex items-center gap-2 font-semibold text-slate-800 hover:text-amber-600 transition-colors"
                 >
                   <Phone className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Call: +91 99198 97039</span>
+                  <span>Call: +91 93568 97893</span>
                 </a>
                 <a
-                  href="mailto:support@pennygrade.com"
+                  href="mailto:pennygradebusiness@gmail.com"
                   className="flex items-center gap-2 font-semibold text-slate-800 hover:text-amber-600 transition-colors"
                 >
                   <Mail className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Email: support@pennygrade.com</span>
+                  <span>Email: pennygradebusiness@gmail.com</span>
                 </a>
               </div>
             </div>

@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as BecomeAMemberRouteImport } from './routes/become-a-member'
+import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MembershipTermsRouteImport } from './routes/membership-terms'
+import { Route as MerchantAgreementRouteImport } from './routes/merchant-agreement'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as PartnerWithUsRouteImport } from './routes/partner-with-us'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -59,6 +62,11 @@ const BecomeAMemberRoute = BecomeAMemberRouteImport.update({
   path: '/become-a-member',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DisclaimerRoute = DisclaimerRouteImport.update({
+  id: '/disclaimer',
+  path: '/disclaimer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -72,6 +80,16 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipTermsRoute = MembershipTermsRouteImport.update({
+  id: '/membership-terms',
+  path: '/membership-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantAgreementRoute = MerchantAgreementRouteImport.update({
+  id: '/merchant-agreement',
+  path: '/merchant-agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OffersRoute = OffersRouteImport.update({
@@ -236,9 +254,12 @@ const AuthenticatedAdminVerificationsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/membership-terms': typeof MembershipTermsRoute
+  '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
   '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
@@ -272,9 +293,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/membership-terms': typeof MembershipTermsRoute
+  '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
   '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
@@ -309,9 +333,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/become-a-member': typeof BecomeAMemberRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/membership-terms': typeof MembershipTermsRoute
+  '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
   '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
@@ -347,9 +374,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/become-a-member'
+    | '/disclaimer'
     | '/history'
     | '/how-it-works'
     | '/login'
+    | '/membership-terms'
+    | '/merchant-agreement'
     | '/offers'
     | '/partner-with-us'
     | '/privacy'
@@ -383,9 +413,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/become-a-member'
+    | '/disclaimer'
     | '/history'
     | '/how-it-works'
     | '/login'
+    | '/membership-terms'
+    | '/merchant-agreement'
     | '/offers'
     | '/partner-with-us'
     | '/privacy'
@@ -419,9 +452,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/become-a-member'
+    | '/disclaimer'
     | '/history'
     | '/how-it-works'
     | '/login'
+    | '/membership-terms'
+    | '/merchant-agreement'
     | '/offers'
     | '/partner-with-us'
     | '/privacy'
@@ -457,9 +493,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   BecomeAMemberRoute: typeof BecomeAMemberRoute
+  DisclaimerRoute: typeof DisclaimerRoute
   HistoryRoute: typeof HistoryRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
+  MembershipTermsRoute: typeof MembershipTermsRoute
+  MerchantAgreementRoute: typeof MerchantAgreementRoute
   OffersRoute: typeof OffersRoute
   PartnerWithUsRoute: typeof PartnerWithUsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -496,6 +535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BecomeAMemberRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/disclaimer': {
+      id: '/disclaimer'
+      path: '/disclaimer'
+      fullPath: '/disclaimer'
+      preLoaderRoute: typeof DisclaimerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
@@ -515,6 +561,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-terms': {
+      id: '/membership-terms'
+      path: '/membership-terms'
+      fullPath: '/membership-terms'
+      preLoaderRoute: typeof MembershipTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merchant-agreement': {
+      id: '/merchant-agreement'
+      path: '/merchant-agreement'
+      fullPath: '/merchant-agreement'
+      preLoaderRoute: typeof MerchantAgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offers': {
@@ -781,9 +841,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   BecomeAMemberRoute: BecomeAMemberRoute,
+  DisclaimerRoute: DisclaimerRoute,
   HistoryRoute: HistoryRoute,
   HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,
+  MembershipTermsRoute: MembershipTermsRoute,
+  MerchantAgreementRoute: MerchantAgreementRoute,
   OffersRoute: OffersRoute,
   PartnerWithUsRoute: PartnerWithUsRoute,
   PrivacyRoute: PrivacyRoute,

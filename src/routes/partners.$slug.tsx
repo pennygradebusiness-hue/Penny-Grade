@@ -180,7 +180,7 @@ function PartnerPage() {
   const [calcBill, setCalcBill] = useState("1000");
 
   if (!p) return null;
-  const offer = p.offers[0];
+  const offer = p.offers && p.offers.length > 0 ? p.offers[0] : null;
   const coverUrl = p.cover_image_url || getCategoryCover(p.category?.name);
 
   // Bill savings calculation
@@ -648,7 +648,7 @@ function PartnerPage() {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-display text-base font-black text-[#c25e36]">
-                  {offer ? offerHeadline(offer) : "Member Offer"}
+                  {offer ? offerHeadline(offer) : "New Partner"}
                 </span>
                 <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-800 border border-amber-200/60">
                   Unlimited

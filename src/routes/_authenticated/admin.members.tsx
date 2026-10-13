@@ -61,9 +61,13 @@ function Members() {
     queryKey: ["admin", "members"],
     queryFn: async () => {
       // Fetch from V1 store
-      const storeMembers = await fetchMembersFn();
-      if (storeMembers && storeMembers.length > 0) {
-        return storeMembers as unknown as Row[];
+      try {
+        const storeMembers = await fetchMembersFn();
+        if (Array.isArray(storeMembers)) {
+          return storeMembers as unknown as Row[];
+        }
+      } catch (err) {
+        console.warn("fetchMembersFn failed, falling back to Supabase query:", err);
       }
 
       // Fallback query to Supabase if any exist
@@ -122,6 +126,18 @@ function Members() {
     if (!confirm(`Are you sure you want to permanently delete member "${m.full_name}" (${m.membership_number})? This action cannot be undone.`)) return;
     try {
       await deleteMemberFn({ data: { id: m.id } });
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id);
+        if (isUuid) {
+          await supabase.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", m.id);
+          await supabase.from("memberships").delete().eq("id", m.id);
+        }
+        if (m.membership_number) {
+          await supabase.from("memberships").delete().eq("membership_number", m.membership_number);
+        }
+      } catch {
+        // ignore
+      }
       toast.success(`Member "${m.full_name}" deleted`);
       refresh();
     } catch (err: any) {

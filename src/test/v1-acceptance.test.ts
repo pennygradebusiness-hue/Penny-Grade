@@ -194,7 +194,7 @@ describe("PennyGrade V1 Final Acceptance Criteria & Security Tests", () => {
 
   it("allows superadmin to create another superadmin with temporary password and complete first-time login", async () => {
     // 1. Super Admin creates a new Super Admin with an auto/custom temporary password
-    const newAdminEmail = "newsuper@pennygrade.com";
+    const newAdminEmail = "newsuper@pennygrade.in";
     const res = addAdminLogic({
       email: newAdminEmail,
       role: "super_admin",

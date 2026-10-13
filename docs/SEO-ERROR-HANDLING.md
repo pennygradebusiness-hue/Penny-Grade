@@ -59,7 +59,7 @@ Route-level document head metadata is constructed via `buildPageHead`:
   - `/history/`
   - `/login`
   - `/register`
-- Explicitly declares production sitemap: `Sitemap: https://pennygrade.com/sitemap.xml`.
+- Explicitly declares production sitemap: `Sitemap: https://pennygrade.in/sitemap.xml`.
 
 ### 3.2 Dynamic XML Sitemap (`src/routes/sitemap[.]xml.ts`)
 - Serves compliant XML adhering to standard Sitemap Schema 0.9.
@@ -174,8 +174,8 @@ Configure the following environment variables in your hosting environment (e.g.,
 
 ```ini
 # Production Origin (Authoritative Canonical Domain)
-SITE_URL="https://pennygrade.com"
-VITE_SITE_URL="https://pennygrade.com"
+SITE_URL="https://pennygrade.in"
+VITE_SITE_URL="https://pennygrade.in"
 
 # Supabase Project Credentials (Publishable anon key only for client)
 SUPABASE_PROJECT_ID="your-project-id"
@@ -195,18 +195,18 @@ VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key"
 ## 8. Google Search Console & Production Readiness Checklist
 
 ### Step 1: Domain Verification
-- Add `pennygrade.com` as a Domain property in [Google Search Console](https://search.google.com/search-console).
+- Add `pennygrade.in` as a Domain property in [Google Search Console](https://search.google.com/search-console).
 - Add the Google TXT verification record to the DNS provider (Cloudflare, Namecheap, Route 53, etc.).
 
 ### Step 2: Submit Sitemap
-- Once the domain is live and serving HTTPS, submit: `https://pennygrade.com/sitemap.xml`.
+- Once the domain is live and serving HTTPS, submit: `https://pennygrade.in/sitemap.xml`.
 - Confirm Search Console returns `Success` status.
 
 ### Step 3: URL Inspection & Live Test
 - Test representative URLs:
-  - Homepage: `https://pennygrade.com/`
-  - Partner directory: `https://pennygrade.com/partners`
-  - Dynamic partner: `https://pennygrade.com/partners/abc-cafe`
+  - Homepage: `https://pennygrade.in/`
+  - Partner directory: `https://pennygrade.in/partners`
+  - Dynamic partner: `https://pennygrade.in/partners/abc-cafe`
 - Confirm:
   - Canonical URL matches inspected URL.
   - Page is indexable.

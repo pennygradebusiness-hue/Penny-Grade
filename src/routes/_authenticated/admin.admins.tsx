@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAdminUsers, addAdmin, removeAdminRole, resetAdminPassword } from "@/lib/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { type V1AdminUser } from "@/lib/v1-store";
 import {
   ShieldCheck,
@@ -189,7 +190,7 @@ function Admins() {
   };
 
   const copyCredentials = (data: { name: string; email: string; role: RoleType; password: string }) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://pennygrade.com";
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://pennygrade.in";
     const text = `🎉 PennyGrade Administrator Access
 ------------------------------------------------
 Name: ${data.name}
@@ -212,9 +213,18 @@ Please sign in and change your password upon first login.`;
     if (!confirm(`Are you sure you want to remove ${roleName.replace(/_/g, " ")} role from ${adminEmail}?`)) return;
     try {
       await removeAdminRole({ data: { id } });
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (isUuid) {
+          await supabase.from("user_roles").delete().eq("id", id);
+        }
+      } catch {
+        // ignore
+      }
       toast.success(`Removed ${roleName.replace(/_/g, " ")} role from ${adminEmail}`);
       qc.invalidateQueries({ queryKey: ["admin", "admin-users"] });
       qc.invalidateQueries({ queryKey: ["admin", "audit"] });
+      qc.invalidateQueries({ queryKey: ["admin"] });
     } catch {
       toast.error("Failed to revoke role");
     }
@@ -307,7 +317,7 @@ Please sign in and change your password upon first login.`;
               <Input
                 type="email"
                 required
-                placeholder="e.g. ramesh@pennygrade.com"
+                placeholder="e.g. ramesh@pennygrade.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-10 text-xs"

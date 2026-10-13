@@ -20,7 +20,7 @@ function MembershipPage() {
   return (
     <AccountLayout>
       <h1 className="mb-6 text-2xl font-semibold">My Membership</h1>
-      {!m ? <EmptyState title="You don't currently have an active PennyGrade membership." >Contact support@pennygrade.com to activate.</EmptyState> : (
+      {!m ? <EmptyState title="You don't currently have an active PennyGrade membership." >Contact pennygradebusiness@gmail.com to activate.</EmptyState> : (
         <div className="grid gap-6 md:grid-cols-2">
           <MembershipCard name={data?.profile?.full_name ?? ""} membership={m} reveal={reveal} />
           <dl className="divide-y rounded-2xl border bg-card text-sm">

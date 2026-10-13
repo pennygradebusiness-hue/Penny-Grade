@@ -72,7 +72,7 @@ function Dashboard() {
           <Button asChild variant="ghost" size="sm"><Link to="/account/history">View all</Link></Button></div>
         {history.isLoading ? <div className="h-24 animate-pulse rounded-2xl bg-muted" /> : <HistoryList rows={(history.data ?? []) as never} />}
       </section>
-      {!m && <div className="mt-8"><EmptyState title="Need help activating your membership?">Contact support@pennygrade.com</EmptyState></div>}
+      {!m && <div className="mt-8"><EmptyState title="Need help activating your membership?">Contact pennygradebusiness@gmail.com</EmptyState></div>}
     </AccountLayout>
   );
 }

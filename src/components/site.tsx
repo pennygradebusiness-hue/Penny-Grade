@@ -218,18 +218,18 @@ export function SiteFooter() {
 
           <div className="mt-5 space-y-2.5 text-xs">
             <a
-              href="tel:+919919897039"
+              href="tel:+919356897893"
               className="flex items-center gap-2 text-navy-foreground/90 transition-colors hover:text-gold"
             >
               <Phone className="h-3.5 w-3.5 text-gold" />
-              <span>+91 99198 97039</span>
+              <span>+91 93568 97893</span>
             </a>
             <a
-              href="mailto:support@pennygrade.com"
+              href="mailto:pennygradebusiness@gmail.com"
               className="flex items-center gap-2 text-navy-foreground/90 transition-colors hover:text-gold"
             >
               <Mail className="h-3.5 w-3.5 text-gold" />
-              <span>support@pennygrade.com</span>
+              <span>pennygradebusiness@gmail.com</span>
             </a>
             <div className="flex items-center gap-2 text-[11px] text-gold">
               <ShieldCheck className="h-3.5 w-3.5" />
@@ -282,17 +282,12 @@ export function SiteFooter() {
 
         {/* Col 3: Support & Legal */}
         <div>
-          <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">Support</h4>
+          <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">Support & Legal</h4>
           <ul className="space-y-2.5 text-xs font-semibold">
             <li>
-              <a href="mailto:support@pennygrade.com" className="text-navy-muted transition-colors hover:text-white">
+              <a href="mailto:pennygradebusiness@gmail.com" className="text-navy-muted transition-colors hover:text-white">
                 Contact Support
               </a>
-            </li>
-            <li>
-              <Link to="/how-it-works" className="text-navy-muted transition-colors hover:text-white">
-                Redemption Guide
-              </Link>
             </li>
             <li>
               <Link to="/terms" className="text-navy-muted transition-colors hover:text-white">
@@ -302,6 +297,21 @@ export function SiteFooter() {
             <li>
               <Link to="/privacy" className="text-navy-muted transition-colors hover:text-white">
                 Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link to="/merchant-agreement" className="text-navy-muted transition-colors hover:text-white">
+                Merchant Agreement
+              </Link>
+            </li>
+            <li>
+              <Link to="/membership-terms" className="text-navy-muted transition-colors hover:text-white">
+                Membership & Card Terms
+              </Link>
+            </li>
+            <li>
+              <Link to="/disclaimer" className="text-navy-muted transition-colors hover:text-white">
+                Website Disclaimer
               </Link>
             </li>
             <li>
@@ -334,9 +344,11 @@ export function SiteFooter() {
       <div className="border-t border-white/10 py-6 text-center text-xs text-navy-muted">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
           <span>&copy; {new Date().getFullYear()} PennyGrade. All rights reserved.</span>
-          <div className="flex gap-4">
-            <Link to="/privacy" className="hover:text-white">Privacy</Link>
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/terms" className="hover:text-white">Terms</Link>
+            <Link to="/privacy" className="hover:text-white">Privacy</Link>
+            <Link to="/merchant-agreement" className="hover:text-white">Merchant Agreement</Link>
+            <Link to="/disclaimer" className="hover:text-white">Disclaimer</Link>
             <Link to="/how-it-works" className="hover:text-white">Help</Link>
           </div>
         </div>
@@ -436,22 +448,20 @@ function getCategoryCover(categoryName?: string | null) {
 }
 
 export function PartnerCard({ p }: { p: PublicPartner }) {
-  const offer = p.offers[0];
+  const offer = p.offers && p.offers.length > 0 ? p.offers[0] : null;
   const [isFav, setIsFav] = useState(false);
   const coverUrl = p.cover_image_url || getCategoryCover(p.category?.name);
 
   // Format discount pill
-  let discountBadge = "15% OFF";
-  let discountNote = "On total bill";
+  let discountBadge = "";
+  let discountNote = "";
   if (offer) {
     if (offer.discount_type === "PERCENTAGE") {
       discountBadge = `${offer.discount_value}% OFF`;
     } else {
       discountBadge = `₹${offer.discount_value} OFF`;
     }
-    if (offer.description) {
-      discountNote = offer.description;
-    }
+    discountNote = offer.description || "Exclusive member discount";
   }
 
   return (
@@ -542,17 +552,29 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
           </div>
         )}
 
-        {/* Footer Offer strip matching reference image */}
+        {/* Footer Offer strip */}
         <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="inline-block rounded-lg bg-[#fef2eb] px-2.5 py-1 font-display text-xs font-black text-[#c25e36] border border-[#fcdccf] shrink-0">
-              {discountBadge}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-[11px] font-medium text-slate-600">{discountNote}</p>
-              <p className="text-[10px] font-semibold text-slate-400 leading-tight">Exclusive for members</p>
+          {offer ? (
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-block rounded-lg bg-[#fef2eb] px-2.5 py-1 font-display text-xs font-black text-[#c25e36] border border-[#fcdccf] shrink-0">
+                {discountBadge}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-medium text-slate-600">{discountNote}</p>
+                <p className="text-[10px] font-semibold text-slate-400 leading-tight">Exclusive for members</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-block rounded-lg bg-slate-100 px-2.5 py-1 font-display text-[11px] font-bold text-slate-600 border border-slate-200 shrink-0">
+                New Partner
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-medium text-slate-500">Offers updating soon</p>
+                <p className="text-[10px] font-semibold text-slate-400 leading-tight">Exclusive for members</p>
+              </div>
+            </div>
+          )}
 
           {/* Terracotta Circular Arrow Button */}
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#c25e36] text-white shadow-xs transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#a84d28]">

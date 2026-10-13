@@ -177,7 +177,7 @@ export function CardPreview({ number, name, valid }: { number: string; name: str
         <p className="font-display font-semibold">Penny<span className="text-amber-400">Grade</span></p>
         <p className="text-xs text-slate-300">Present this physical membership card at partner checkout counter.</p>
         <div className="text-[10px] text-slate-400">
-          <p>pennygrade.com · support@pennygrade.com</p>
+          <p>pennygrade.in · pennygradebusiness@gmail.com</p>
           <p className="mt-1">Non-transferable. Subject to PennyGrade terms. Not a payment card.</p>
         </div>
       </div>

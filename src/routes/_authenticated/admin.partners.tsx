@@ -3,14 +3,28 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Star, Phone, CheckCircle2, Trash2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Star,
+  Trash2,
+  Building2,
+  Globe,
+  MapPin,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 import { PageHeader, DataTable, td, TableSkeleton, Select } from "@/components/admin-ui";
 import { StatusBadge } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, fmtDate } from "@/lib/format";
@@ -21,6 +35,8 @@ import {
   deletePartner,
   getPartnerApplications,
   updatePartnerApplicationStatus,
+  saveOffer,
+  getAdminOffers,
 } from "@/lib/admin.functions";
 import type { V1PartnerApplication, V1Partner } from "@/lib/v1-store";
 
@@ -53,6 +69,11 @@ const EMPTY = {
   business_hours: "Mon–Sun · 9:00 AM – 10:00 PM",
   status: "ACTIVE",
   featured: false,
+  create_offer: false,
+  offer_title: "",
+  offer_discount_type: "PERCENTAGE" as "PERCENTAGE" | "FIXED",
+  offer_discount_value: 10,
+  offer_min_bill: 0,
 };
 type Form = typeof EMPTY & { id?: string };
 
@@ -64,6 +85,8 @@ function Partners() {
   const deletePartnerFn = useServerFn(deletePartner);
   const fetchPartnerAppsFn = useServerFn(getPartnerApplications);
   const updatePartnerAppFn = useServerFn(updatePartnerApplicationStatus);
+  const saveOfferFn = useServerFn(saveOffer);
+  const getAdminOffersFn = useServerFn(getAdminOffers);
 
   const [tab, setTab] = useState<"partners" | "inquiries">("partners");
   const q = useQuery({
@@ -71,7 +94,7 @@ function Partners() {
     queryFn: async () => {
       try {
         const res = await fetchPartnersFn();
-        if (res && res.length > 0) return res as V1Partner[];
+        if (Array.isArray(res)) return res as V1Partner[];
       } catch (err) {
         console.warn("fetchPartnersFn failed, falling back to Supabase query:", err);
       }
@@ -111,11 +134,138 @@ function Partners() {
     queryFn: async () => (await fetchPartnerAppsFn()) as V1PartnerApplication[],
   });
 
+  const offersQ = useQuery({
+    queryKey: ["admin", "offers"],
+    queryFn: async () => {
+      try {
+        const res = await getAdminOffersFn();
+        if (res) return res;
+      } catch {}
+      return [];
+    },
+  });
+
   const [edit, setEdit] = useState<Form | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [manualSlug, setManualSlug] = useState(false);
   const [search, setSearch] = useState("");
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin"] });
     qc.invalidateQueries({ queryKey: ["public"] });
+  };
+
+  const validate = (): boolean => {
+    if (!edit) return false;
+    const errs: Record<string, string> = {};
+
+    if (!edit.business_name.trim() || edit.business_name.trim().length < 2) {
+      errs.business_name = "Business name must be at least 2 characters.";
+    }
+
+    const cleanSlug = edit.slug.trim().toLowerCase();
+    if (!cleanSlug) {
+      errs.slug = "Slug is required.";
+    } else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleanSlug)) {
+      errs.slug = "Slug must contain only lowercase letters, numbers, and hyphens.";
+    }
+
+    if (!edit.category_id) {
+      errs.category_id = "Please select a category.";
+    }
+
+    if (edit.email && edit.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(edit.email.trim())) {
+      errs.email = "Please enter a valid email address.";
+    }
+
+    if (edit.website && edit.website.trim() && !/^https?:\/\//i.test(edit.website.trim())) {
+      errs.website = "Website URL must start with http:// or https://";
+    }
+
+    if (edit.logo_url && edit.logo_url.trim() && !/^https?:\/\//i.test(edit.logo_url.trim())) {
+      errs.logo_url = "Logo URL must start with http:// or https://";
+    }
+
+    if (edit.cover_image_url && edit.cover_image_url.trim() && !/^https?:\/\//i.test(edit.cover_image_url.trim())) {
+      errs.cover_image_url = "Cover image URL must start with http:// or https://";
+    }
+
+    if (edit.latitude !== "" && edit.latitude !== null && edit.latitude !== undefined) {
+      const lat = Number(edit.latitude);
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        errs.latitude = "Latitude must be between -90 and 90.";
+      }
+    }
+
+    if (edit.longitude !== "" && edit.longitude !== null && edit.longitude !== undefined) {
+      const lng = Number(edit.longitude);
+      if (isNaN(lng) || lng < -180 || lng > 180) {
+        errs.longitude = "Longitude must be between -180 and 180.";
+      }
+    }
+
+    if (!edit.id && edit.create_offer) {
+      if (!edit.offer_title?.trim()) {
+        errs.offer_title = "Offer title is required.";
+      }
+      const val = Number(edit.offer_discount_value);
+      if (isNaN(val) || val <= 0) {
+        errs.offer_discount_value = "Discount value must be greater than 0.";
+      } else if (edit.offer_discount_type === "PERCENTAGE" && val > 100) {
+        errs.offer_discount_value = "Percentage discount cannot exceed 100%.";
+      }
+      const minBill = Number(edit.offer_min_bill);
+      if (isNaN(minBill) || minBill < 0) {
+        errs.offer_min_bill = "Minimum bill cannot be negative.";
+      }
+    }
+
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast.error("Please correct the errors in the form before saving.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!edit) return;
+    if (!edit.id && !manualSlug) {
+      setEdit({
+        ...edit,
+        business_name: val,
+        slug: slugify(val),
+      });
+    } else {
+      setEdit({
+        ...edit,
+        business_name: val,
+      });
+    }
+    if (errors.business_name) {
+      setErrors((prev) => ({ ...prev, business_name: "" }));
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!edit) return;
+    setManualSlug(true);
+    setEdit({
+      ...edit,
+      slug: e.target.value.toLowerCase().replace(/\s+/g, "-"),
+    });
+    if (errors.slug) {
+      setErrors((prev) => ({ ...prev, slug: "" }));
+    }
+  };
+
+  const setField = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!edit) return;
+    setEdit({ ...edit, [k]: e.target.value });
+    if (errors[k]) {
+      setErrors((prev) => ({ ...prev, [k]: "" }));
+    }
   };
 
   const upd = async (id: string, patch: { status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }, action: string) => {
@@ -134,53 +284,75 @@ function Partners() {
   };
 
   const save = async () => {
-    if (!edit || !edit.business_name.trim() || !edit.category_id) {
-      return toast.error("Business name and category are required");
-    }
+    if (!edit) return;
+    if (!validate()) return;
+
+    setSaving(true);
     const { id, ...f } = edit;
     const num = (v: string | number | null | undefined) => (v === "" || v === null || v === undefined ? null : Number(v));
     const allCats = cats.data && cats.data.length > 0 ? cats.data : DEFAULT_CATEGORIES;
     const matchedCat = allCats.find((c) => c.id === f.category_id);
 
     try {
-      await savePartnerFn({
+      const partnerRes = await savePartnerFn({
         data: {
           id: id || undefined,
           business_name: f.business_name.trim(),
-          slug: f.slug?.trim() || slugify(f.business_name),
+          slug: f.slug.trim().toLowerCase(),
           category_id: f.category_id,
           category_name: matchedCat?.name || "General",
-          description: f.description || "",
-          logo_url: f.logo_url || "",
-          cover_image_url: f.cover_image_url || "",
-          phone: f.phone || "",
-          email: f.email || "",
-          website: f.website || "",
-          address: f.address || "",
-          city: f.city || "Daltonganj",
+          description: f.description?.trim() || "",
+          logo_url: f.logo_url?.trim() || "",
+          cover_image_url: f.cover_image_url?.trim() || "",
+          phone: f.phone?.trim() || "",
+          email: f.email?.trim() || "",
+          website: f.website?.trim() || "",
+          address: f.address?.trim() || "",
+          city: f.city?.trim() || "Daltonganj",
           latitude: num(f.latitude),
           longitude: num(f.longitude),
-          business_hours: f.business_hours || "",
+          business_hours: f.business_hours?.trim() || "",
           status: (f.status || "ACTIVE") as "ACTIVE" | "INACTIVE" | "SUSPENDED",
-          featured: !!f.featured,
+          featured: Boolean(f.featured),
         },
       });
+
+      const newPartnerId = id || (partnerRes as any)?.partner?.id;
+
+      if (!id && f.create_offer && newPartnerId) {
+        try {
+          await saveOfferFn({
+            data: {
+              partner_id: newPartnerId,
+              title: f.offer_title?.trim() || `${f.business_name.trim()} Member Discount`,
+              discount_type: f.offer_discount_type || "PERCENTAGE",
+              discount_value: Number(f.offer_discount_value) || 10,
+              minimum_bill: Number(f.offer_min_bill) || 0,
+              valid_days: [0, 1, 2, 3, 4, 5, 6],
+              status: "ACTIVE",
+            },
+          });
+        } catch (offerErr: any) {
+          console.warn("Could not auto-create initial offer:", offerErr);
+        }
+      }
+
       try {
         const sbPayload: any = {
           business_name: f.business_name.trim(),
-          slug: f.slug?.trim() || slugify(f.business_name),
+          slug: f.slug.trim().toLowerCase(),
           category_id: f.category_id,
-          description: f.description || "",
-          logo_url: f.logo_url || null,
-          cover_image_url: f.cover_image_url || null,
-          phone: f.phone || null,
-          email: f.email || null,
-          website: f.website || null,
-          address: f.address || null,
-          city: f.city || "Daltonganj",
+          description: f.description?.trim() || "",
+          logo_url: f.logo_url?.trim() || null,
+          cover_image_url: f.cover_image_url?.trim() || null,
+          phone: f.phone?.trim() || null,
+          email: f.email?.trim() || null,
+          website: f.website?.trim() || null,
+          address: f.address?.trim() || null,
+          city: f.city?.trim() || "Daltonganj",
           latitude: num(f.latitude),
           longitude: num(f.longitude),
-          business_hours: f.business_hours || null,
+          business_hours: f.business_hours?.trim() || null,
           status: (f.status || "ACTIVE") as any,
           featured: Boolean(f.featured),
         };
@@ -192,24 +364,42 @@ function Partners() {
       } catch {
         // ignore
       }
-      toast.success(id ? "Partner updated successfully" : "Partner created successfully");
+
+      toast.success(
+        id
+          ? "Partner updated successfully"
+          : f.create_offer
+          ? "Partner & initial offer created successfully!"
+          : "Partner created successfully"
+      );
       setEdit(null);
+      setErrors({});
       refresh();
     } catch (err: any) {
       toast.error(err?.message || "Could not save partner");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
+    if (!confirm(`Are you sure you want to permanently delete "${name}" and all of its associated offers? This action cannot be undone.`)) return;
     try {
       await deletePartnerFn({ data: { id } });
       try {
+        await supabase.from("verification_logs").delete().eq("partner_id", id);
+        await supabase.from("verification_sessions").delete().eq("partner_id", id);
+        await supabase.from("offers").delete().eq("partner_id", id);
         await supabase.from("partners").delete().eq("id", id);
       } catch {
         // ignore
       }
-      toast.success(`Partner "${name}" deleted`);
+      toast.success(`Partner "${name}" and related offers permanently deleted`);
+      qc.invalidateQueries({ queryKey: ["admin", "partners"] });
+      qc.invalidateQueries({ queryKey: ["admin", "offers"] });
+      qc.invalidateQueries({ queryKey: ["admin", "qr"] });
+      qc.invalidateQueries({ queryKey: ["admin", "partners-min"] });
+      qc.invalidateQueries({ queryKey: ["public", "partners"] });
       refresh();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete partner");
@@ -236,7 +426,15 @@ function Partners() {
         title="Partners & Inquiries"
         desc={`${q.data?.length ?? 0} active partners · ${partnerAppsQ.data?.length ?? 0} onboarding inquiries`}
         actions={
-          <Button size="sm" onClick={() => setEdit({ ...EMPTY })} className="bg-gold font-bold text-accent-foreground hover:bg-gold-soft">
+          <Button
+            size="sm"
+            onClick={() => {
+              setManualSlug(false);
+              setErrors({});
+              setEdit({ ...EMPTY });
+            }}
+            className="bg-gold font-bold text-accent-foreground hover:bg-gold-soft cursor-pointer"
+          >
             Add partner
           </Button>
         }
@@ -395,12 +593,31 @@ function Partners() {
             <DataTable head={["Partner", "Category", "City", "Offers", "Status", "Featured", ""]} empty={!list.length}>
               {list.map((p) => {
                 const catName = p.category_name || (p as any).category?.name || "General";
+                const pOffers = (offersQ.data ?? []).filter((o: any) => o.partner_id === p.id);
                 return (
                   <tr key={p.id} className="hover:bg-slate-50/70">
                     <td className={td}><p className="font-bold text-navy">{p.business_name}</p><p className="text-xs text-muted-foreground font-mono">/{p.slug}</p></td>
                     <td className={td}><span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{catName}</span></td>
                     <td className={td}>{p.city || "Daltonganj"}</td>
-                    <td className={td}><Link to="/admin/offers" search={{ partner: p.id }} className="underline text-xs font-medium text-amber-700">View offers</Link></td>
+                    <td className={td}>
+                      {pOffers.length > 0 ? (
+                        <Link
+                          to="/admin/offers"
+                          search={{ partner: p.id }}
+                          className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                        >
+                          {pOffers.length} {pOffers.length === 1 ? "Offer" : "Offers"}
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/admin/offers"
+                          search={{ partner: p.id, create: "true" }}
+                          className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-300 hover:bg-amber-200 transition-colors shadow-2xs"
+                        >
+                          + Add offer
+                        </Link>
+                      )}
+                    </td>
                     <td className={td}><StatusBadge status={p.status} /></td>
                     <td className={td}>{p.featured && <Star className="h-4 w-4 fill-gold text-gold" />}</td>
                     <td className={td}>
@@ -408,9 +625,27 @@ function Partners() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="cursor-pointer"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => setEdit({ ...EMPTY, ...p, latitude: String(p.latitude ?? ""), longitude: String(p.longitude ?? "") } as Form)}>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => {
+                              setManualSlug(true);
+                              setErrors({});
+                              setEdit({
+                                ...EMPTY,
+                                ...p,
+                                latitude: String(p.latitude ?? ""),
+                                longitude: String(p.longitude ?? ""),
+                                create_offer: false,
+                              } as Form);
+                            }}
+                          >
                             Edit details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild className="cursor-pointer">
+                            <Link to="/admin/offers" search={{ partner: p.id, create: "true" }}>
+                              + Create offer
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem className="cursor-pointer" onClick={() => upd(p.id, { featured: !p.featured }, p.featured ? "Unfeatured partner" : "Featured partner")}>
                             {p.featured ? "Unfeature" : "Feature"}
@@ -451,32 +686,357 @@ function Partners() {
           )}
         </div>
       )}
-      <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>{edit?.id ? "Edit partner" : "New partner"}</DialogTitle></DialogHeader>
-          {edit && <div className="grid gap-3 sm:grid-cols-2">
-            <F l="Business name"><Input value={edit.business_name} onChange={(e) => setEdit({ ...edit, business_name: e.target.value, slug: edit.id ? edit.slug : slugify(e.target.value) })} /></F>
-            <F l="Slug (QR URL — keep permanent)"><Input value={edit.slug} onChange={(e) => setEdit({ ...edit, slug: slugify(e.target.value) })} /></F>
-            <F l="Category"><Select className="w-full" value={edit.category_id} onChange={(v) => setEdit({ ...edit, category_id: v })}><option value="">Select</option>{cats.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></F>
-            <F l="Status"><Select className="w-full" value={edit.status} onChange={(v) => setEdit({ ...edit, status: v })}>{["ACTIVE", "INACTIVE", "SUSPENDED"].map((s) => <option key={s}>{s}</option>)}</Select></F>
-            <div className="sm:col-span-2"><F l="Description"><Textarea value={edit.description} onChange={set("description")} /></F></div>
-            <F l="Logo URL"><Input value={edit.logo_url} onChange={set("logo_url")} placeholder="https://" /></F>
-            <F l="Cover image URL"><Input value={edit.cover_image_url} onChange={set("cover_image_url")} placeholder="https://" /></F>
-            <F l="Phone"><Input value={edit.phone} onChange={set("phone")} /></F>
-            <F l="Email"><Input value={edit.email} onChange={set("email")} /></F>
-            <F l="Website"><Input value={edit.website} onChange={set("website")} /></F>
-            <F l="Business hours"><Input value={edit.business_hours} onChange={set("business_hours")} placeholder="Mon–Sun · 9 AM – 10 PM" /></F>
-            <F l="Address"><Input value={edit.address} onChange={set("address")} /></F>
-            <F l="City"><Input value={edit.city} onChange={set("city")} /></F>
-            <F l="Latitude"><Input value={edit.latitude} onChange={set("latitude")} /></F>
-            <F l="Longitude"><Input value={edit.longitude} onChange={set("longitude")} /></F>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={edit.featured} onChange={(e) => setEdit({ ...edit, featured: e.target.checked })} />Featured</label>
-            <Button className="sm:col-span-2" onClick={save}>Save partner</Button>
-          </div>}
+      <Dialog open={!!edit} onOpenChange={(o) => { if (!o && !saving) { setEdit(null); setErrors({}); } }}>
+        <DialogContent className="max-h-[88vh] max-w-2xl sm:max-w-3xl flex flex-col p-0 overflow-hidden rounded-2xl border-slate-200 shadow-2xl bg-white">
+          {/* Sticky Header */}
+          <DialogHeader className="px-6 py-4 border-b border-slate-100 bg-white shrink-0 text-left">
+            <DialogTitle className="font-display text-lg font-bold text-slate-900">
+              {edit?.id ? "Edit Partner Details" : "Add New Partner"}
+            </DialogTitle>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {edit?.id
+                ? "Update outlet identity, location coordinates, and counter verification settings."
+                : "Register a local business outlet with public catalog listing and verification QR."}
+            </p>
+          </DialogHeader>
+
+          {/* Scrollable Form Body */}
+          {edit && (
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-7">
+              {/* SECTION A: Basic Details */}
+              <div>
+                <div className="flex items-center gap-2 mb-3.5 pb-2 border-b border-slate-100">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+                    <Building2 className="h-3.5 w-3.5" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    A. Basic Details
+                  </h4>
+                </div>
+                <div className="grid gap-3.5 sm:grid-cols-2">
+                  <FormField label="Business Name" required error={errors.business_name}>
+                    <Input
+                      value={edit.business_name}
+                      onChange={handleNameChange}
+                      placeholder="e.g. Urban Brew Café"
+                    />
+                  </FormField>
+
+                  <FormField label="Slug (Permanent QR URL)" required error={errors.slug}>
+                    <Input
+                      value={edit.slug}
+                      onChange={handleSlugChange}
+                      placeholder="e.g. urban-brew"
+                      className="font-mono text-xs"
+                    />
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
+                      <span>Public QR:</span>
+                      <span className="font-mono text-amber-700 font-semibold truncate">
+                        https://pennygrade.in/p/{edit.slug || "slug"}
+                      </span>
+                    </div>
+                  </FormField>
+
+                  <FormField label="Category" required error={errors.category_id}>
+                    <Select
+                      className="w-full"
+                      value={edit.category_id}
+                      onChange={(v) => {
+                        setEdit({ ...edit, category_id: v });
+                        if (errors.category_id) setErrors((prev) => ({ ...prev, category_id: "" }));
+                      }}
+                    >
+                      <option value="">Select Category</option>
+                      {cats.data?.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  <FormField label="Account Status">
+                    <Select
+                      className="w-full"
+                      value={edit.status}
+                      onChange={(v) => setEdit({ ...edit, status: v as any })}
+                    >
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                      <option value="SUSPENDED">SUSPENDED</option>
+                    </Select>
+                  </FormField>
+
+                  <FormField label="Description" className="sm:col-span-2 space-y-1.5" error={errors.description}>
+                    <Textarea
+                      value={edit.description}
+                      onChange={setField("description")}
+                      placeholder="Brief overview of this outlet for PennyGrade members..."
+                      rows={3}
+                    />
+                  </FormField>
+                </div>
+              </div>
+
+              {/* SECTION B: Branding & Contact */}
+              <div>
+                <div className="flex items-center gap-2 mb-3.5 pb-2 border-b border-slate-100">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+                    <Globe className="h-3.5 w-3.5" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    B. Branding & Contact
+                  </h4>
+                </div>
+                <div className="grid gap-3.5 sm:grid-cols-2">
+                  <FormField label="Logo URL" error={errors.logo_url}>
+                    <Input
+                      value={edit.logo_url}
+                      onChange={setField("logo_url")}
+                      placeholder="https://... logo image URL"
+                    />
+                  </FormField>
+
+                  <FormField label="Cover Image URL" error={errors.cover_image_url}>
+                    <Input
+                      value={edit.cover_image_url}
+                      onChange={setField("cover_image_url")}
+                      placeholder="https://... storefront banner URL"
+                    />
+                  </FormField>
+
+                  <FormField label="Contact Phone" error={errors.phone}>
+                    <Input
+                      value={edit.phone}
+                      onChange={setField("phone")}
+                      placeholder="+91 98765 43210"
+                    />
+                  </FormField>
+
+                  <FormField label="Business Email" error={errors.email}>
+                    <Input
+                      type="email"
+                      value={edit.email}
+                      onChange={setField("email")}
+                      placeholder="contact@outlet.in"
+                    />
+                  </FormField>
+
+                  <FormField label="Official Website" className="sm:col-span-2 space-y-1.5" error={errors.website}>
+                    <Input
+                      value={edit.website}
+                      onChange={setField("website")}
+                      placeholder="https://outlet.in"
+                    />
+                  </FormField>
+                </div>
+              </div>
+
+              {/* SECTION C: Location & Visibility */}
+              <div>
+                <div className="flex items-center gap-2 mb-3.5 pb-2 border-b border-slate-100">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+                    <MapPin className="h-3.5 w-3.5" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    C. Location & Visibility
+                  </h4>
+                </div>
+                <div className="grid gap-3.5 sm:grid-cols-2">
+                  <FormField label="Business Hours" className="sm:col-span-2 space-y-1.5">
+                    <Input
+                      value={edit.business_hours}
+                      onChange={setField("business_hours")}
+                      placeholder="Mon–Sun · 9:00 AM – 10:00 PM"
+                    />
+                  </FormField>
+
+                  <FormField label="Street Address">
+                    <Input
+                      value={edit.address}
+                      onChange={setField("address")}
+                      placeholder="Main Road, Near Hospital Chowk"
+                    />
+                  </FormField>
+
+                  <FormField label="City">
+                    <Input
+                      value={edit.city}
+                      onChange={setField("city")}
+                      placeholder="Daltonganj"
+                    />
+                  </FormField>
+
+                  <FormField label="Latitude" error={errors.latitude}>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={edit.latitude}
+                      onChange={setField("latitude")}
+                      placeholder="24.0384"
+                    />
+                  </FormField>
+
+                  <FormField label="Longitude" error={errors.longitude}>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={edit.longitude}
+                      onChange={setField("longitude")}
+                      placeholder="84.0682"
+                    />
+                  </FormField>
+
+                  <div className="sm:col-span-2">
+                    <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 p-3 cursor-pointer hover:bg-slate-100/70 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={edit.featured}
+                        onChange={(e) => setEdit({ ...edit, featured: e.target.checked })}
+                        className="h-4 w-4 mt-0.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 block">
+                          Feature this partner on public directory tops
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Featured partners receive priority ranking and gold badges across marketing and category listings.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION D: Initial Discount Offer (New Partners Only) */}
+              {!edit.id && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3.5 pb-2 border-b border-amber-200">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                      D. Initial Discount Offer
+                    </h4>
+                  </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3.5">
+                    <label className="flex items-center gap-2.5 text-xs font-bold text-amber-950 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                        checked={edit.create_offer}
+                        onChange={(e) => setEdit({ ...edit, create_offer: e.target.checked })}
+                      />
+                      <span>Create initial discount offer for this partner now</span>
+                    </label>
+
+                    {edit.create_offer && (
+                      <div className="grid gap-3 sm:grid-cols-2 pt-2.5 border-t border-amber-200/70">
+                        <FormField label="Offer Title" required error={errors.offer_title}>
+                          <Input
+                            value={edit.offer_title}
+                            onChange={setField("offer_title")}
+                            placeholder="e.g. 10% Off on Food / Total Bill"
+                            className="bg-white"
+                          />
+                        </FormField>
+
+                        <FormField label="Discount Value" required error={errors.offer_discount_value}>
+                          <Input
+                            type="number"
+                            value={edit.offer_discount_value}
+                            onChange={(e) => setEdit({ ...edit, offer_discount_value: Number(e.target.value) })}
+                            className="bg-white"
+                          />
+                        </FormField>
+
+                        <FormField label="Discount Type">
+                          <Select
+                            className="w-full bg-white"
+                            value={edit.offer_discount_type}
+                            onChange={(v) => setEdit({ ...edit, offer_discount_type: v as any })}
+                          >
+                            <option value="PERCENTAGE">Percentage (%)</option>
+                            <option value="FIXED">Flat (₹)</option>
+                          </Select>
+                        </FormField>
+
+                        <FormField label="Minimum Bill (₹) — 0 for no minimum" error={errors.offer_min_bill}>
+                          <Input
+                            type="number"
+                            value={edit.offer_min_bill}
+                            onChange={(e) => setEdit({ ...edit, offer_min_bill: Number(e.target.value) })}
+                            placeholder="0"
+                            className="bg-white"
+                          />
+                        </FormField>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sticky Footer */}
+          <div className="px-6 py-3.5 border-t border-slate-100 bg-slate-50/90 shrink-0 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+              * Required fields are validated before submission
+            </span>
+            <div className="flex items-center gap-2.5 ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEdit(null);
+                  setErrors({});
+                }}
+                disabled={saving}
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={save}
+                disabled={saving}
+                className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold min-w-[130px] cursor-pointer shadow-xs"
+              >
+                {saving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                {saving ? "Saving..." : edit?.id ? "Save Changes" : "Create Partner"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
   );
 }
-function F({ l, children }: { l: string; children: React.ReactNode }) {
-  return <div className="space-y-1.5"><Label className="text-xs">{l}</Label>{children}</div>;
+
+function FormField({
+  label,
+  required,
+  error,
+  children,
+  className,
+}: {
+  label: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className || "space-y-1.5"}>
+      <Label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+        <span>
+          {label} {required && <span className="text-red-500 font-bold">*</span>}
+        </span>
+      </Label>
+      {children}
+      {error && <p className="text-[11px] font-medium text-red-500 mt-1">{error}</p>}
+    </div>
+  );
 }

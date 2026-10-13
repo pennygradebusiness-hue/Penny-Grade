@@ -517,9 +517,15 @@ function PartnerWithUsPage() {
                     {busy ? "Submitting Inquiry…" : "Apply for PennyGrade Partnership"}
                   </Button>
 
-                  <p className="text-center text-[11px] text-slate-400">
-                    No upfront setup fees. Our representative will visit your location to verify and
-                    install your acrylic QR standee.
+                  <p className="text-center text-[11px] text-slate-500">
+                    No upfront setup fees. By applying, you agree to the{" "}
+                    <Link to="/merchant-agreement" className="font-semibold underline hover:text-amber-600">
+                      Merchant Agreement
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy" className="font-semibold underline hover:text-amber-600">
+                      Privacy Policy
+                    </Link>.
                   </p>
                 </form>
               </div>
@@ -595,24 +601,24 @@ function PartnerWithUsPage() {
                 Merchant Onboarding Desk
               </h3>
               <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-                Prefer to talk directly with our partnership director in Daltonganj? Call or message
+                Prefer to talk directly with our partnership desk in Daltonganj? Call or message
                 our direct merchant line.
               </p>
 
               <div className="mt-4 space-y-2 text-xs">
                 <a
-                  href="tel:+919919897039"
+                  href="tel:+919356897893"
                   className="flex items-center gap-2 font-semibold text-slate-800 hover:text-amber-600 transition-colors"
                 >
                   <Phone className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Merchant Line: +91 99198 97039</span>
+                  <span>Merchant Line: +91 93568 97893</span>
                 </a>
                 <a
-                  href="mailto:partners@pennygrade.com"
+                  href="mailto:pennygradebusiness@gmail.com"
                   className="flex items-center gap-2 font-semibold text-slate-800 hover:text-amber-600 transition-colors"
                 >
                   <Mail className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Email: partners@pennygrade.com</span>
+                  <span>Email: pennygradebusiness@gmail.com</span>
                 </a>
               </div>
             </div>

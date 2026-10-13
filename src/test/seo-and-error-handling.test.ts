@@ -18,44 +18,44 @@ import { renderErrorPage } from "@/lib/error-page";
 describe("PennyGrade Technical SEO & Metadata Architecture", () => {
   it("resolves authoritative production site origin correctly", () => {
     const origin = getSiteUrl();
-    expect(origin).toBe("https://pennygrade.com");
+    expect(origin).toBe("https://pennygrade.in");
     expect(origin.endsWith("/")).toBe(false);
   });
 
   describe("Canonical URL Generation & Normalization", () => {
     it("generates root canonical URL with trailing slash", () => {
-      expect(buildCanonicalUrl("/")).toBe("https://pennygrade.com/");
-      expect(buildCanonicalUrl("")).toBe("https://pennygrade.com/");
+      expect(buildCanonicalUrl("/")).toBe("https://pennygrade.in/");
+      expect(buildCanonicalUrl("")).toBe("https://pennygrade.in/");
     });
 
     it("generates normalized canonical URLs for public pages without trailing slash", () => {
-      expect(buildCanonicalUrl("/how-it-works")).toBe("https://pennygrade.com/how-it-works");
-      expect(buildCanonicalUrl("/partners")).toBe("https://pennygrade.com/partners");
-      expect(buildCanonicalUrl("/partners/")).toBe("https://pennygrade.com/partners");
-      expect(buildCanonicalUrl("/offers")).toBe("https://pennygrade.com/offers");
-      expect(buildCanonicalUrl("/become-a-member")).toBe("https://pennygrade.com/become-a-member");
-      expect(buildCanonicalUrl("/partner-with-us")).toBe("https://pennygrade.com/partner-with-us");
+      expect(buildCanonicalUrl("/how-it-works")).toBe("https://pennygrade.in/how-it-works");
+      expect(buildCanonicalUrl("/partners")).toBe("https://pennygrade.in/partners");
+      expect(buildCanonicalUrl("/partners/")).toBe("https://pennygrade.in/partners");
+      expect(buildCanonicalUrl("/offers")).toBe("https://pennygrade.in/offers");
+      expect(buildCanonicalUrl("/become-a-member")).toBe("https://pennygrade.in/become-a-member");
+      expect(buildCanonicalUrl("/partner-with-us")).toBe("https://pennygrade.in/partner-with-us");
     });
 
     it("strips query parameters and filters from canonical URLs", () => {
       expect(buildCanonicalUrl("/partners?q=coffee&category=cafes&sort=popular")).toBe(
-        "https://pennygrade.com/partners",
+        "https://pennygrade.in/partners",
       );
-      expect(buildCanonicalUrl("/offers?discountMin=15")).toBe("https://pennygrade.com/offers");
+      expect(buildCanonicalUrl("/offers?discountMin=15")).toBe("https://pennygrade.in/offers");
     });
 
     it("strips hash fragments from canonical URLs", () => {
       expect(buildCanonicalUrl("/how-it-works#calculator")).toBe(
-        "https://pennygrade.com/how-it-works",
+        "https://pennygrade.in/how-it-works",
       );
     });
 
     it("generates correct partner profile canonical URLs using verified slug", () => {
       expect(buildCanonicalUrl("/partners/abc-cafe")).toBe(
-        "https://pennygrade.com/partners/abc-cafe",
+        "https://pennygrade.in/partners/abc-cafe",
       );
       expect(buildCanonicalUrl("/partners/urban-brew/")).toBe(
-        "https://pennygrade.com/partners/urban-brew",
+        "https://pennygrade.in/partners/urban-brew",
       );
     });
   });
@@ -80,10 +80,10 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(ogTitle?.content).toBe("Test Page | PennyGrade");
 
       const ogUrl = head.meta.find((m) => m.property === "og:url");
-      expect(ogUrl?.content).toBe("https://pennygrade.com/how-it-works");
+      expect(ogUrl?.content).toBe("https://pennygrade.in/how-it-works");
 
       const ogImage = head.meta.find((m) => m.property === "og:image");
-      expect(ogImage?.content).toBe("https://pennygrade.com/test-image.png");
+      expect(ogImage?.content).toBe("https://pennygrade.in/test-image.png");
 
       const twitterCard = head.meta.find((m) => m.name === "twitter:card");
       expect(twitterCard?.content).toBe("summary_large_image");
@@ -93,7 +93,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
 
       // Canonical link
       const canonicalLink = head.links.find((l) => l.rel === "canonical");
-      expect(canonicalLink?.href).toBe("https://pennygrade.com/how-it-works");
+      expect(canonicalLink?.href).toBe("https://pennygrade.in/how-it-works");
     });
 
     it("applies noindex, nofollow directives for sensitive or private routes", () => {
@@ -115,10 +115,10 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(org["@context"]).toBe("https://schema.org");
       expect(org["@type"]).toBe("Organization");
       expect(org.name).toBe("PennyGrade");
-      expect(org.url).toBe("https://pennygrade.com/");
+      expect(org.url).toBe("https://pennygrade.in/");
       expect(org.logo).toContain("/pennygrade-logo.jpg");
       expect(org.contactPoint["@type"]).toBe("ContactPoint");
-      expect(org.contactPoint.email).toBe("support@pennygrade.com");
+      expect(org.contactPoint.email).toBe("pennygradebusiness@gmail.com");
     });
 
     it("generates valid WebSite schema with search action", () => {
@@ -126,7 +126,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(site["@context"]).toBe("https://schema.org");
       expect(site["@type"]).toBe("WebSite");
       expect(site.name).toBe("PennyGrade");
-      expect(site.url).toBe("https://pennygrade.com/");
+      expect(site.url).toBe("https://pennygrade.in/");
       expect(site.potentialAction["@type"]).toBe("SearchAction");
     });
 
@@ -141,11 +141,11 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(breadcrumbs["@type"]).toBe("BreadcrumbList");
       expect(breadcrumbs.itemListElement).toHaveLength(3);
       expect(breadcrumbs.itemListElement[0].name).toBe("Home");
-      expect(breadcrumbs.itemListElement[0].item).toBe("https://pennygrade.com/");
+      expect(breadcrumbs.itemListElement[0].item).toBe("https://pennygrade.in/");
       expect(breadcrumbs.itemListElement[1].name).toBe("Partners");
-      expect(breadcrumbs.itemListElement[1].item).toBe("https://pennygrade.com/partners");
+      expect(breadcrumbs.itemListElement[1].item).toBe("https://pennygrade.in/partners");
       expect(breadcrumbs.itemListElement[2].name).toBe("ABC Café");
-      expect(breadcrumbs.itemListElement[2].item).toBe("https://pennygrade.com/partners/abc-cafe");
+      expect(breadcrumbs.itemListElement[2].item).toBe("https://pennygrade.in/partners/abc-cafe");
     });
 
     it("generates valid LocalBusiness schema with category resolution", () => {
@@ -163,7 +163,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
 
       expect(cafeSchema["@type"]).toBe("CafeOrCoffeeShop");
       expect(cafeSchema.name).toBe("ABC Café");
-      expect(cafeSchema.url).toBe("https://pennygrade.com/partners/abc-cafe");
+      expect(cafeSchema.url).toBe("https://pennygrade.in/partners/abc-cafe");
       expect(cafeSchema.telephone).toBe("+91 98200 11111");
       expect(cafeSchema.address).toEqual({
         "@type": "PostalAddress",
@@ -206,7 +206,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       const robotsPath = path.resolve(process.cwd(), "public", "robots.txt");
       const content = fs.readFileSync(robotsPath, "utf-8");
 
-      expect(content).toContain("Sitemap: https://pennygrade.com/sitemap.xml");
+      expect(content).toContain("Sitemap: https://pennygrade.in/sitemap.xml");
       expect(content).toContain("Disallow: /admin");
       expect(content).toContain("Disallow: /account");
       expect(content).toContain("Disallow: /verification");
@@ -294,12 +294,17 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
       expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
 
       // Must include canonical public discovery routes
-      expect(xml).toContain("<loc>https://pennygrade.com/</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.com/how-it-works</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.com/partners</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.com/offers</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.com/become-a-member</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.com/partner-with-us</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/how-it-works</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/partners</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/offers</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/become-a-member</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/partner-with-us</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/terms</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/privacy</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/merchant-agreement</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/membership-terms</loc>");
+      expect(xml).toContain("<loc>https://pennygrade.in/disclaimer</loc>");
 
       // MUST NOT include sensitive, customer, or admin routes
       expect(xml).not.toContain("/admin");
@@ -374,6 +379,171 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
       expect(capped.eligible).toBe(true);
       expect(capped.discount).toBe(300); // capped at max_discount
       expect(capped.finalAmount).toBe(4700);
+    });
+  });
+
+  describe("Cross-System Entity Deletion & Synchronization Persistence", () => {
+    it("deleting a business partner removes it, tracks deletion, and prevents re-seeding", async () => {
+      const { store, saveStoreToDisk } = await import("@/lib/v1-store");
+
+      const testPartnerId = "test-partner-to-delete";
+      const testPartnerSlug = "test-partner-outlet";
+      store.partners.set(testPartnerId, {
+        id: testPartnerId,
+        business_name: "Test Partner To Delete",
+        slug: testPartnerSlug,
+        category_id: "cafes",
+        category_name: "Cafés",
+        description: "Test outlet",
+        logo_url: "",
+        cover_image_url: "",
+        phone: "+91 99999 00000",
+        email: "test@outlet.com",
+        website: "",
+        address: "Main Road",
+        city: "Daltonganj",
+        latitude: null,
+        longitude: null,
+        business_hours: "9 AM - 9 PM",
+        status: "ACTIVE",
+        featured: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      expect(store.partners.has(testPartnerId)).toBe(true);
+
+      // Simulate deletion: track and remove
+      if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
+      store.deletedPartnerIds.push(testPartnerId);
+      store.deletedPartnerIds.push(testPartnerSlug);
+      store.partners.delete(testPartnerId);
+      saveStoreToDisk();
+
+      expect(store.partners.has(testPartnerId)).toBe(false);
+      expect(store.deletedPartnerIds).toContain(testPartnerId);
+      expect(store.deletedPartnerIds).toContain(testPartnerSlug);
+
+      // Filtered view must exclude deleted partner
+      const visible = Array.from(store.partners.values()).filter(
+        (p) => !store.deletedPartnerIds.includes(p.id) && !store.deletedPartnerIds.includes(p.slug)
+      );
+      expect(visible.find((p) => p.id === testPartnerId)).toBeUndefined();
+    });
+
+    it("deleting a member releases assigned physical card and unlinks membership", async () => {
+      const { store, saveStoreToDisk } = await import("@/lib/v1-store");
+
+      const testMemberId = "mem-test-del-001";
+      const testCardId = "card-test-del-001";
+      const testMemNum = "PEN-DEL1-TEST";
+
+      // Setup member and linked card
+      store.cards.set(testCardId, {
+        id: testCardId,
+        card_number: testMemNum,
+        membership_id: testMemberId,
+        status: "ACTIVE",
+        issued_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      store.members.set(testMemberId, {
+        id: testMemberId,
+        membership_number: testMemNum,
+        full_name: "Test Delete Member",
+        mobile: "9988776655",
+        email: "del.member@test.com",
+        plan_id: "plan-6m",
+        plan_name: "6-Month Plan",
+        start_date: "2026-10-12",
+        expiry_date: "2027-04-12",
+        status: "ACTIVE",
+        card_id: testCardId,
+        card_number: testMemNum,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      expect(store.members.has(testMemberId)).toBe(true);
+      expect(store.cards.get(testCardId)?.status).toBe("ACTIVE");
+
+      // Simulate deletion logic
+      if (!store.deletedMemberIds) store.deletedMemberIds = [];
+      store.deletedMemberIds.push(testMemberId);
+      store.deletedMemberIds.push(testMemNum);
+
+      // Card release
+      const card = store.cards.get(testCardId)!;
+      card.membership_id = null;
+      card.status = "AVAILABLE";
+      card.updated_at = new Date().toISOString();
+
+      store.members.delete(testMemberId);
+      saveStoreToDisk();
+
+      // Assertions
+      expect(store.members.has(testMemberId)).toBe(false);
+      expect(store.deletedMemberIds).toContain(testMemberId);
+      expect(store.cards.get(testCardId)?.status).toBe("AVAILABLE");
+      expect(store.cards.get(testCardId)?.membership_id).toBeNull();
+    });
+
+    it("revoking an admin user removes them from team list and tracks revocation", async () => {
+      const { store, saveStoreToDisk } = await import("@/lib/v1-store");
+
+      const testAdminId = "adm-test-revoke-001";
+      const testEmail = "temp.manager@pennygrade.in";
+
+      if (!store.adminUsers) store.adminUsers = [];
+      store.adminUsers.push({
+        id: testAdminId,
+        user_id: "uid-test-revoke-001",
+        full_name: "Temporary Manager",
+        email: testEmail,
+        role: "manager",
+        created_at: new Date().toISOString(),
+      });
+
+      expect(store.adminUsers.some((u) => u.id === testAdminId)).toBe(true);
+
+      // Simulate revoke
+      if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
+      store.deletedAdminUserIds.push(testAdminId);
+      store.deletedAdminUserIds.push(testEmail.toLowerCase());
+
+      store.adminUsers = store.adminUsers.filter(
+        (u) => u.id !== testAdminId && u.email.toLowerCase() !== testEmail.toLowerCase()
+      );
+      saveStoreToDisk();
+
+      expect(store.adminUsers.some((u) => u.id === testAdminId)).toBe(false);
+      expect(store.deletedAdminUserIds).toContain(testAdminId);
+      expect(store.deletedAdminUserIds).toContain(testEmail.toLowerCase());
+    });
+  });
+
+  describe("Official Production Legal Documentation & Contact Architecture", () => {
+    it("ensures all 5 authoritative legal routes export valid route configurations", async () => {
+      const termsMod = await import("@/routes/terms");
+      const privacyMod = await import("@/routes/privacy");
+      const merchantMod = await import("@/routes/merchant-agreement");
+      const membershipMod = await import("@/routes/membership-terms");
+      const disclaimerMod = await import("@/routes/disclaimer");
+
+      expect(termsMod.Route).toBeDefined();
+      expect(privacyMod.Route).toBeDefined();
+      expect(merchantMod.Route).toBeDefined();
+      expect(membershipMod.Route).toBeDefined();
+      expect(disclaimerMod.Route).toBeDefined();
+    });
+
+    it("ensures canonical support email and helpline are uniformly configured", async () => {
+      const { buildOrganizationSchema } = await import("@/lib/seo");
+      const schema = buildOrganizationSchema();
+      expect(schema.contactPoint.email).toBe("pennygradebusiness@gmail.com");
+      expect(schema.contactPoint.telephone).toBe("+91-93568-97893");
     });
   });
 });

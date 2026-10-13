@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
 import { PageHeader, Stat, Panel, TableSkeleton, Chart } from "@/components/admin-ui";
-import { supabase } from "@/integrations/supabase/client";
-import { getAdminMembers, getAdminCards } from "@/lib/admin.functions";
+import { getAdminMembers, getAdminCards, getAdminPartners, getAdminOffers } from "@/lib/admin.functions";
 import { fetchLogs, groupSum, lastMonths, monthKey } from "@/lib/admin-data";
 import { inr } from "@/lib/format";
 
@@ -18,52 +17,33 @@ const axis = { fontSize: 11, stroke: "var(--muted-foreground)" };
 function Dashboard() {
   const fetchMembersFn = useServerFn(getAdminMembers);
   const fetchCardsFn = useServerFn(getAdminCards);
+  const fetchPartnersFn = useServerFn(getAdminPartners);
+  const fetchOffersFn = useServerFn(getAdminOffers);
 
   const q = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       try {
-        let partnersCount = 0;
-        try {
-          const res = await supabase.from("partners").select("id", { count: "exact", head: true }).eq("status", "ACTIVE");
-          partnersCount = res.count ?? 0;
-        } catch {
-          // ignore
-        }
+        const [msRes, cardsRes, partnersRes, offersRes, logsRes] = await Promise.allSettled([
+          fetchMembersFn(),
+          fetchCardsFn(),
+          fetchPartnersFn(),
+          fetchOffersFn(),
+          fetchLogs(180),
+        ]);
 
-        let offersCount = 0;
-        try {
-          const res = await supabase.from("offers").select("id", { count: "exact", head: true }).eq("status", "ACTIVE");
-          offersCount = res.count ?? 0;
-        } catch {
-          // ignore
-        }
-
-        let ms: Awaited<ReturnType<typeof fetchMembersFn>> = [];
-        try {
-          ms = (await fetchMembersFn()) ?? [];
-        } catch {
-          ms = [];
-        }
-
-        let cards: Awaited<ReturnType<typeof fetchCardsFn>> = [];
-        try {
-          cards = (await fetchCardsFn()) ?? [];
-        } catch {
-          cards = [];
-        }
-
-        let logs: Awaited<ReturnType<typeof fetchLogs>> = [];
-        try {
-          logs = await fetchLogs(180);
-        } catch {
-          logs = [];
-        }
+        const ms = msRes.status === "fulfilled" ? (msRes.value ?? []) : [];
+        const cards = cardsRes.status === "fulfilled" ? (cardsRes.value ?? []) : [];
+        const partners = partnersRes.status === "fulfilled" ? (partnersRes.value ?? []) : [];
+        const offers = offersRes.status === "fulfilled" ? (offersRes.value ?? []) : [];
+        const logs = logsRes.status === "fulfilled" ? (logsRes.value ?? []) : [];
 
         const active = ms.filter((m) => m.status === "ACTIVE" && m.expiry_date >= today).length;
         const expired = ms.filter((m) => m.status === "EXPIRED" || (m.status === "ACTIVE" && m.expiry_date < today)).length;
         const availableCards = cards.filter((c) => c.status === "AVAILABLE").length;
+        const activePartners = partners.filter((p) => p.status === "ACTIVE").length;
+        const activeOffers = offers.filter((o) => o.status === "ACTIVE").length;
 
         return {
           ms,
@@ -71,8 +51,8 @@ function Dashboard() {
           active,
           expired,
           availableCards,
-          partners: partnersCount,
-          offers: offersCount,
+          partners: activePartners,
+          offers: activeOffers,
           logs,
         };
       } catch (err) {

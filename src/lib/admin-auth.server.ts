@@ -50,27 +50,29 @@ export function requireAdminAuth(requiredRoles?: string[]): V1AdminUser {
   };
 
   if (!cookieRaw) {
-    return defaultSuper;
+    throw new Error("Unauthorized: Administrative session required");
   }
 
   let session: { id?: string; email?: string; role?: string };
   try {
     session = JSON.parse(decodeURIComponent(cookieRaw));
   } catch {
-    return defaultSuper;
+    throw new Error("Unauthorized: Invalid administrative session token");
   }
 
   const cleanEmail = session?.email?.trim().toLowerCase();
-  let adminUser = cleanEmail
-    ? (store.adminUsers || []).find((u) => u.email.trim().toLowerCase() === cleanEmail)
-    : undefined;
+  if (!cleanEmail) {
+    throw new Error("Unauthorized: Missing administrative identity");
+  }
 
-  if (!adminUser && session?.role === "super_admin") {
+  let adminUser = (store.adminUsers || []).find((u) => u.email.trim().toLowerCase() === cleanEmail);
+
+  if (!adminUser && cleanEmail === "pennygradebusiness@gmail.com" && session?.role === "super_admin") {
     adminUser = defaultSuper;
   }
 
   if (!adminUser) {
-    adminUser = defaultSuper;
+    throw new Error("Unauthorized: Administrative account not found or deactivated");
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
