@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { getRealtimeTransport } from "./config";
 import {
   store,
   safeRandomUUID,
@@ -34,6 +35,9 @@ export function pub() {
 
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    realtime: {
+      transport: getRealtimeTransport(),
+    },
   });
 }
 

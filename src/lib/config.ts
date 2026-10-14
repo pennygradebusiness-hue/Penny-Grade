@@ -94,3 +94,33 @@ export function getPublicSupabaseConfig() {
 
   return { projectId, url, publishableKey };
 }
+
+/**
+ * Resolves a safe WebSocket transport constructor for Supabase RealtimeClient.
+ * - In browsers: uses window.WebSocket.
+ * - In modern runtimes (Node 22+, Deno, Bun): uses globalThis.WebSocket.
+ * - In serverless runtimes without native WebSocket (Node < 22 on Netlify):
+ *   provides a safe stub class so RealtimeClient initialization does not crash SSR.
+ */
+export function getRealtimeTransport(): typeof WebSocket | undefined {
+  if (typeof window !== "undefined" && typeof window.WebSocket !== "undefined") {
+    return window.WebSocket;
+  }
+  if (typeof globalThis !== "undefined" && typeof globalThis.WebSocket !== "undefined") {
+    return globalThis.WebSocket;
+  }
+  // Server stub for Node environments lacking native WebSocket support
+  class ServerStubWebSocket {
+    static readonly CONNECTING = 0;
+    static readonly OPEN = 1;
+    static readonly CLOSING = 2;
+    static readonly CLOSED = 3;
+    readonly readyState = 3;
+    constructor() {}
+    close() {}
+    send() {}
+    addEventListener() {}
+    removeEventListener() {}
+  }
+  return ServerStubWebSocket as unknown as typeof WebSocket;
+}

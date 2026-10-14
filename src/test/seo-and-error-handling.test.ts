@@ -559,4 +559,48 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
       expect(schema.contactPoint.telephone).toBe("+91-93568-97893");
     });
   });
+
+  describe("Supabase Runtime WebSocket Compatibility & Serverless Resilience", () => {
+    it("provides a resilient transport constructor that prevents crashes in environments lacking native WebSocket", async () => {
+      const { getRealtimeTransport } = await import("@/lib/config");
+      const transport = getRealtimeTransport();
+      expect(transport).toBeDefined();
+
+      // Test instantiation with URL (standard WebSocket spec compliant)
+      // @ts-expect-error test instantiation
+      const socket = new transport("wss://example.com");
+      expect(socket).toBeDefined();
+      expect(typeof socket.close).toBe("function");
+
+      // Test serverless fallback when native WebSocket is absent
+      const originalWindowWs = window.WebSocket;
+      const originalGlobalWs = globalThis.WebSocket;
+      try {
+        // @ts-expect-error simulate Node < 22
+        delete window.WebSocket;
+        // @ts-expect-error simulate Node < 22
+        delete globalThis.WebSocket;
+
+        const fallbackTransport = getRealtimeTransport();
+        expect(fallbackTransport).toBeDefined();
+        // @ts-expect-error test stub instantiation
+        const stubSocket = new fallbackTransport();
+        expect(stubSocket).toBeDefined();
+        expect(typeof stubSocket.close).toBe("function");
+        expect(typeof stubSocket.send).toBe("function");
+      } finally {
+        window.WebSocket = originalWindowWs;
+        globalThis.WebSocket = originalGlobalWs;
+      }
+    });
+
+    it("verifies public Supabase client initializes cleanly without throwing native WebSocket errors", async () => {
+      const { pub } = await import("@/lib/public.functions");
+      expect(() => {
+        const client = pub();
+        expect(client).toBeDefined();
+      }).not.toThrow();
+    });
+  });
 });
+

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getSiteUrl } from "@/lib/seo";
+import { getRealtimeTransport } from "@/lib/config";
 import { store, type V1Partner } from "@/lib/v1-store";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -99,6 +100,9 @@ export const Route = createFileRoute("/sitemap.xml")({
               auth: { persistSession: false },
               global: {
                 fetch: (url, opts) => fetch(url, { ...opts, signal: AbortSignal.timeout(1500) }),
+              },
+              realtime: {
+                transport: getRealtimeTransport(),
               },
             });
             const { data, error } = await sb
