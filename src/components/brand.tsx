@@ -10,11 +10,11 @@ export const CARD_URL = cardUrl;
 /** Official PennyGrade eagle emblem */
 export function LogoMark({ className, variant = "badge" }: { className?: string; variant?: "badge" | "raw" }) {
   if (variant === "raw") {
-    return <img src={emblemUrl} alt="PennyGrade Eagle Emblem" className={cn("object-contain filter drop-shadow-sm", className)} />;
+    return <img src={emblemUrl} alt="PennyGrade Eagle Emblem" width={36} height={36} decoding="async" className={cn("object-contain filter drop-shadow-sm", className)} />;
   }
   return (
     <span className={cn("inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-950 to-black p-1 ring-1 ring-amber-400/50 shadow-sm", className)}>
-      <img src={emblemUrl} alt="PennyGrade Eagle Emblem" className="h-full w-full object-contain filter drop-shadow" />
+      <img src={emblemUrl} alt="PennyGrade Eagle Emblem" width={36} height={36} decoding="async" className="h-full w-full object-contain filter drop-shadow" />
     </span>
   );
 }
@@ -66,6 +66,9 @@ export function PhysicalCardPreview({
       <img
         src={cardUrl}
         alt="PennyGrade Physical Membership Card"
+        width={420}
+        height={262}
+        decoding="async"
         className="h-auto w-full rounded-2xl object-cover select-none"
       />
       {code && code !== "PEN-7X4P-92LM" && (

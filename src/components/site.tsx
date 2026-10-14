@@ -86,6 +86,9 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setCityOpen(!cityOpen)}
+              aria-expanded={cityOpen}
+              aria-haspopup="dialog"
+              aria-label="Select location, currently Daltonganj (Live)"
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50/70 px-3.5 py-1 text-[12px] font-bold text-amber-900 shadow-2xs transition-colors hover:bg-amber-100/80 cursor-pointer"
             >
               <span className="relative flex h-2 w-2">
@@ -150,7 +153,9 @@ export function SiteHeader() {
         <button
           className="rounded-lg p-2 text-navy hover:bg-muted lg:hidden cursor-pointer"
           onClick={() => setOpen(!open)}
-          aria-label="Toggle navigation"
+          aria-expanded={open}
+          aria-controls="mobile-navigation"
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
         >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -158,7 +163,7 @@ export function SiteHeader() {
 
       {/* Mobile Drawer */}
       {open && (
-        <div className="border-t border-[#ececf1] bg-white px-4 pb-6 pt-2 shadow-lg lg:hidden">
+        <div id="mobile-navigation" className="border-t border-[#ececf1] bg-white px-4 pb-6 pt-2 shadow-lg lg:hidden">
           <nav className="flex flex-col space-y-1">
             {mobileLinks.map((l) => (
               <Link
@@ -360,8 +365,16 @@ export function SiteFooter() {
 export function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:bg-slate-900 focus:px-4 focus:py-2.5 focus:text-xs focus:font-bold focus:text-white focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+      >
+        Skip to main content
+      </a>
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </main>
       <SiteFooter />
     </div>
   );
@@ -476,6 +489,9 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
           src={coverUrl}
           alt={p.business_name}
           loading="lazy"
+          decoding="async"
+          width={700}
+          height={438}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
@@ -510,6 +526,10 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
             <img
               src={p.logo_url}
               alt=""
+              loading="lazy"
+              decoding="async"
+              width={36}
+              height={36}
               className="h-9 w-9 rounded-xl border-2 border-white object-cover shadow-sm"
             />
           </div>

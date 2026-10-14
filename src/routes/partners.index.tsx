@@ -701,6 +701,10 @@ function Partners() {
                     <img
                       src={CARD_URL}
                       alt="PennyGrade Premium Membership Card"
+                      width={380}
+                      height={238}
+                      loading="lazy"
+                      decoding="async"
                       className="h-auto w-full rounded-xl object-cover shadow-inner"
                     />
                     <div className="absolute bottom-4 left-4 rounded-md bg-slate-950/85 px-2.5 py-1 font-mono text-[10px] font-black tracking-widest text-amber-200 border border-amber-400/40 backdrop-blur-xs">

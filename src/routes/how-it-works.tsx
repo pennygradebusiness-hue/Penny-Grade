@@ -459,6 +459,10 @@ function HowItWorks() {
                             <img
                               src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=200&q=80"
                               alt="Café Bliss"
+                              width={48}
+                              height={48}
+                              loading="lazy"
+                              decoding="async"
                               className="h-12 w-12 rounded-lg object-cover shrink-0"
                             />
                             <div className="flex-1 min-w-0">
@@ -482,6 +486,10 @@ function HowItWorks() {
                             <img
                               src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=200&q=80"
                               alt="The Grand Stay"
+                              width={48}
+                              height={48}
+                              loading="lazy"
+                              decoding="async"
                               className="h-12 w-12 rounded-lg object-cover shrink-0"
                             />
                             <div className="flex-1 min-w-0">
@@ -505,6 +513,10 @@ function HowItWorks() {
                             <img
                               src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=200&q=80"
                               alt="FitZone Studio"
+                              width={48}
+                              height={48}
+                              loading="lazy"
+                              decoding="async"
                               className="h-12 w-12 rounded-lg object-cover shrink-0"
                             />
                             <div className="flex-1 min-w-0">
@@ -921,6 +933,10 @@ function HowItWorks() {
               <img
                 src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80"
                 alt="Fine Dining"
+                width={300}
+                height={375}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex flex-col justify-end">
@@ -942,6 +958,10 @@ function HowItWorks() {
               <img
                 src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80"
                 alt="Artisan Café"
+                width={300}
+                height={375}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex flex-col justify-end">
@@ -963,6 +983,10 @@ function HowItWorks() {
               <img
                 src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80"
                 alt="Luxury Hotel"
+                width={300}
+                height={375}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex flex-col justify-end">
@@ -984,6 +1008,10 @@ function HowItWorks() {
               <img
                 src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80"
                 alt="Boutique Shopping"
+                width={300}
+                height={375}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex flex-col justify-end">
@@ -1005,6 +1033,10 @@ function HowItWorks() {
               <img
                 src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80"
                 alt="Fitness Gym"
+                width={300}
+                height={375}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex flex-col justify-end">
@@ -1026,6 +1058,10 @@ function HowItWorks() {
               <img
                 src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80"
                 alt="Travel"
+                width={300}
+                height={375}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent p-3 flex flex-col justify-end">

@@ -199,6 +199,10 @@ function QrLanding() {
             <img
               src={p.logo_url}
               alt=""
+              width={40}
+              height={40}
+              loading="lazy"
+              decoding="async"
               className="h-10 w-10 rounded-xl border border-[#ececf1] object-cover shadow-xs shrink-0"
             />
           )}

@@ -209,6 +209,7 @@ function PartnerPage() {
           <img
             src={coverUrl}
             alt={p.business_name}
+            decoding="async"
             className="h-full w-full object-cover object-center brightness-90"
           />
           {/* Subtle Ambient Shadow */}
@@ -257,6 +258,9 @@ function PartnerPage() {
                     <img
                       src={p.logo_url}
                       alt={p.business_name}
+                      width={96}
+                      height={96}
+                      decoding="async"
                       className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-4 border-white bg-white object-cover shadow-md ring-1 ring-slate-100"
                     />
                   ) : (
