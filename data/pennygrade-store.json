@@ -3328,7 +3328,7 @@
       "user_id": "68bb89d9-24be-4eff-84ab-ebb65032a7df",
       "full_name": "samir pandey",
       "email": "samirjee187@gmail.com",
-      "role": "manager",
+      "role": "super_admin",
       "temporary_password": "Samir@125141",
       "is_password_set": true,
       "created_at": "2026-10-13T22:03:31.426Z"

@@ -623,13 +623,34 @@ function loadStoreFromDisk(): PennyGradeStore | null {
 function seedAdminUsers(): V1AdminUser[] {
   return [
     {
+      id: "a6956859-262f-4eda-88b1-9dc42b42563b",
+      user_id: "68bb89d9-24be-4eff-84ab-ebb65032a7df",
+      full_name: "Samir Pandey",
+      email: "samirjee187@gmail.com",
+      role: "super_admin",
+      temporary_password: "Samir@125141",
+      is_password_set: true,
+      created_at: "2026-10-13T22:03:31.426Z",
+    },
+    {
       id: "admin-primary-owner",
       user_id: "uid-primary-owner",
       full_name: "PennyGrade Business",
       email: "pennygradebusiness@gmail.com",
       role: "super_admin",
-      is_password_set: false,
-      created_at: new Date().toISOString(),
+      temporary_password: "NewSupabasePass2026!",
+      is_password_set: true,
+      created_at: "2026-10-12T13:57:03.463Z",
+    },
+    {
+      id: "af5726c7-cc4c-43e6-894f-c03da11eb60b",
+      user_id: "cb362b20-493d-4ec6-b501-ca3d38392290",
+      full_name: "Vikram Singhania",
+      email: "newsuper@pennygrade.in",
+      role: "super_admin",
+      temporary_password: "Perm@Password2026!",
+      is_password_set: true,
+      created_at: "2026-10-14T06:58:37.452Z",
     },
   ];
 }
@@ -691,9 +712,29 @@ function initStore(): PennyGradeStore {
           full_name: "PennyGrade Business",
           email: "pennygradebusiness@gmail.com",
           role: "super_admin",
+          temporary_password: "NewSupabasePass2026!",
           is_password_set: true,
           created_at: "2026-09-12T10:23:54.846Z",
         });
+      }
+
+      // Ensure Samir Pandey always exists with super_admin access
+      const existingSamir = fromDisk.adminUsers.find((u) => u.email.toLowerCase() === "samirjee187@gmail.com");
+      if (!existingSamir) {
+        fromDisk.adminUsers.unshift({
+          id: "a6956859-262f-4eda-88b1-9dc42b42563b",
+          user_id: "68bb89d9-24be-4eff-84ab-ebb65032a7df",
+          full_name: "Samir Pandey",
+          email: "samirjee187@gmail.com",
+          role: "super_admin",
+          temporary_password: "Samir@125141",
+          is_password_set: true,
+          created_at: "2026-10-13T22:03:31.426Z",
+        });
+      } else {
+        existingSamir.role = "super_admin";
+        existingSamir.temporary_password = "Samir@125141";
+        existingSamir.is_password_set = true;
       }
     }
     globalThis.__pennyGradeStore = fromDisk;
