@@ -1184,6 +1184,27 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 
 // ---------------- PARTNERS MANAGEMENT ----------------
 
+// Permanent name-based blacklist: partners that have been deleted but may still exist in Supabase
+// because anonymous-key deletes are silently blocked by RLS. This is the last line of defense.
+const PERMANENTLY_DELETED_PARTNER_NAMES = new Set([
+  "the grand stay",
+  "fitzone",
+  "fit zone",
+]);
+const PERMANENTLY_DELETED_PARTNER_SLUGS = new Set([
+  "the-grand-stay",
+  "grand-stay",
+  "fitzone",
+  "fit-zone",
+]);
+
+function isPartnerPermanentlyDeleted(id: string, slug: string | null | undefined, name: string): boolean {
+  return (
+    PERMANENTLY_DELETED_PARTNER_SLUGS.has((slug || "").toLowerCase().trim()) ||
+    PERMANENTLY_DELETED_PARTNER_NAMES.has(name.toLowerCase().trim())
+  );
+}
+
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
   if (!store.partners) store.partners = new Map();
@@ -1195,7 +1216,7 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
   if (!store.seededPartners && store.partners.size === 0) {
     const seeded = seedPartners();
     for (const [k, v] of seeded.entries()) {
-      if (!delSet.has(k) && !delSet.has(v.slug)) {
+      if (!delSet.has(k) && !delSet.has(v.slug) && !isPartnerPermanentlyDeleted(k, v.slug, v.business_name)) {
         store.partners.set(k, v);
       }
     }
@@ -1209,30 +1230,40 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
       .select("*, category:categories(id, name, slug)");
     if (dbPartners && dbPartners.length > 0) {
       for (const p of dbPartners) {
-        if (!delSet.has(p.id) && !delSet.has(p.slug) && !store.partners.has(p.id)) {
-          store.partners.set(p.id, {
-            id: p.id,
-            business_name: p.business_name,
-            slug: p.slug,
-            category_id: p.category_id || "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
-            category_name: (p as any).category?.name || "General",
-            description: p.description || "",
-            logo_url: p.logo_url || "",
-            cover_image_url: p.cover_image_url || "",
-            phone: p.phone || "",
-            email: p.email || "",
-            website: p.website || "",
-            address: p.address || "",
-            city: p.city || "Daltonganj",
-            latitude: p.latitude ?? null,
-            longitude: p.longitude ?? null,
-            business_hours: p.business_hours || "",
-            status: p.status as "ACTIVE" | "INACTIVE" | "SUSPENDED",
-            featured: Boolean(p.featured),
-            created_at: p.created_at || new Date().toISOString(),
-            updated_at: p.updated_at || new Date().toISOString(),
-          });
+        // Skip permanently deleted partners (even if still in Supabase DB due to RLS-blocked deletes)
+        if (
+          delSet.has(p.id) ||
+          delSet.has(p.slug) ||
+          store.partners.has(p.id) ||
+          isPartnerPermanentlyDeleted(p.id, p.slug, p.business_name)
+        ) {
+          // Ensure their IDs are tracked in the deleted set so they're permanently blocked
+          if (!store.deletedPartnerIds.includes(p.id)) store.deletedPartnerIds.push(p.id);
+          if (p.slug && !store.deletedPartnerIds.includes(p.slug)) store.deletedPartnerIds.push(p.slug);
+          continue;
         }
+        store.partners.set(p.id, {
+          id: p.id,
+          business_name: p.business_name,
+          slug: p.slug,
+          category_id: p.category_id || "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
+          category_name: (p as any).category?.name || "General",
+          description: p.description || "",
+          logo_url: p.logo_url || "",
+          cover_image_url: p.cover_image_url || "",
+          phone: p.phone || "",
+          email: p.email || "",
+          website: p.website || "",
+          address: p.address || "",
+          city: p.city || "Daltonganj",
+          latitude: p.latitude ?? null,
+          longitude: p.longitude ?? null,
+          business_hours: p.business_hours || "",
+          status: p.status as "ACTIVE" | "INACTIVE" | "SUSPENDED",
+          featured: Boolean(p.featured),
+          created_at: p.created_at || new Date().toISOString(),
+          updated_at: p.updated_at || new Date().toISOString(),
+        });
       }
     }
   } catch {
@@ -1241,7 +1272,11 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
 
   saveStoreToDisk();
   return Array.from(store.partners.values())
-    .filter((p) => !delSet.has(p.id) && !delSet.has(p.slug))
+    .filter((p) =>
+      !delSet.has(p.id) &&
+      !delSet.has(p.slug) &&
+      !isPartnerPermanentlyDeleted(p.id, p.slug, p.business_name)
+    )
     .sort((a, b) => a.business_name.localeCompare(b.business_name));
 });
 
@@ -1436,10 +1471,21 @@ export const getAdminOffers = createServerFn({ method: "GET" }).handler(async ()
     if (dbOffers) {
       for (const o of dbOffers) {
         const pSlug = (o.partner as any)?.slug;
+        const pName = (o.partner as any)?.business_name || "";
+        // Block permanently deleted partners (including those still in Supabase due to RLS-blocked anonymous deletes)
+        const isPermDeletedPartner = isPartnerPermanentlyDeleted(o.partner_id, pSlug, pName);
         const isDeleted =
           delOfferSet.has(o.id) ||
           delPartnerSet.has(o.partner_id) ||
-          (pSlug && delPartnerSet.has(pSlug));
+          (pSlug && delPartnerSet.has(pSlug)) ||
+          isPermDeletedPartner;
+
+        if (isPermDeletedPartner) {
+          // Auto-register in deleted tracking so future calls skip faster
+          if (!store.deletedOfferIds.includes(o.id)) store.deletedOfferIds.push(o.id);
+          if (o.partner_id && !store.deletedPartnerIds.includes(o.partner_id)) store.deletedPartnerIds.push(o.partner_id);
+          if (pSlug && !store.deletedPartnerIds.includes(pSlug)) store.deletedPartnerIds.push(pSlug);
+        }
 
         if (!isDeleted) {
           if (!store.offers.has(o.id)) {
@@ -1470,15 +1516,21 @@ export const getAdminOffers = createServerFn({ method: "GET" }).handler(async ()
     // ignore
   }
 
+  // Refresh sets after auto-registration above
+  const finalDelOfferSet = new Set(store.deletedOfferIds);
+  const finalDelPartnerSet = new Set(store.deletedPartnerIds);
+
   // Build filtered response
   const result: V1Offer[] = [];
   for (const offer of store.offers.values()) {
     const partner = store.partners?.get(offer.partner_id);
     const pSlug = offer.partner?.slug || partner?.slug;
+    const pName = offer.partner?.business_name || partner?.business_name || "";
     if (
-      delOfferSet.has(offer.id) ||
-      delPartnerSet.has(offer.partner_id) ||
-      (pSlug && delPartnerSet.has(pSlug))
+      finalDelOfferSet.has(offer.id) ||
+      finalDelPartnerSet.has(offer.partner_id) ||
+      (pSlug && finalDelPartnerSet.has(pSlug)) ||
+      isPartnerPermanentlyDeleted(offer.partner_id, pSlug, pName)
     ) {
       continue;
     }
