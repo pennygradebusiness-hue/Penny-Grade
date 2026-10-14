@@ -7,7 +7,8 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node scripts/generate-robots.js && vite dev",
+    "prebuild": "node scripts/generate-robots.js",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",

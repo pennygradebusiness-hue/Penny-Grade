@@ -15,47 +15,51 @@ import { generateRequestId, sanitizeLogData, createApiError } from "@/lib/errors
 import { logApplicationError } from "@/lib/error-logger";
 import { renderErrorPage } from "@/lib/error-page";
 
+const TEST_ORIGIN = "https://test.pennygrade.example";
+process.env.VITE_SITE_URL = TEST_ORIGIN;
+process.env.SITE_URL = TEST_ORIGIN;
+
 describe("PennyGrade Technical SEO & Metadata Architecture", () => {
   it("resolves authoritative production site origin correctly", () => {
     const origin = getSiteUrl();
-    expect(origin).toBe("https://pennygrade.in");
+    expect(origin).toBe(TEST_ORIGIN);
     expect(origin.endsWith("/")).toBe(false);
   });
 
   describe("Canonical URL Generation & Normalization", () => {
     it("generates root canonical URL with trailing slash", () => {
-      expect(buildCanonicalUrl("/")).toBe("https://pennygrade.in/");
-      expect(buildCanonicalUrl("")).toBe("https://pennygrade.in/");
+      expect(buildCanonicalUrl("/")).toBe(`${TEST_ORIGIN}/`);
+      expect(buildCanonicalUrl("")).toBe(`${TEST_ORIGIN}/`);
     });
 
     it("generates normalized canonical URLs for public pages without trailing slash", () => {
-      expect(buildCanonicalUrl("/how-it-works")).toBe("https://pennygrade.in/how-it-works");
-      expect(buildCanonicalUrl("/partners")).toBe("https://pennygrade.in/partners");
-      expect(buildCanonicalUrl("/partners/")).toBe("https://pennygrade.in/partners");
-      expect(buildCanonicalUrl("/offers")).toBe("https://pennygrade.in/offers");
-      expect(buildCanonicalUrl("/become-a-member")).toBe("https://pennygrade.in/become-a-member");
-      expect(buildCanonicalUrl("/partner-with-us")).toBe("https://pennygrade.in/partner-with-us");
+      expect(buildCanonicalUrl("/how-it-works")).toBe(`${TEST_ORIGIN}/how-it-works`);
+      expect(buildCanonicalUrl("/partners")).toBe(`${TEST_ORIGIN}/partners`);
+      expect(buildCanonicalUrl("/partners/")).toBe(`${TEST_ORIGIN}/partners`);
+      expect(buildCanonicalUrl("/offers")).toBe(`${TEST_ORIGIN}/offers`);
+      expect(buildCanonicalUrl("/become-a-member")).toBe(`${TEST_ORIGIN}/become-a-member`);
+      expect(buildCanonicalUrl("/partner-with-us")).toBe(`${TEST_ORIGIN}/partner-with-us`);
     });
 
     it("strips query parameters and filters from canonical URLs", () => {
       expect(buildCanonicalUrl("/partners?q=coffee&category=cafes&sort=popular")).toBe(
-        "https://pennygrade.in/partners",
+        `${TEST_ORIGIN}/partners`,
       );
-      expect(buildCanonicalUrl("/offers?discountMin=15")).toBe("https://pennygrade.in/offers");
+      expect(buildCanonicalUrl("/offers?discountMin=15")).toBe(`${TEST_ORIGIN}/offers`);
     });
 
     it("strips hash fragments from canonical URLs", () => {
       expect(buildCanonicalUrl("/how-it-works#calculator")).toBe(
-        "https://pennygrade.in/how-it-works",
+        `${TEST_ORIGIN}/how-it-works`,
       );
     });
 
     it("generates correct partner profile canonical URLs using verified slug", () => {
       expect(buildCanonicalUrl("/partners/abc-cafe")).toBe(
-        "https://pennygrade.in/partners/abc-cafe",
+        `${TEST_ORIGIN}/partners/abc-cafe`,
       );
       expect(buildCanonicalUrl("/partners/urban-brew/")).toBe(
-        "https://pennygrade.in/partners/urban-brew",
+        `${TEST_ORIGIN}/partners/urban-brew`,
       );
     });
   });
@@ -80,10 +84,10 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(ogTitle?.content).toBe("Test Page | PennyGrade");
 
       const ogUrl = head.meta.find((m) => m.property === "og:url");
-      expect(ogUrl?.content).toBe("https://pennygrade.in/how-it-works");
+      expect(ogUrl?.content).toBe(`${TEST_ORIGIN}/how-it-works`);
 
       const ogImage = head.meta.find((m) => m.property === "og:image");
-      expect(ogImage?.content).toBe("https://pennygrade.in/test-image.png");
+      expect(ogImage?.content).toBe(`${TEST_ORIGIN}/test-image.png`);
 
       const twitterCard = head.meta.find((m) => m.name === "twitter:card");
       expect(twitterCard?.content).toBe("summary_large_image");
@@ -93,7 +97,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
 
       // Canonical link
       const canonicalLink = head.links.find((l) => l.rel === "canonical");
-      expect(canonicalLink?.href).toBe("https://pennygrade.in/how-it-works");
+      expect(canonicalLink?.href).toBe(`${TEST_ORIGIN}/how-it-works`);
     });
 
     it("applies noindex, nofollow directives for sensitive or private routes", () => {
@@ -115,7 +119,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(org["@context"]).toBe("https://schema.org");
       expect(org["@type"]).toBe("Organization");
       expect(org.name).toBe("PennyGrade");
-      expect(org.url).toBe("https://pennygrade.in/");
+      expect(org.url).toBe(`${TEST_ORIGIN}/`);
       expect(org.logo).toContain("/pennygrade-logo.jpg");
       expect(org.contactPoint["@type"]).toBe("ContactPoint");
       expect(org.contactPoint.email).toBe("pennygradebusiness@gmail.com");
@@ -126,7 +130,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(site["@context"]).toBe("https://schema.org");
       expect(site["@type"]).toBe("WebSite");
       expect(site.name).toBe("PennyGrade");
-      expect(site.url).toBe("https://pennygrade.in/");
+      expect(site.url).toBe(`${TEST_ORIGIN}/`);
       expect(site.potentialAction["@type"]).toBe("SearchAction");
     });
 
@@ -141,11 +145,11 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(breadcrumbs["@type"]).toBe("BreadcrumbList");
       expect(breadcrumbs.itemListElement).toHaveLength(3);
       expect(breadcrumbs.itemListElement[0].name).toBe("Home");
-      expect(breadcrumbs.itemListElement[0].item).toBe("https://pennygrade.in/");
+      expect(breadcrumbs.itemListElement[0].item).toBe(`${TEST_ORIGIN}/`);
       expect(breadcrumbs.itemListElement[1].name).toBe("Partners");
-      expect(breadcrumbs.itemListElement[1].item).toBe("https://pennygrade.in/partners");
+      expect(breadcrumbs.itemListElement[1].item).toBe(`${TEST_ORIGIN}/partners`);
       expect(breadcrumbs.itemListElement[2].name).toBe("ABC Café");
-      expect(breadcrumbs.itemListElement[2].item).toBe("https://pennygrade.in/partners/abc-cafe");
+      expect(breadcrumbs.itemListElement[2].item).toBe(`${TEST_ORIGIN}/partners/abc-cafe`);
     });
 
     it("generates valid LocalBusiness schema with category resolution", () => {
@@ -163,7 +167,7 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
 
       expect(cafeSchema["@type"]).toBe("CafeOrCoffeeShop");
       expect(cafeSchema.name).toBe("ABC Café");
-      expect(cafeSchema.url).toBe("https://pennygrade.in/partners/abc-cafe");
+      expect(cafeSchema.url).toBe(`${TEST_ORIGIN}/partners/abc-cafe`);
       expect(cafeSchema.telephone).toBe("+91 98200 11111");
       expect(cafeSchema.address).toEqual({
         "@type": "PostalAddress",
@@ -202,11 +206,11 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
   });
 
   describe("robots.txt Configuration Validation", () => {
-    it("contains valid sitemap declaration and crawl rules", () => {
-      const robotsPath = path.resolve(process.cwd(), "public", "robots.txt");
-      const content = fs.readFileSync(robotsPath, "utf-8");
+    it("contains valid sitemap declaration and crawl rules in template", () => {
+      const templatePath = path.resolve(process.cwd(), "public", "robots.txt.template");
+      const content = fs.readFileSync(templatePath, "utf-8");
 
-      expect(content).toContain("Sitemap: https://pennygrade.in/sitemap.xml");
+      expect(content).toContain("Sitemap: {{SITE_URL}}/sitemap.xml");
       expect(content).toContain("Disallow: /admin");
       expect(content).toContain("Disallow: /account");
       expect(content).toContain("Disallow: /verification");
@@ -214,6 +218,15 @@ describe("PennyGrade Technical SEO & Metadata Architecture", () => {
       expect(content).toContain("Disallow: /history");
       expect(content).toContain("Allow: /");
       expect(content).not.toContain("Disallow: / ");
+    });
+
+    it("generates production-ready robots.txt from environment URL without hardcoding", () => {
+      const templatePath = path.resolve(process.cwd(), "public", "robots.txt.template");
+      const template = fs.readFileSync(templatePath, "utf-8");
+      const generated = template.replace(/\{\{SITE_URL\}\}/g, TEST_ORIGIN);
+
+      expect(generated).toContain(`Sitemap: ${TEST_ORIGIN}/sitemap.xml`);
+      expect(generated).toContain(`Authoritative Production Origin: ${TEST_ORIGIN}`);
     });
   });
 });
@@ -294,17 +307,17 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
       expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
 
       // Must include canonical public discovery routes
-      expect(xml).toContain("<loc>https://pennygrade.in/</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/how-it-works</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/partners</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/offers</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/become-a-member</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/partner-with-us</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/terms</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/privacy</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/merchant-agreement</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/membership-terms</loc>");
-      expect(xml).toContain("<loc>https://pennygrade.in/disclaimer</loc>");
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/how-it-works</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/partners</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/offers</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/become-a-member</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/partner-with-us</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/terms</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/privacy</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/merchant-agreement</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/membership-terms</loc>`);
+      expect(xml).toContain(`<loc>${TEST_ORIGIN}/disclaimer</loc>`);
 
       // MUST NOT include sensitive, customer, or admin routes
       expect(xml).not.toContain("/admin");

@@ -12,11 +12,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/use-session";
 import { getAdminPartners, deletePartner } from "@/lib/admin.functions";
 import type { V1Partner } from "@/lib/v1-store";
+import { getSiteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/admin/qr-codes")({ component: QrCodes });
 
 type P = { id: string; business_name: string; slug: string; status: string; qr_created_at?: string | null; created_at?: string | null };
-const qrUrl = (slug: string) => `${typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://pennygrade.in"}/p/${slug}`;
+const qrUrl = (slug: string) => `${typeof window !== "undefined" && window.location.origin ? window.location.origin : getSiteUrl()}/p/${slug}`;
 
 function QrCodes() {
   const qc = useQueryClient();
@@ -125,7 +126,7 @@ function QrPoster({ p }: { p: P }) {
   useEffect(() => { QRCode.toDataURL(qrUrl(p.slug), { width: 600, margin: 1, color: { dark: "#1b2333", light: "#ffffff" } }).then(setSrc); }, [p.slug]);
   const print = () => {
     const w = window.open("", "_blank"); if (!w) return;
-    const origin = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://pennygrade.in";
+    const origin = typeof window !== "undefined" && window.location.origin ? window.location.origin : getSiteUrl();
     w.document.write(`<html><head><title>${p.business_name} QR</title></head><body style="font-family:sans-serif;text-align:center;padding:40px">
       <img src="${origin}${LOGO_URL}" style="width:220px;border-radius:12px"/><h1 style="margin:24px 0 4px">PennyGrade Member Benefits</h1>
       <p style="font-size:20px;margin:0 0 24px">${p.business_name}</p><img src="${src}" style="width:380px"/>

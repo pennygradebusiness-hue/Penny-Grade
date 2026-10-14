@@ -22,6 +22,7 @@ import { Route as OffersRouteImport } from './routes/offers'
 import { Route as PartnerWithUsRouteImport } from './routes/partner-with-us'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -110,6 +111,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/partner-with-us': typeof PartnerWithUsRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -384,6 +393,7 @@ export interface FileRouteTypes {
     | '/partner-with-us'
     | '/privacy'
     | '/register'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/terms'
     | '/admin'
@@ -423,6 +433,7 @@ export interface FileRouteTypes {
     | '/partner-with-us'
     | '/privacy'
     | '/register'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/terms'
     | '/admin/login'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/partner-with-us'
     | '/privacy'
     | '/register'
+    | '/robots.txt'
     | '/sitemap.xml'
     | '/terms'
     | '/_authenticated/admin'
@@ -503,6 +515,7 @@ export interface RootRouteChildren {
   PartnerWithUsRoute: typeof PartnerWithUsRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -603,6 +616,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -851,6 +871,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerWithUsRoute: PartnerWithUsRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   AdminLoginRoute: AdminLoginRoute,

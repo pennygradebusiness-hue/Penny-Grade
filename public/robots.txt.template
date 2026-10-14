@@ -1,5 +1,5 @@
 # PennyGrade Robots Crawling Directives
-# Authoritative Production Origin: https://pennygrade.in
+# Authoritative Production Origin: {{SITE_URL}}
 
 User-agent: *
 Allow: /
@@ -26,4 +26,4 @@ Disallow: /login
 Disallow: /register
 
 # Sitemap Declaration
-Sitemap: https://pennygrade.in/sitemap.xml
+Sitemap: {{SITE_URL}}/sitemap.xml

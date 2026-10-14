@@ -19,30 +19,14 @@ export interface PageHeadOptions {
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
+import { getAppSiteUrl } from "./config";
+
 /**
- * Resolves the authoritative production origin.
- * Priority:
- * 1. import.meta.env.VITE_SITE_URL (Vite client/build time)
- * 2. process.env.VITE_SITE_URL
- * 3. process.env.SITE_URL
- * 4. Authoritative PennyGrade production domain fallback
+ * Resolves the authoritative application origin using the central configuration helper.
+ * Never hardcodes environment-specific domain string literals in source code.
  */
 export function getSiteUrl(): string {
-  let rawUrl: string | undefined;
-
-  if (typeof import.meta !== "undefined" && import.meta.env) {
-    rawUrl =
-      (import.meta.env.VITE_SITE_URL as string | undefined) ||
-      (import.meta.env.SITE_URL as string | undefined);
-  }
-
-  if (!rawUrl && typeof process !== "undefined" && process.env) {
-    rawUrl = process.env.VITE_SITE_URL || process.env.SITE_URL;
-  }
-
-  const base = rawUrl ? rawUrl.trim() : "https://pennygrade.in";
-  // Normalize: ensure HTTPS in production / strip trailing slash
-  return base.replace(/\/+$/, "");
+  return getAppSiteUrl();
 }
 
 /**

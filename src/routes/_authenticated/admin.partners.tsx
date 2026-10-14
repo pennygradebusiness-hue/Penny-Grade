@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getSiteUrl } from "@/lib/seo";
 import {
   MoreHorizontal,
   Star,
@@ -732,7 +733,7 @@ function Partners() {
                     <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
                       <span>Public QR:</span>
                       <span className="font-mono text-amber-700 font-semibold truncate">
-                        https://pennygrade.in/p/{edit.slug || "slug"}
+                        {getSiteUrl()}/p/{edit.slug || "slug"}
                       </span>
                     </div>
                   </FormField>

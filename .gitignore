@@ -28,6 +28,9 @@ dist-ssr
 .lovable/
 supabase/.temp/
 
+# Generated public assets
+public/robots.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

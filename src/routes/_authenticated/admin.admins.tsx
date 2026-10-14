@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { getAdminUsers, addAdmin, removeAdminRole, resetAdminPassword } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { type V1AdminUser } from "@/lib/v1-store";
+import { getSiteUrl } from "@/lib/seo";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -190,7 +191,7 @@ function Admins() {
   };
 
   const copyCredentials = (data: { name: string; email: string; role: RoleType; password: string }) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://pennygrade.in";
+    const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : getSiteUrl();
     const text = `🎉 PennyGrade Administrator Access
 ------------------------------------------------
 Name: ${data.name}
