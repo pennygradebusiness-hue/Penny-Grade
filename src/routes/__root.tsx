@@ -177,7 +177,30 @@ function RootComponent() {
   }, []);
 
   useEffect(() => {
+    // Intercept Supabase Auth recovery tokens if user lands on root or other routes
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      const isRecovery =
+        hash.includes("type=recovery") ||
+        search.includes("type=recovery") ||
+        (hash.includes("access_token=") && !hash.includes("error="));
+
+      if (isRecovery && !window.location.pathname.startsWith("/admin/reset-password")) {
+        window.location.replace(`/admin/reset-password${search}${hash}`);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/reset-password")) {
+          window.location.replace(`/admin/reset-password${window.location.search}${window.location.hash}`);
+        }
+        return;
+      }
+
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event === "SIGNED_OUT") queryClient.clear();

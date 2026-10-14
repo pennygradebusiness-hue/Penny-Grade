@@ -97,21 +97,7 @@ function Partners() {
         const res = await fetchPartnersFn();
         if (Array.isArray(res)) return res as V1Partner[];
       } catch (err) {
-        console.warn("fetchPartnersFn failed, falling back to Supabase query:", err);
-      }
-      try {
-        const { data: dbData } = await supabase
-          .from("partners")
-          .select("*, category:categories(id, name, slug)")
-          .order("business_name");
-        if (dbData && dbData.length > 0) {
-          return dbData.map((p: any) => ({
-            ...p,
-            category_name: p.category?.name || "General",
-          })) as V1Partner[];
-        }
-      } catch (sbErr) {
-        console.error("Direct Supabase query failed:", sbErr);
+        console.warn("fetchPartnersFn failed:", err);
       }
       return [] as V1Partner[];
     },

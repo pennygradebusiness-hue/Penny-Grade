@@ -1935,6 +1935,148 @@
   ],
   "auditLogs": [
     {
+      "id": "ea43317f-e7db-49ed-914e-442a7df939ad",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Password reset successfully via recovery (pennygradebusiness@gmail.com)",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com",
+        "method": "security_code"
+      },
+      "created_at": "2026-10-14T15:55:20.509Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "4f259880-7b76-41d1-9cc1-634e048e5fd6",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Admin password reset code requested for pennygradebusiness@gmail.com",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com"
+      },
+      "created_at": "2026-10-14T15:55:20.507Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "930c1068-e9c4-4753-ac2c-86ac90993554",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Password reset successfully via recovery (pennygradebusiness@gmail.com)",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com",
+        "method": "phone_verification"
+      },
+      "created_at": "2026-10-14T15:55:20.506Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "7f8cbe81-f528-4be9-b935-9d14779c13c6",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Admin password reset code requested for pennygradebusiness@gmail.com",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com"
+      },
+      "created_at": "2026-10-14T14:11:31.978Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "7ae7008d-94aa-419f-92e2-e3512affa152",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Password reset successfully via recovery (pennygradebusiness@gmail.com)",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com",
+        "method": "phone_verification"
+      },
+      "created_at": "2026-10-14T14:11:31.961Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "9e27c286-fc5f-46bf-b077-703e6c468be3",
+      "admin_user_id": "admin",
+      "action": "Deleted Offer: One-Off Special 50% Off",
+      "target_type": "offer",
+      "target_id": "test-single-offer-999",
+      "metadata": {
+        "title": "One-Off Special 50% Off",
+        "id": "test-single-offer-999"
+      },
+      "created_at": "2026-10-14T14:10:38.999Z",
+      "who": "Super Admin Tester"
+    },
+    {
+      "id": "65cdf174-c7c8-431c-83e5-e67078c5d0f9",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test QR Cafe & 0 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-qr-999",
+      "metadata": {
+        "name": "Test QR Cafe",
+        "slug": "test-qr-cafe",
+        "deletedOfferCount": 0
+      },
+      "created_at": "2026-10-14T14:10:37.997Z",
+      "who": "Admin Tester"
+    },
+    {
+      "id": "a1c0db1c-537e-4564-95fc-293ad1ce529b",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test Café XYZ & 1 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-xyz-123",
+      "metadata": {
+        "name": "Test Café XYZ",
+        "slug": "test-cafe-xyz",
+        "deletedOfferCount": 1
+      },
+      "created_at": "2026-10-14T14:10:26.563Z",
+      "who": "Super Admin Tester"
+    },
+    {
+      "id": "0348e30d-946d-41bb-8ac2-8425c217aa15",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Password reset successfully via recovery (pennygradebusiness@gmail.com)",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com",
+        "method": "security_code"
+      },
+      "created_at": "2026-10-14T13:49:33.155Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "f527134d-bca1-40ca-b2f8-47b5f1483f8d",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Admin password reset code requested for pennygradebusiness@gmail.com",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com"
+      },
+      "created_at": "2026-10-14T13:49:33.152Z",
+      "who": "Primary Owner"
+    },
+    {
+      "id": "eead7a66-71d4-4425-8555-7e63bd014b91",
+      "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "action": "Password reset successfully via recovery (pennygradebusiness@gmail.com)",
+      "target_type": "user_role",
+      "target_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
+      "metadata": {
+        "email": "pennygradebusiness@gmail.com",
+        "method": "phone_verification"
+      },
+      "created_at": "2026-10-14T13:49:33.151Z",
+      "who": "Primary Owner"
+    },
+    {
       "id": "2e946231-0bf6-4303-a2c4-aa8b36545cbb",
       "admin_user_id": "admin",
       "action": "Deleted Partner: Test QR Cafe & 0 related offers",
@@ -3198,8 +3340,8 @@
       "email": "pennygradebusiness@gmail.com",
       "role": "super_admin",
       "created_at": "2026-10-12T13:57:03.463Z",
-      "temporary_password": "Penny@SG6J!",
-      "is_password_set": false
+      "temporary_password": "NewSupabasePass2026!",
+      "is_password_set": true
     }
   ],
   "memberApplications": [
@@ -3271,7 +3413,10 @@
     "offer-test-cafe-xyz",
     "test-single-offer-999",
     "offer-test-partner-qr-999",
-    "offer-test-qr-cafe"
+    "offer-test-qr-cafe",
+    "a8577aa3-f4ab-4008-87e0-421841a7925e",
+    "offer-9d919438-8783-49dc-a755-a9e873473614",
+    "offer-the-grand-stay"
   ],
   "deletedMemberIds": [
     "64cca9a4-21f0-457b-9b8a-d3c648a11b07",

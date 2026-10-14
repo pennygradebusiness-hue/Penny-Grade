@@ -70,13 +70,9 @@ function Offers() {
         const res = await getAdminOffersFn();
         if (res) return res;
       } catch {
-        // fallback
+        // ignore
       }
-      const { data } = await supabase
-        .from("offers")
-        .select("*, partner:partners(business_name)")
-        .order("created_at", { ascending: false });
-      return data ?? [];
+      return [];
     },
   });
 

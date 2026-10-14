@@ -1435,7 +1435,13 @@ export const getAdminOffers = createServerFn({ method: "GET" }).handler(async ()
 
     if (dbOffers) {
       for (const o of dbOffers) {
-        if (!delOfferSet.has(o.id) && !delPartnerSet.has(o.partner_id)) {
+        const pSlug = (o.partner as any)?.slug;
+        const isDeleted =
+          delOfferSet.has(o.id) ||
+          delPartnerSet.has(o.partner_id) ||
+          (pSlug && delPartnerSet.has(pSlug));
+
+        if (!isDeleted) {
           if (!store.offers.has(o.id)) {
             store.offers.set(o.id, {
               id: o.id,
@@ -1467,10 +1473,15 @@ export const getAdminOffers = createServerFn({ method: "GET" }).handler(async ()
   // Build filtered response
   const result: V1Offer[] = [];
   for (const offer of store.offers.values()) {
-    if (delOfferSet.has(offer.id) || delPartnerSet.has(offer.partner_id)) {
+    const partner = store.partners?.get(offer.partner_id);
+    const pSlug = offer.partner?.slug || partner?.slug;
+    if (
+      delOfferSet.has(offer.id) ||
+      delPartnerSet.has(offer.partner_id) ||
+      (pSlug && delPartnerSet.has(pSlug))
+    ) {
       continue;
     }
-    const partner = store.partners?.get(offer.partner_id);
     result.push({
       ...offer,
       partner: offer.partner || (partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined),

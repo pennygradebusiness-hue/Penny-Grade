@@ -94,7 +94,29 @@ function AdminResetPasswordPage() {
         }
       }
 
-      // 3. Check for existing active recovery session in Supabase client
+      // 3. Direct hash extraction for implicit recovery flow (#access_token=...&refresh_token=...)
+      if (hash.includes("access_token=")) {
+        try {
+          const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+          const accessToken = hashParams.get("access_token");
+          const refreshToken = hashParams.get("refresh_token");
+          if (accessToken && refreshToken) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (!error && data.session && mounted) {
+              setUserEmail(data.session.user.email || "");
+              setStatus("ready");
+              return;
+            }
+          }
+        } catch {
+          // Fall through to getSession / listener
+        }
+      }
+
+      // 4. Check for existing active recovery session in Supabase client
       try {
         const { data } = await supabase.auth.getSession();
         if (data.session && mounted) {

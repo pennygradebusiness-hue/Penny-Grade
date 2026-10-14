@@ -202,8 +202,8 @@ describe("PennyGrade Comprehensive Security & Hardening Tests", () => {
       expect(Route.options).toBeDefined();
 
       if (typeof Route.options.head === "function") {
-        const head = Route.options.head({});
-        const meta = head.meta || [];
+        const head = await (Route.options.head as any)({} as any);
+        const meta = head?.meta || [];
         const robots = meta.find((m: any) => m.name === "robots");
         expect(robots).toBeDefined();
         expect(robots?.content).toBe("noindex, nofollow");

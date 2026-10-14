@@ -34,6 +34,7 @@ function AdminLogin() {
   // Forgot Password / Supabase Auth Recovery Modal State
   const [forgotModal, setForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+  const [botTrap, setBotTrap] = useState("");
   const [forgotBusy, setForgotBusy] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -72,11 +73,39 @@ function AdminLogin() {
     }
   }, [navigate]);
 
+  // Persistent anti-abuse rate-limiting keys
+  const COOLDOWN_KEY = "pg_recovery_cooldown_expiry";
+  const ATTEMPTS_KEY = "pg_recovery_attempts";
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const expiry = parseInt(localStorage.getItem(COOLDOWN_KEY) || "0", 10);
+        const remaining = Math.max(0, Math.ceil((expiry - Date.now()) / 1000));
+        if (remaining > 0) {
+          setCooldown(remaining);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   // Rate-limiting cooldown countdown
   useEffect(() => {
     if (cooldown <= 0) return;
     const timer = setInterval(() => {
-      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      setCooldown((prev) => {
+        const next = prev > 0 ? prev - 1 : 0;
+        if (next <= 0 && typeof window !== "undefined") {
+          try {
+            localStorage.removeItem(COOLDOWN_KEY);
+          } catch {
+            // ignore
+          }
+        }
+        return next;
+      });
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldown]);
@@ -190,21 +219,60 @@ function AdminLogin() {
 
   const handleRequestPasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Silent Bot Honeypot Trap
+    // Automated scrapers and bots will fill this hidden field. We silently trap them without hitting Supabase.
+    if (botTrap.trim()) {
+      setForgotSent(true);
+      return;
+    }
+
     const cleanEmail = forgotEmail.trim().toLowerCase();
     if (!cleanEmail) {
       toast.error("Please enter your administrator email address.");
       return;
     }
+
+    // 2. Strict RFC email format verification before touching backend
+    const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      toast.error("Please enter a valid administrator email address.");
+      return;
+    }
+
     if (cooldown > 0) {
       toast.warning(`Please wait ${cooldown}s before requesting another reset email.`);
       return;
     }
 
+    // 3. Client sliding-window abuse limiter (Maximum 4 requests per 15 minutes)
+    if (typeof window !== "undefined") {
+      try {
+        const now = Date.now();
+        const rawAttempts = localStorage.getItem(ATTEMPTS_KEY);
+        let attempts: number[] = rawAttempts ? JSON.parse(rawAttempts) : [];
+        attempts = attempts.filter((t) => now - t < 15 * 60 * 1000);
+        if (attempts.length >= 4) {
+          toast.error("Security alert: Excessive recovery attempts detected. Please wait 15 minutes.");
+          setCooldown(900);
+          localStorage.setItem(COOLDOWN_KEY, (now + 900_000).toString());
+          return;
+        }
+        attempts.push(now);
+        localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+      } catch {
+        // ignore
+      }
+    }
+
     setForgotBusy(true);
 
     try {
-      const siteUrl = getSiteUrl();
-      const redirectUrl = `${siteUrl}/admin/reset-password`;
+      const origin =
+        typeof window !== "undefined" && window.location.origin && !window.location.origin.includes("0.0.0.0")
+          ? window.location.origin
+          : getSiteUrl();
+      const redirectUrl = `${origin}/admin/reset-password`;
 
       // Call Supabase Auth supported password recovery API
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
@@ -214,17 +282,33 @@ function AdminLogin() {
       if (error && (error as { status?: number }).status === 429) {
         toast.error("Too many reset requests. Please wait a few minutes before trying again.");
         setForgotBusy(false);
+        setCooldown(180);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(COOLDOWN_KEY, (Date.now() + 180_000).toString());
+          } catch {}
+        }
         return;
       }
 
       // Always display generic confirmation message (prevents user account enumeration)
       setForgotSent(true);
       setCooldown(60); // 60-second abuse prevention cooldown
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(COOLDOWN_KEY, (Date.now() + 60_000).toString());
+        } catch {}
+      }
       toast.success("Password recovery request received.");
     } catch {
       // In case of any unhandled network error, show generic confirmation as per security requirements
       setForgotSent(true);
       setCooldown(60);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(COOLDOWN_KEY, (Date.now() + 60_000).toString());
+        } catch {}
+      }
     } finally {
       setForgotBusy(false);
     }
@@ -259,7 +343,7 @@ function AdminLogin() {
               <button
                 type="button"
                 onClick={() => {
-                  setForgotEmail(email.trim() || "pennygradebusiness@gmail.com");
+                  setForgotEmail(email.trim() || "");
                   setForgotModal(true);
                 }}
                 className="text-[11px] font-bold text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
@@ -380,6 +464,19 @@ function AdminLogin() {
               </div>
             ) : (
               <form onSubmit={handleRequestPasswordReset} className="space-y-4">
+                {/* Honeypot field for anti-bot defense */}
+                <div className="sr-only" aria-hidden="true" style={{ position: "absolute", left: "-9999px" }}>
+                  <label htmlFor="pg_security_trap">Leave this blank</label>
+                  <input
+                    id="pg_security_trap"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={botTrap}
+                    onChange={(e) => setBotTrap(e.target.value)}
+                  />
+                </div>
+
                 <div className="rounded-xl border border-slate-200/90 bg-slate-50 p-3.5 text-xs text-slate-600 space-y-1.5 leading-relaxed">
                   <div className="flex items-center gap-1.5 font-bold text-slate-800">
                     <ShieldCheck className="h-4 w-4 text-amber-500 shrink-0" />
@@ -401,7 +498,7 @@ function AdminLogin() {
                       required
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="admin@pennygrade.in"
+                      placeholder="Enter registered administrator email"
                       className="h-11 rounded-[9px] border-[#ececf1] text-xs font-semibold shadow-sm focus:border-gold pl-9"
                     />
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
