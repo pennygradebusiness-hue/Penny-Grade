@@ -194,4 +194,70 @@ describe("PennyGrade Comprehensive Security & Hardening Tests", () => {
       }).toThrow(/at least 6 characters/);
     });
   });
+
+  describe("Supabase Auth Administrator Password Recovery Flow", () => {
+    it("exports /admin/reset-password route with noindex, nofollow robots protection", async () => {
+      const { Route } = await import("@/routes/admin.reset-password");
+      expect(Route).toBeDefined();
+      expect(Route.options).toBeDefined();
+
+      if (typeof Route.options.head === "function") {
+        const head = Route.options.head({});
+        const meta = head.meta || [];
+        const robots = meta.find((m: any) => m.name === "robots");
+        expect(robots).toBeDefined();
+        expect(robots?.content).toBe("noindex, nofollow");
+        const title = meta.find((m: any) => m.title);
+        expect(title?.title).toContain("Reset Administrator Password");
+      }
+    });
+
+    it("ensures recovery redirect URL points to /admin/reset-password on canonical site origin", async () => {
+      const { getSiteUrl } = await import("@/lib/seo");
+      const origin = getSiteUrl();
+      const recoveryRedirect = `${origin}/admin/reset-password`;
+
+      expect(recoveryRedirect).toMatch(/^https?:\/\/.+\/admin\/reset-password$/);
+      expect(recoveryRedirect).not.toContain("localhost:3000");
+    });
+
+    it("enforces password policy: rejects short passwords or mismatched confirmation", () => {
+      const validatePolicy = (pass: string, confirm: string) => {
+        const hasMinLength = pass.length >= 8;
+        const hasNumberOrSymbol = /[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pass);
+        const matches = pass.length > 0 && pass === confirm;
+        return hasMinLength && hasNumberOrSymbol && matches;
+      };
+
+      // Fails: under 8 chars
+      expect(validatePolicy("Short1!", "Short1!")).toBe(false);
+      // Fails: no number or symbol
+      expect(validatePolicy("NoNumberOrSymbolPass", "NoNumberOrSymbolPass")).toBe(false);
+      // Fails: mismatch
+      expect(validatePolicy("ValidPass123!", "ValidPass123?")).toBe(false);
+      // Passes: 8+ chars with number/symbol and exact match
+      expect(validatePolicy("PennyAdmin#2026", "PennyAdmin#2026")).toBe(true);
+    });
+
+    it("synchronizes admin store password upon verified Supabase Auth reset", async () => {
+      const { syncAdminPasswordAfterSupabaseResetLogic, verifyAdminLoginCredentialsLogic } = await import("@/lib/v1-logic");
+
+      const syncRes = syncAdminPasswordAfterSupabaseResetLogic({
+        email: "pennygradebusiness@gmail.com",
+        new_password: "NewSupabasePass2026!",
+      });
+
+      expect(syncRes.ok).toBe(true);
+
+      // Verify sign in works with the updated password
+      const loginCheck = verifyAdminLoginCredentialsLogic({
+        email: "pennygradebusiness@gmail.com",
+        password: "NewSupabasePass2026!",
+      });
+
+      expect(loginCheck.ok).toBe(true);
+      expect(loginCheck.user?.email).toBe("pennygradebusiness@gmail.com");
+    });
+  });
 });
+

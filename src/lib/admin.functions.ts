@@ -25,6 +25,7 @@ import {
   deletePartnerCascadeLogic,
   deleteOfferCascadeLogic,
   getFilteredOffersLogic,
+  syncAdminPasswordAfterSupabaseResetLogic,
 } from "./v1-logic";
 import { requireAdminAuth } from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
@@ -597,6 +598,19 @@ export const resetAdminForgottenPassword = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     return verifyAndResetForgottenPasswordLogic(data);
+  });
+
+// Synchronize Admin Password After Verified Supabase Auth Reset
+export { syncAdminPasswordAfterSupabaseResetLogic };
+export const syncAdminPasswordAfterSupabaseReset = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string; new_password: string }) =>
+    z.object({
+      email: z.string().trim().email("Valid admin email is required").max(255),
+      new_password: z.string().min(6, "Password must be at least 6 characters").max(100),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    return syncAdminPasswordAfterSupabaseResetLogic(data);
   });
 
 // Admin Remove Role

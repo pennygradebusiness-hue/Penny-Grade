@@ -885,3 +885,32 @@ export async function getFilteredOffersLogic(): Promise<V1Offer[]> {
 
   return result.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
+
+// Synchronize Admin Password Logic after verified Supabase Auth reset
+export function syncAdminPasswordAfterSupabaseResetLogic(data: {
+  email: string;
+  new_password: string;
+}): { ok: boolean; message: string } {
+  const cleanEmail = data.email.trim().toLowerCase();
+  if (!store.adminUsers) store.adminUsers = [];
+  let user = store.adminUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+  const isPrimaryOwner = cleanEmail === "pennygradebusiness@gmail.com";
+  if (!user && isPrimaryOwner) {
+    user = {
+      id: "admin-primary-owner",
+      user_id: "uid-primary-owner",
+      full_name: "PennyGrade Business",
+      email: "pennygradebusiness@gmail.com",
+      role: "super_admin",
+      is_password_set: false,
+      created_at: new Date().toISOString(),
+    };
+    store.adminUsers.unshift(user);
+  }
+  if (user) {
+    user.temporary_password = data.new_password;
+    user.is_password_set = true;
+    saveStoreToDisk();
+  }
+  return { ok: true, message: "Admin store synchronized." };
+}

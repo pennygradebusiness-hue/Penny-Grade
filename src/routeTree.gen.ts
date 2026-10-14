@@ -27,6 +27,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminResetPasswordRouteImport } from './routes/admin.reset-password'
 import { Route as PPartnerSlugRouteImport } from './routes/p.$partnerSlug'
 import { Route as PartnersIndexRouteImport } from './routes/partners.index'
 import { Route as PartnersSlugRouteImport } from './routes/partners.$slug'
@@ -136,6 +137,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminResetPasswordRoute = AdminResetPasswordRouteImport.update({
+  id: '/admin/reset-password',
+  path: '/admin/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PPartnerSlugRoute = PPartnerSlugRouteImport.update({
@@ -275,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/verification/$sessionId': typeof VerificationSessionIdRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/verification/$sessionId': typeof VerificationSessionIdRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/verification/$sessionId': typeof VerificationSessionIdRoute
@@ -398,6 +407,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin'
     | '/admin/login'
+    | '/admin/reset-password'
     | '/p/$partnerSlug'
     | '/partners/$slug'
     | '/verification/$sessionId'
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/admin/login'
+    | '/admin/reset-password'
     | '/p/$partnerSlug'
     | '/partners/$slug'
     | '/verification/$sessionId'
@@ -478,6 +489,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/admin'
     | '/admin/login'
+    | '/admin/reset-password'
     | '/p/$partnerSlug'
     | '/partners/$slug'
     | '/verification/$sessionId'
@@ -519,6 +531,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminResetPasswordRoute: typeof AdminResetPasswordRoute
   PPartnerSlugRoute: typeof PPartnerSlugRoute
   PartnersSlugRoute: typeof PartnersSlugRoute
   VerificationSessionIdRoute: typeof VerificationSessionIdRoute
@@ -651,6 +664,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reset-password': {
+      id: '/admin/reset-password'
+      path: '/admin/reset-password'
+      fullPath: '/admin/reset-password'
+      preLoaderRoute: typeof AdminResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/p/$partnerSlug': {
@@ -875,6 +895,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminResetPasswordRoute: AdminResetPasswordRoute,
   PPartnerSlugRoute: PPartnerSlugRoute,
   PartnersSlugRoute: PartnersSlugRoute,
   VerificationSessionIdRoute: VerificationSessionIdRoute,
