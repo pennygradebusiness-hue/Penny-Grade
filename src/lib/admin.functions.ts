@@ -20,6 +20,8 @@ import {
   resetAdminPasswordLogic,
   verifyAdminLoginCredentialsLogic,
   firstTimeSetPasswordLogic,
+  requestAdminPasswordResetCodeLogic,
+  verifyAndResetForgottenPasswordLogic,
   deletePartnerCascadeLogic,
   deleteOfferCascadeLogic,
   getFilteredOffersLogic,
@@ -571,6 +573,30 @@ export const firstTimeSetPassword = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     return firstTimeSetPasswordLogic(data);
+  });
+
+// Admin / Primary Owner Password Reset Code Request
+export const requestAdminPasswordResetCode = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) =>
+    z.object({
+      email: z.string().trim().email("Valid admin email is required").max(255),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    return requestAdminPasswordResetCodeLogic(data);
+  });
+
+// Admin / Primary Owner Reset Forgotten Password
+export const resetAdminForgottenPassword = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string; verification_credential: string; new_password: string }) =>
+    z.object({
+      email: z.string().trim().email("Valid admin email is required").max(255),
+      verification_credential: z.string().trim().min(4, "Verification credential is required").max(50),
+      new_password: z.string().min(6, "Password must be at least 6 characters").max(100),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    return verifyAndResetForgottenPasswordLogic(data);
   });
 
 // Admin Remove Role

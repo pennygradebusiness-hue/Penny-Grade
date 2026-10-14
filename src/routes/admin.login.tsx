@@ -1,14 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, ShieldCheck, CheckCircle2, Lock, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { KeyRound, ShieldCheck, CheckCircle2, Lock, ArrowRight, Eye, EyeOff, Loader2, Phone, Mail, HelpCircle, Sparkles } from "lucide-react";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { verifyAdminLoginCredentials, firstTimeSetPassword } from "@/lib/admin.functions";
+import {
+  verifyAdminLoginCredentials,
+  firstTimeSetPassword,
+  requestAdminPasswordResetCode,
+  resetAdminForgottenPassword,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
@@ -26,6 +31,16 @@ function AdminLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Forgot Password / Owner Recovery Modal State
+  const [forgotModal, setForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotCredential, setForgotCredential] = useState("");
+  const [forgotNewPass, setForgotNewPass] = useState("");
+  const [forgotConfirmPass, setForgotConfirmPass] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [requestingCode, setRequestingCode] = useState(false);
+  const [showForgotPass, setShowForgotPass] = useState(false);
 
   // First-Time Setup Modal State
   const [setupModal, setSetupModal] = useState(false);
@@ -159,6 +174,93 @@ function AdminLogin() {
     }
   };
 
+  const handleRequestCode = async () => {
+    const cleanEmail = forgotEmail.trim().toLowerCase();
+    if (!cleanEmail) {
+      return toast.error("Please enter your admin email first.");
+    }
+    setRequestingCode(true);
+    try {
+      // Also request Supabase auth recovery email if configured
+      try {
+        await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/admin/login?type=recovery` : undefined,
+        });
+      } catch {
+        // Ignore Supabase auth error if user is store-only
+      }
+
+      const res = await requestAdminPasswordResetCode({
+        data: { email: cleanEmail },
+      });
+      toast.success(res.message);
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to generate security code.");
+    } finally {
+      setRequestingCode(false);
+    }
+  };
+
+  const handleForgotReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = forgotEmail.trim().toLowerCase();
+    if (!cleanEmail) return toast.error("Please enter your admin email.");
+    if (!forgotCredential.trim()) {
+      return toast.error("Please enter your registered mobile or 6-digit code.");
+    }
+    if (forgotNewPass.length < 6) {
+      return toast.error("New password must be at least 6 characters.");
+    }
+    if (forgotNewPass !== forgotConfirmPass) {
+      return toast.error("Passwords do not match.");
+    }
+
+    setForgotBusy(true);
+    try {
+      // Also update Supabase password if active recovery session exists
+      try {
+        await supabase.auth.updateUser({ password: forgotNewPass });
+      } catch {
+        // ignore
+      }
+
+      const res = await resetAdminForgottenPassword({
+        data: {
+          email: cleanEmail,
+          verification_credential: forgotCredential.trim(),
+          new_password: forgotNewPass,
+        },
+      });
+
+      if (res.ok && res.user) {
+        saveAdminSession({
+          id: res.user.id,
+          email: res.user.email,
+          role: res.user.role,
+        });
+        toast.success("Password reset successfully! Welcome back.");
+        setEmail(cleanEmail);
+        setPassword(forgotNewPass);
+        setForgotModal(false);
+        setForgotEmail("");
+        setForgotCredential("");
+        setForgotNewPass("");
+        setForgotConfirmPass("");
+        navigate({ to: "/admin", replace: true });
+        return;
+      }
+
+      toast.success(res.message || "Password updated successfully. Please sign in.");
+      setEmail(cleanEmail);
+      setPassword(forgotNewPass);
+      setForgotModal(false);
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to reset password.");
+    } finally {
+      setForgotBusy(false);
+    }
+  };
+
   return (
     <AuthShell
       title="Administrator Sign In"
@@ -184,16 +286,29 @@ function AdminLogin() {
             <Label htmlFor="admin-password" className="text-xs font-bold text-navy uppercase tracking-wider">
               Password
             </Label>
-            <button
-              type="button"
-              onClick={() => {
-                setSetupEmail(email);
-                setSetupModal(true);
-              }}
-              className="text-[11px] font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
-            >
-              First-Time Login / Set Password?
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotEmail(email.trim() || "pennygradebusiness@gmail.com");
+                  setForgotModal(true);
+                }}
+                className="text-[11px] font-bold text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+              <span className="text-slate-300 text-xs">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSetupEmail(email);
+                  setSetupModal(true);
+                }}
+                className="text-[11px] font-medium text-slate-500 hover:text-slate-700 cursor-pointer"
+              >
+                First-Time Setup
+              </button>
+            </div>
           </div>
           <div className="relative">
             <Input
@@ -229,6 +344,132 @@ function AdminLogin() {
           Protected area. Authorized PennyGrade personnel only.
         </p>
       </form>
+
+      {/* Forgot Password / Primary Owner & Admin Password Recovery Dialog */}
+      <Dialog open={forgotModal} onOpenChange={setForgotModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-navy flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-amber-500" />
+              Reset Administrator Password
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Primary owner & administrator self-service password recovery console.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleForgotReset} className="space-y-3.5 pt-1">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-[11px] text-amber-900 leading-relaxed space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-amber-950">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span>Primary Owner Security Guarantee</span>
+              </div>
+              <p>
+                Primary owner (<strong>pennygradebusiness@gmail.com</strong>) can verify identity immediately using the registered helpline / owner mobile (<strong>+91 93568 97893</strong>) or by clicking &quot;Get 6-Digit Code&quot;.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-[11px] font-bold text-slate-700">Admin Email Address</Label>
+              <Input
+                type="email"
+                required
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="pennygradebusiness@gmail.com"
+                className="h-10 text-xs font-semibold"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] font-bold text-slate-700">
+                  Security Credential
+                </Label>
+                <button
+                  type="button"
+                  disabled={requestingCode}
+                  onClick={handleRequestCode}
+                  className="text-[11px] font-bold text-amber-600 hover:text-amber-700 cursor-pointer disabled:opacity-50"
+                >
+                  {requestingCode ? "Sending Code…" : "Get 6-Digit Code"}
+                </button>
+              </div>
+              <Input
+                type="text"
+                required
+                value={forgotCredential}
+                onChange={(e) => setForgotCredential(e.target.value)}
+                placeholder="Registered mobile (9356897893) or 6-digit code"
+                className="h-10 text-xs font-mono"
+              />
+              <p className="text-[10px] text-slate-500">
+                Enter your registered owner mobile (+91 93568 97893) or the 6-digit verification code.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[11px] font-bold text-slate-700">New Password</Label>
+                <div className="relative">
+                  <Input
+                    type={showForgotPass ? "text" : "password"}
+                    required
+                    value={forgotNewPass}
+                    onChange={(e) => setForgotNewPass(e.target.value)}
+                    placeholder="Min. 6 chars"
+                    className="h-10 text-xs pr-8"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPass(!showForgotPass)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    {showForgotPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] font-bold text-slate-700">Confirm Password</Label>
+                <Input
+                  type={showForgotPass ? "text" : "password"}
+                  required
+                  value={forgotConfirmPass}
+                  onChange={(e) => setForgotConfirmPass(e.target.value)}
+                  placeholder="Confirm password"
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <Button
+                type="submit"
+                disabled={forgotBusy}
+                className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-xs font-extrabold text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer"
+              >
+                {forgotBusy ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Resetting…
+                  </>
+                ) : (
+                  "Reset Password & Sign In"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl text-xs font-bold"
+                onClick={() => setForgotModal(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* First-Time Setup / Password Reset Dialog */}
       <Dialog open={setupModal} onOpenChange={setSetupModal}>

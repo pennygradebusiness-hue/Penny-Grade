@@ -1935,6 +1935,47 @@
   ],
   "auditLogs": [
     {
+      "id": "2e946231-0bf6-4303-a2c4-aa8b36545cbb",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test QR Cafe & 0 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-qr-999",
+      "metadata": {
+        "name": "Test QR Cafe",
+        "slug": "test-qr-cafe",
+        "deletedOfferCount": 0
+      },
+      "created_at": "2026-10-14T10:06:49.637Z",
+      "who": "Admin Tester"
+    },
+    {
+      "id": "010fe0da-5a96-442f-b6a3-d9c28a5709d5",
+      "admin_user_id": "admin",
+      "action": "Deleted Offer: One-Off Special 50% Off",
+      "target_type": "offer",
+      "target_id": "test-single-offer-999",
+      "metadata": {
+        "title": "One-Off Special 50% Off",
+        "id": "test-single-offer-999"
+      },
+      "created_at": "2026-10-14T10:06:49.611Z",
+      "who": "Super Admin Tester"
+    },
+    {
+      "id": "c84d98f8-a185-4c51-846c-6ee556517749",
+      "admin_user_id": "admin",
+      "action": "Deleted Partner: Test Café XYZ & 1 related offers",
+      "target_type": "partner",
+      "target_id": "test-partner-xyz-123",
+      "metadata": {
+        "name": "Test Café XYZ",
+        "slug": "test-cafe-xyz",
+        "deletedOfferCount": 1
+      },
+      "created_at": "2026-10-14T10:06:46.328Z",
+      "who": "Super Admin Tester"
+    },
+    {
       "id": "13e8235b-2c3f-4465-b69e-024d198f8eaa",
       "admin_user_id": "admin",
       "action": "Deleted Partner: Test QR Cafe & 0 related offers",

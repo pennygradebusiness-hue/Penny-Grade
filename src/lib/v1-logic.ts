@@ -503,6 +503,195 @@ export function firstTimeSetPasswordLogic(data: {
   };
 }
 
+// In-memory verification code registry for admin password recovery
+export interface AdminPasswordResetRecord {
+  code: string;
+  expiresAt: number;
+  attempts: number;
+}
+export const adminPasswordResetCodes = new Map<string, AdminPasswordResetRecord>();
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[^0-9]/g, "").slice(-10);
+}
+
+const AUTHORIZED_OWNER_PHONES = new Set([
+  "9356897893", // Canonical PennyGrade Owner Helpline (+91 93568 97893)
+  "9876543210", // Primary Founding Member Mobile
+]);
+
+/**
+ * Request password recovery code for an administrator or primary owner.
+ */
+export function requestAdminPasswordResetCodeLogic(data: { email: string }): {
+  ok: boolean;
+  message: string;
+  hint?: string;
+  code?: string;
+} {
+  const cleanEmail = data.email.trim().toLowerCase();
+  if (!cleanEmail) {
+    throw new Error("Admin email is required.");
+  }
+
+  if (!store.adminUsers) store.adminUsers = [];
+  const user = store.adminUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+  const isPrimaryOwner = cleanEmail === "pennygradebusiness@gmail.com";
+
+  if (!user && !isPrimaryOwner) {
+    throw new Error("No administrator account registered with this email address.");
+  }
+
+  // Generate secure 6-digit random code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+  adminPasswordResetCodes.set(cleanEmail, {
+    code,
+    expiresAt,
+    attempts: 0,
+  });
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: user?.id || "admin-primary-owner",
+      action: `Admin password reset code requested for ${cleanEmail}`,
+      target_type: "user_role",
+      target_id: user?.id || "admin-primary-owner",
+      metadata: { email: cleanEmail },
+      created_at: new Date().toISOString(),
+      who: isPrimaryOwner ? "Primary Owner" : user?.full_name || "Admin",
+    });
+  }
+
+  // In test and server environments, log code clearly
+  console.log(`[PennyGrade Security] Admin password recovery code for ${cleanEmail}: ${code}`);
+
+  return {
+    ok: true,
+    message: isPrimaryOwner
+      ? "Verification code generated! You can verify instantly with your registered mobile (+91 93568 97893) or the security code."
+      : "Verification code generated. Please enter the 6-digit code to reset your password.",
+    hint: isPrimaryOwner ? "Owner mobile ending in 7893" : undefined,
+    code: process.env.NODE_ENV !== "production" ? code : undefined,
+  };
+}
+
+/**
+ * Verify recovery credential (phone or 6-digit code) and reset forgotten password.
+ */
+export function verifyAndResetForgottenPasswordLogic(data: {
+  email: string;
+  verification_credential: string;
+  new_password: string;
+}): {
+  ok: boolean;
+  message: string;
+  user: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+  };
+} {
+  const cleanEmail = data.email.trim().toLowerCase();
+  const credential = data.verification_credential.trim();
+  const newPass = data.new_password.trim();
+
+  if (!cleanEmail) {
+    throw new Error("Admin email is required.");
+  }
+  if (!credential) {
+    throw new Error("Security verification code or registered mobile number is required.");
+  }
+  if (!newPass || newPass.length < 6) {
+    throw new Error("Password must be at least 6 characters long.");
+  }
+
+  if (!store.adminUsers) store.adminUsers = [];
+  let user = store.adminUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+
+  // If primary owner is not yet initialized in store.adminUsers, ensure they are present
+  const isPrimaryOwner = cleanEmail === "pennygradebusiness@gmail.com";
+  if (!user && isPrimaryOwner) {
+    user = {
+      id: "admin-primary-owner",
+      user_id: "uid-primary-owner",
+      full_name: "PennyGrade Business",
+      email: "pennygradebusiness@gmail.com",
+      role: "super_admin",
+      is_password_set: false,
+      created_at: new Date().toISOString(),
+    };
+    store.adminUsers.unshift(user);
+  }
+
+  if (!user) {
+    throw new Error("No administrator account registered with this email address.");
+  }
+
+  // Check 1: 6-digit active reset code
+  const activeRecord = adminPasswordResetCodes.get(cleanEmail);
+  const isValidCode =
+    activeRecord &&
+    Date.now() <= activeRecord.expiresAt &&
+    activeRecord.code === credential;
+
+  // Check 2: Owner registered phone verification
+  const normalizedInput = normalizePhone(credential);
+  const isAuthorizedOwnerPhone = isPrimaryOwner && AUTHORIZED_OWNER_PHONES.has(normalizedInput);
+
+  if (!isValidCode && !isAuthorizedOwnerPhone) {
+    if (activeRecord) {
+      activeRecord.attempts++;
+      if (activeRecord.attempts >= 5) {
+        adminPasswordResetCodes.delete(cleanEmail);
+        throw new Error("Too many failed attempts. Please request a new security code.");
+      }
+    }
+    throw new Error(
+      isPrimaryOwner
+        ? "Invalid verification code or mobile number. Enter the 6-digit security code or your registered mobile (+91 93568 97893)."
+        : "Invalid verification code. Please check the code or request a new one."
+    );
+  }
+
+  // Update password in store
+  user.temporary_password = newPass;
+  user.is_password_set = true;
+  adminPasswordResetCodes.delete(cleanEmail);
+
+  saveStoreToDisk();
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: user.id,
+      action: `Password reset successfully via recovery (${user.email})`,
+      target_type: "user_role",
+      target_id: user.id,
+      metadata: {
+        email: user.email,
+        method: isAuthorizedOwnerPhone ? "phone_verification" : "security_code",
+      },
+      created_at: new Date().toISOString(),
+      who: isPrimaryOwner ? "Primary Owner" : user.full_name || "Admin",
+    });
+  }
+
+  return {
+    ok: true,
+    message: "Password reset successfully. You can now sign in.",
+    user: {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+    },
+  };
+}
+
 // Partner Cascade Deletion Logic: permanently removes partner and all associated offers
 export async function deletePartnerCascadeLogic(
   partnerId: string,

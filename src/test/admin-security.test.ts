@@ -118,4 +118,80 @@ describe("PennyGrade Comprehensive Security & Hardening Tests", () => {
       expect(mockLogs.length).toBe(0);
     });
   });
+
+  describe("Primary Owner & Administrator Forgot Password Recovery Protocol", () => {
+    it("allows the primary owner (pennygradebusiness@gmail.com) to reset password using registered owner mobile", async () => {
+      const { verifyAndResetForgottenPasswordLogic, verifyAdminLoginCredentialsLogic } = await import("@/lib/v1-logic");
+
+      // Reset password using registered helpline/owner mobile (+91 93568 97893)
+      const res = verifyAndResetForgottenPasswordLogic({
+        email: "pennygradebusiness@gmail.com",
+        verification_credential: "+91 93568 97893",
+        new_password: "OwnerSecurePass@2026!",
+      });
+
+      expect(res.ok).toBe(true);
+      expect(res.user.email).toBe("pennygradebusiness@gmail.com");
+
+      // Now verify they can immediately sign in with the new password
+      const loginRes = verifyAdminLoginCredentialsLogic({
+        email: "pennygradebusiness@gmail.com",
+        password: "OwnerSecurePass@2026!",
+      });
+
+      expect(loginRes.ok).toBe(true);
+      expect(loginRes.user?.email).toBe("pennygradebusiness@gmail.com");
+      expect(loginRes.user?.role).toBe("super_admin");
+    });
+
+    it("allows requesting a 6-digit security code and verifying password reset", async () => {
+      const { requestAdminPasswordResetCodeLogic, verifyAndResetForgottenPasswordLogic, verifyAdminLoginCredentialsLogic } = await import("@/lib/v1-logic");
+
+      const codeRes = requestAdminPasswordResetCodeLogic({
+        email: "pennygradebusiness@gmail.com",
+      });
+
+      expect(codeRes.ok).toBe(true);
+      expect(codeRes.code).toBeDefined();
+
+      const resetRes = verifyAndResetForgottenPasswordLogic({
+        email: "pennygradebusiness@gmail.com",
+        verification_credential: codeRes.code!,
+        new_password: "UpdatedOwnerPass#99!",
+      });
+
+      expect(resetRes.ok).toBe(true);
+
+      const loginRes = verifyAdminLoginCredentialsLogic({
+        email: "pennygradebusiness@gmail.com",
+        password: "UpdatedOwnerPass#99!",
+      });
+
+      expect(loginRes.ok).toBe(true);
+    });
+
+    it("strictly rejects password reset when verification credential is invalid", async () => {
+      const { verifyAndResetForgottenPasswordLogic } = await import("@/lib/v1-logic");
+
+      expect(() => {
+        verifyAndResetForgottenPasswordLogic({
+          email: "pennygradebusiness@gmail.com",
+          verification_credential: "WRONG-CODE-0000",
+          new_password: "NewPassword123!",
+        });
+      }).toThrow(/Invalid verification code or mobile number/);
+    });
+
+    it("strictly rejects password reset when new password is under 6 characters", async () => {
+      const { verifyAndResetForgottenPasswordLogic } = await import("@/lib/v1-logic");
+
+      expect(() => {
+        verifyAndResetForgottenPasswordLogic({
+          email: "pennygradebusiness@gmail.com",
+          verification_credential: "9356897893",
+          new_password: "123",
+        });
+      }).toThrow(/at least 6 characters/);
+    });
+  });
 });
