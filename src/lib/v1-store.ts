@@ -265,13 +265,17 @@ declare global {
   var __pennyGradeStore: PennyGradeStore | undefined;
 }
 
-const STORE_PATH = path.resolve(process.cwd(), "data", "pennygrade-store.json");
+const STORE_PATH =
+  typeof process !== "undefined" && typeof process.cwd === "function"
+    ? path.resolve(process.cwd(), "data", "pennygrade-store.json")
+    : "";
 
 /**
  * Persists the entire store atomically to disk so server restarts/rebuilds never lose cards or applications.
  */
 export function saveStoreToDisk(): void {
   try {
+    if (!STORE_PATH || typeof process === "undefined" || typeof fs?.existsSync !== "function") return;
     if (!globalThis.__pennyGradeStore) return;
     const s = globalThis.__pennyGradeStore;
     const dir = path.dirname(STORE_PATH);
@@ -595,6 +599,7 @@ export function seedOffers(): Map<string, V1Offer> {
 
 function loadStoreFromDisk(): PennyGradeStore | null {
   try {
+    if (!STORE_PATH || typeof process === "undefined" || typeof fs?.existsSync !== "function") return null;
     if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, "utf-8");
       if (!raw || !raw.trim()) return null;

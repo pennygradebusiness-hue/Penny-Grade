@@ -601,7 +601,6 @@ export const resetAdminForgottenPassword = createServerFn({ method: "POST" })
   });
 
 // Synchronize Admin Password After Verified Supabase Auth Reset
-export { syncAdminPasswordAfterSupabaseResetLogic };
 export const syncAdminPasswordAfterSupabaseReset = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; new_password: string }) =>
     z.object({

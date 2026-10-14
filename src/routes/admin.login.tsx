@@ -323,14 +323,14 @@ function AdminLogin() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-300">
                 <KeyRound className="h-6 w-6 stroke-[2.5]" />
               </div>
-              <div>
-                <h3 className="font-display text-base font-extrabold text-white">
+              <DialogHeader className="text-left space-y-0.5">
+                <DialogTitle className="font-display text-base font-extrabold text-white">
                   Reset Admin Password
-                </h3>
-                <p className="text-xs text-slate-400">
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-400">
                   Secure email-based recovery via Supabase Auth
-                </p>
-              </div>
+                </DialogDescription>
+              </DialogHeader>
             </div>
           </div>
 
@@ -451,6 +451,9 @@ function AdminLogin() {
               <Lock className="h-4 w-4 text-amber-500" />
               First-Time Login / Set Password
             </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              If an administrator has granted you access, set your permanent password below.
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleFirstTimeSetup} className="space-y-3.5 pt-1">
