@@ -100,7 +100,9 @@ function Admins() {
     name: string;
     email: string;
     role: RoleType;
-    password: string;
+    password?: string;
+    existingAccount?: boolean;
+    roleAlreadyAssigned?: boolean;
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -143,12 +145,13 @@ function Admins() {
       });
       toast.success(res.message || "Administrator role granted");
       
-      const issuedPass = res.temporary_password || password;
       setCreatedCreds({
         name: name.trim() || res.admin.full_name || email.split("@")[0],
         email: email.trim().toLowerCase(),
         role,
-        password: issuedPass,
+        password: typeof res.temporary_password === "string" ? res.temporary_password : undefined,
+        existingAccount: res.existing_account,
+        roleAlreadyAssigned: res.role_already_assigned,
       });
 
       setEmail("");
@@ -179,6 +182,8 @@ function Admins() {
         email: resettingUser.email,
         role: resettingUser.role,
         password: res.temporary_password,
+        existingAccount: false,
+        roleAlreadyAssigned: false,
       });
       setResettingUser(null);
       setNewResetPassword("");
@@ -487,7 +492,7 @@ Please sign in and change your password upon first login.`;
             <div className="flex items-center gap-2 text-emerald-600">
               <CheckCircle2 className="h-5 w-5" />
               <DialogTitle className="text-base font-extrabold text-navy">
-                Administrator Credentials Ready
+                {createdCreds?.existingAccount ? "Administrator Role Ready" : "Administrator Credentials Ready"}
               </DialogTitle>
             </div>
           </DialogHeader>
@@ -495,7 +500,11 @@ Please sign in and change your password upon first login.`;
           {createdCreds && (
             <div className="space-y-4 pt-1">
               <p className="text-xs text-slate-600">
-                The administrator account has been created. Share these credentials with the team member so they can complete their first-time login:
+                {createdCreds.existingAccount
+                  ? createdCreds.roleAlreadyAssigned
+                    ? "This existing account already has the selected role. Sign in with its current password."
+                    : "The role was added to this existing account. Its password was not changed; sign in with the password already used for this email."
+                  : "The administrator account has been created. Share these credentials with the team member for sign in."}
               </p>
 
               <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 space-y-2.5">
@@ -513,31 +522,33 @@ Please sign in and change your password upon first login.`;
                     {ROLE_CONFIG[createdCreds.role].title}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Initial Password</span>
-                  <span className="font-mono text-sm font-extrabold text-amber-900 bg-white px-2.5 py-1 rounded-md border border-amber-300 shadow-xs">
-                    {createdCreds.password}
-                  </span>
-                </div>
+                {createdCreds.password && (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Initial Password</span>
+                    <span className="font-mono text-sm font-extrabold text-amber-900 bg-white px-2.5 py-1 rounded-md border border-amber-300 shadow-xs">
+                      {createdCreds.password}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="rounded-lg bg-slate-50 p-2.5 text-[11px] text-slate-600 border border-slate-200">
                 <strong>First-Time Login Instructions:</strong>
                 <p className="mt-0.5">
                   1. Visit <code className="font-bold text-navy">/admin/login</code><br />
-                  2. Enter their email and initial password above.<br />
+                  2. {createdCreds.existingAccount ? "Enter this email and its existing password." : "Enter their email and initial password above."}<br />
                   3. They will be directed straight to their role dashboard.
                 </p>
               </div>
 
               <div className="flex gap-2.5 pt-2">
-                <Button
+                {createdCreds.password && <Button
                   className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-xs font-extrabold text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500 cursor-pointer"
-                  onClick={() => copyCredentials(createdCreds)}
+                  onClick={() => copyCredentials({ ...createdCreds, password: createdCreds.password! })}
                 >
                   {copied ? <Check className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
                   {copied ? "Copied to Clipboard!" : "Copy Full Login Credentials"}
-                </Button>
+                </Button>}
                 <Button
                   variant="outline"
                   className="rounded-xl text-xs font-bold"

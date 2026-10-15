@@ -75,6 +75,11 @@ function getServiceRoleClient() {
   return db;
 }
 
+function isDuplicateAuthEmailError(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  return error.code === "email_exists" || /already (been )?(registered|exists)|user already registered/i.test(error.message || "");
+}
+
 // Admin Create Member — NO customer password, NO customer Supabase Auth account, Email optional
 export const createMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => memberSchema.parse(d))
@@ -694,24 +699,76 @@ export const addAdmin = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { full_name: data.full_name?.trim() || data.email.split("@")[0] },
       });
-      if (createError || !created.user) throw new Error(`Could not create administrator: ${createError?.message || "Auth user was not created"}`);
-      const { error: roleError } = await db.from("user_roles").insert({ user_id: created.user.id, role: data.role });
+      let authUser = created.user;
+      let existingAccount = false;
+
+      if (createError) {
+        if (!isDuplicateAuthEmailError(createError)) {
+          throw new Error(`Could not create administrator: ${createError.message}`);
+        }
+
+        // A customer/member may already have an Auth account. Link that identity
+        // to the requested admin role instead of attempting to create a duplicate
+        // or replacing the person's existing password.
+        const email = data.email.trim().toLowerCase();
+        const perPage = 1000;
+        for (let page = 1; page <= 100 && !authUser; page++) {
+          const { data: usersPage, error: listError } = await db.auth.admin.listUsers({ page, perPage });
+          if (listError) throw new Error(`Could not find the existing account: ${listError.message}`);
+          authUser = usersPage.users.find((user) => user.email?.trim().toLowerCase() === email) ?? null;
+          if (usersPage.users.length < perPage) break;
+        }
+        if (!authUser) throw new Error("An account with this email already exists, but it could not be found for role assignment.");
+        existingAccount = true;
+      }
+
+      if (!authUser) throw new Error("Auth user was not created");
+
+      const { data: existingRole, error: roleLookupError } = await db
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", authUser.id)
+        .eq("role", data.role)
+        .maybeSingle();
+      if (roleLookupError) {
+        if (!existingAccount) await db.auth.admin.deleteUser(authUser.id);
+        throw new Error(`Could not check existing administrator role: ${roleLookupError.message}`);
+      }
+
+      const { error: roleError } = existingRole
+        ? { error: null }
+        : await db.from("user_roles").insert({ user_id: authUser.id, role: data.role });
       if (roleError) {
-        await db.auth.admin.deleteUser(created.user.id);
+        // Only remove an Auth user created in this request. Existing customer
+        // accounts must never be deleted as cleanup for a failed role insert.
+        if (!existingAccount) await db.auth.admin.deleteUser(authUser.id);
         throw new Error(`Could not grant administrator role: ${roleError.message}`);
       }
       const adminUser: V1AdminUser = {
-        id: created.user.id,
-        user_id: created.user.id,
-        full_name: data.full_name?.trim() || data.email.split("@")[0],
-        email: created.user.email || data.email,
+        id: authUser.id,
+        user_id: authUser.id,
+        full_name: data.full_name?.trim() || authUser.user_metadata?.full_name || data.email.split("@")[0],
+        email: authUser.email || data.email,
         role: data.role,
-        is_password_set: true,
-        created_at: created.user.created_at,
+        is_password_set: existingAccount || !!data.temporary_password,
+        created_at: authUser.created_at,
       };
-      return { ok: true, message: `Role ${data.role.replace(/_/g, " ")} granted to ${adminUser.email}`, admin: adminUser, temporary_password: tempPassword };
+      const roleAlreadyAssigned = !!existingRole;
+      return {
+        ok: true,
+        existing_account: existingAccount,
+        role_already_assigned: roleAlreadyAssigned,
+        message: roleAlreadyAssigned
+          ? `${adminUser.email} already has the ${data.role.replace(/_/g, " ")} role.`
+          : existingAccount
+            ? `Role ${data.role.replace(/_/g, " ")} granted to existing account ${adminUser.email}. They should sign in with their existing password.`
+            : `Role ${data.role.replace(/_/g, " ")} granted to ${adminUser.email}`,
+        admin: adminUser,
+        temporary_password: existingAccount ? null : tempPassword,
+      };
     }
-    return addAdminLogic(data);
+    const legacyResult = addAdminLogic(data);
+    return { ...legacyResult, existing_account: false, role_already_assigned: false };
   });
 
 // Admin Reset Password
