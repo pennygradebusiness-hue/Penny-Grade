@@ -125,23 +125,17 @@ function Members() {
   const handleDeleteMember = async (m: Row) => {
     if (!confirm(`Are you sure you want to permanently delete member "${m.full_name}" (${m.membership_number})? This action cannot be undone.`)) return;
     try {
+      // Optimistic cache update: remove immediately so UI responds in 0ms with no flicker
+      qc.setQueryData<Row[]>(["admin", "members"], (old) =>
+        (old ?? []).filter((item) => item.id !== m.id && item.membership_number !== m.membership_number)
+      );
+
       await deleteMemberFn({ data: { id: m.id } });
-      try {
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id);
-        if (isUuid) {
-          await supabase.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", m.id);
-          await supabase.from("memberships").delete().eq("id", m.id);
-        }
-        if (m.membership_number) {
-          await supabase.from("memberships").delete().eq("membership_number", m.membership_number);
-        }
-      } catch {
-        // ignore
-      }
       toast.success(`Member "${m.full_name}" deleted`);
       refresh();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete member");
+      refresh();
     }
   };
 
@@ -561,8 +555,8 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
           <F label="Mobile">
             <Input required placeholder="e.g. 9876543210" value={f.mobile} onChange={set("mobile")} />
           </F>
-          <F label="Email">
-            <Input required type="email" placeholder="e.g. rahul@example.com" value={f.email} onChange={set("email")} />
+          <F label="Email (Optional)">
+            <Input type="email" placeholder="e.g. rahul@example.com (optional)" value={f.email} onChange={set("email")} />
           </F>
           <F label="Plan">
             <Select

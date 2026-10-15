@@ -372,15 +372,12 @@ function Partners() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to permanently delete "${name}" and all of its associated offers? This action cannot be undone.`)) return;
     try {
+      // Optimistic cache update for instant UI feedback
+      qc.setQueryData<V1Partner[]>(["admin", "partners"], (old) =>
+        (old ?? []).filter((item) => item.id !== id && item.slug !== id)
+      );
+
       await deletePartnerFn({ data: { id } });
-      try {
-        await supabase.from("verification_logs").delete().eq("partner_id", id);
-        await supabase.from("verification_sessions").delete().eq("partner_id", id);
-        await supabase.from("offers").delete().eq("partner_id", id);
-        await supabase.from("partners").delete().eq("id", id);
-      } catch {
-        // ignore
-      }
       toast.success(`Partner "${name}" and related offers permanently deleted`);
       qc.invalidateQueries({ queryKey: ["admin", "partners"] });
       qc.invalidateQueries({ queryKey: ["admin", "offers"] });
@@ -390,6 +387,7 @@ function Partners() {
       refresh();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete partner");
+      refresh();
     }
   };
 

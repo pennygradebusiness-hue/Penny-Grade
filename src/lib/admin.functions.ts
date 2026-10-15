@@ -33,14 +33,22 @@ import { supabase } from "@/integrations/supabase/client";
 const memberSchema = z.object({
   full_name: z.string().trim().min(2, "Full name is required").max(100),
   mobile: z.string().trim().min(10, "Valid 10-digit mobile is required").max(16),
-  email: z.string().trim().email("Valid email is required").max(255),
+  email: z
+    .string()
+    .trim()
+    .max(255)
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
+      message: "Please enter a valid email address",
+    }),
   plan_id: z.string().min(1),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   expiry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   card_id: z.string().optional().or(z.literal("")),
 });
 
-// Admin Create Member — NO customer password, NO customer Supabase Auth account
+// Admin Create Member — NO customer password, NO customer Supabase Auth account, Email optional
 export const createMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => memberSchema.parse(d))
   .handler(async ({ data }) => {
@@ -49,36 +57,74 @@ export const createMember = createServerFn({ method: "POST" })
       throw new Error("Expiry date must be after start date");
     }
 
-    const membershipNumber = generatePenCode();
-    const memberId = safeRandomUUID();
-    const now = new Date().toISOString();
+    const cleanEmail = data.email?.trim() || "";
 
-    let assignedCardNumber: string | undefined;
+    let dbCreated: any = null;
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
 
-    // If card_id was provided, assign that physical card
-    if (data.card_id && store.cards.has(data.card_id)) {
-      const card = store.cards.get(data.card_id)!;
-      card.membership_id = memberId;
-      card.status = "ACTIVE";
-      card.issued_at = now;
-      card.updated_at = now;
-      assignedCardNumber = card.card_number;
-    } else {
-      // Find an available card or create one
-      let availableCard: V1PhysicalCard | undefined;
-      for (const c of store.cards.values()) {
-        if (c.status === "AVAILABLE") {
-          availableCard = c;
-          break;
+      // Ensure valid plan UUID
+      let planIdToUse = data.plan_id;
+      const isPlanUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planIdToUse);
+      if (!isPlanUuid) {
+        const { data: dbPlans } = await sb.from("membership_plans").select("id").limit(1);
+        if (dbPlans && dbPlans.length > 0) {
+          planIdToUse = dbPlans[0].id;
         }
       }
 
-      if (availableCard) {
-        availableCard.membership_id = memberId;
-        availableCard.status = "ACTIVE";
-        availableCard.issued_at = now;
-        availableCard.updated_at = now;
-        assignedCardNumber = availableCard.card_number;
+      const { data: res, error } = await sb.rpc("admin_create_member", {
+        p_full_name: data.full_name,
+        p_mobile: data.mobile,
+        p_email: cleanEmail || null,
+        p_plan_id: planIdToUse,
+        p_start_date: data.start_date,
+        p_expiry_date: data.expiry_date,
+        p_card_id: data.card_id || null,
+      });
+
+      if (!error && res?.ok) {
+        dbCreated = res;
+      } else if (error) {
+        console.warn("[PennyGrade] admin_create_member RPC error:", error);
+      }
+    } catch (err) {
+      console.warn("[PennyGrade] Database member creation fallback:", err);
+    }
+
+    const membershipNumber = dbCreated?.membership_number || generatePenCode();
+    const memberId = dbCreated?.id || safeRandomUUID();
+    const now = new Date().toISOString();
+
+    let assignedCardNumber: string | undefined = dbCreated?.card_number;
+
+    if (!dbCreated) {
+      // If card_id was provided, assign that physical card
+      if (data.card_id && store.cards.has(data.card_id)) {
+        const card = store.cards.get(data.card_id)!;
+        card.membership_id = memberId;
+        card.status = "ACTIVE";
+        card.issued_at = now;
+        card.updated_at = now;
+        assignedCardNumber = card.card_number;
+      } else {
+        // Find an available card or create one
+        let availableCard: V1PhysicalCard | undefined;
+        for (const c of store.cards.values()) {
+          if (c.status === "AVAILABLE") {
+            availableCard = c;
+            break;
+          }
+        }
+
+        if (availableCard) {
+          availableCard.membership_id = memberId;
+          availableCard.status = "ACTIVE";
+          availableCard.issued_at = now;
+          availableCard.updated_at = now;
+          assignedCardNumber = availableCard.card_number;
+        }
       }
     }
 
@@ -95,7 +141,7 @@ export const createMember = createServerFn({ method: "POST" })
       status: "ACTIVE",
       created_at: now,
       updated_at: now,
-      card_id: data.card_id || undefined,
+      card_id: (dbCreated?.card_id || data.card_id) || undefined,
       card_number: assignedCardNumber || membershipNumber,
     };
 
@@ -133,6 +179,22 @@ export const generateCardBatch = createServerFn({ method: "POST" })
     const createdCards: string[] = [];
     const now = new Date().toISOString();
 
+    let persistedCount = 0;
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      
+      const { data: rpcRes, error: rpcErr } = await sb.rpc("generate_physical_cards", {
+        p_count: data.count,
+      });
+
+      if (!rpcErr && rpcRes?.ok) {
+        persistedCount = rpcRes.count;
+      }
+    } catch (err) {
+      console.warn("[PennyGrade] Database card generation RPC error, using application generator:", err);
+    }
+
     const existingCodes = new Set<string>();
     for (const c of store.cards.values()) {
       existingCodes.add(c.card_number);
@@ -142,7 +204,8 @@ export const generateCardBatch = createServerFn({ method: "POST" })
       if (m.card_number) existingCodes.add(m.card_number);
     }
 
-    for (let i = 0; i < data.count; i++) {
+    const countToGenerate = persistedCount > 0 ? 0 : data.count;
+    for (let i = 0; i < countToGenerate; i++) {
       const cardId = safeRandomUUID();
       let cardNumber = generatePenCode();
       let attempts = 0;
@@ -165,14 +228,16 @@ export const generateCardBatch = createServerFn({ method: "POST" })
       createdCards.push(cardNumber);
     }
 
+    const totalCreated = persistedCount > 0 ? persistedCount : createdCards.length;
+
     if (store.auditLogs) {
       store.auditLogs.unshift({
         id: safeRandomUUID(),
         admin_user_id: admin.id,
-        action: `Generated Batch (${createdCards.length} Cards)`,
+        action: `Generated Batch (${totalCreated} Cards)`,
         target_type: "cards",
         target_id: `batch-${Date.now()}`,
-        metadata: { count: createdCards.length },
+        metadata: { count: totalCreated },
         created_at: now,
         who: admin.full_name || admin.email,
       });
@@ -182,13 +247,69 @@ export const generateCardBatch = createServerFn({ method: "POST" })
 
     return {
       ok: true,
-      count: createdCards.length,
+      count: totalCreated,
     };
   });
 
 // Admin Get Cards
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
+
+  try {
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    
+    // First try RPC
+    const { data: rpcCards, error: rpcErr } = await sb.rpc("get_all_physical_cards");
+    if (!rpcErr && Array.isArray(rpcCards) && rpcCards.length > 0) {
+      for (const c of rpcCards) {
+        store.cards.set(c.id, {
+          id: c.id,
+          card_number: c.card_number,
+          membership_id: c.membership_id,
+          status: c.status,
+          issued_at: c.issued_at,
+          created_at: c.created_at,
+          updated_at: c.updated_at || c.created_at,
+        });
+      }
+      return rpcCards;
+    }
+
+    // Try direct select
+    const { data: dbCards, error: dbErr } = await sb
+      .from("physical_cards")
+      .select("id,card_number,status,created_at,issued_at,membership_id,memberships(id,membership_number,full_name)")
+      .order("created_at", { ascending: false });
+
+    if (!dbErr && dbCards && dbCards.length > 0) {
+      const formatted = dbCards.map((c: any) => ({
+        id: c.id,
+        card_number: c.card_number,
+        status: c.status,
+        created_at: c.created_at,
+        issued_at: c.issued_at,
+        membership_id: c.membership_id,
+        member: c.memberships?.full_name || "",
+        membership_number: c.memberships?.membership_number || "",
+      }));
+      for (const c of formatted) {
+        store.cards.set(c.id, {
+          id: c.id,
+          card_number: c.card_number,
+          membership_id: c.membership_id,
+          status: c.status,
+          issued_at: c.issued_at,
+          created_at: c.created_at,
+          updated_at: c.created_at,
+        });
+      }
+      return formatted;
+    }
+  } catch (err) {
+    console.warn("[PennyGrade] Supabase physical cards query fallback:", err);
+  }
+
   const cardsList = Array.from(store.cards.values()).map((c) => {
     let memberName = "";
     let membershipNumber = "";
@@ -214,6 +335,72 @@ export const getAdminMembers = createServerFn({ method: "GET" }).handler(async (
   if (!store.deletedMemberIds) store.deletedMemberIds = [];
 
   const delMemberSet = new Set(store.deletedMemberIds);
+
+  try {
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+
+    const { data: rpcMembers, error: rpcErr } = await sb.rpc("get_all_memberships");
+    if (!rpcErr && Array.isArray(rpcMembers)) {
+      const dbIds = new Set(rpcMembers.map((m: any) => m.id));
+      const dbNumbers = new Set(rpcMembers.map((m: any) => m.membership_number));
+
+      // Synchronize in-memory store: remove deleted members not in DB
+      for (const [k, m] of Array.from(store.members.entries())) {
+        if (!dbIds.has(m.id) && !dbNumbers.has(m.membership_number)) {
+          store.members.delete(k);
+        }
+      }
+
+      for (const m of rpcMembers) {
+        if (!delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number)) {
+          store.members.set(m.id, m);
+        }
+      }
+      return rpcMembers.filter((m: any) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number));
+    }
+
+    const { data: dbMembers, error: dbErr } = await sb
+      .from("memberships")
+      .select("*, plan:membership_plans(name)")
+      .order("created_at", { ascending: false });
+
+    if (!dbErr && Array.isArray(dbMembers)) {
+      const formatted = dbMembers.map((m: any) => ({
+        id: m.id,
+        membership_number: m.membership_number,
+        full_name: m.full_name || "",
+        mobile: m.mobile || "",
+        email: m.email || "",
+        plan_id: m.plan_id,
+        plan_name: m.plan?.name || "PennyGrade 6-Month Membership",
+        start_date: m.start_date,
+        expiry_date: m.expiry_date,
+        status: m.status,
+        created_at: m.created_at,
+        updated_at: m.updated_at,
+        card_number: m.card_number || m.membership_number,
+      }));
+
+      const dbIds = new Set(formatted.map((m: any) => m.id));
+      const dbNumbers = new Set(formatted.map((m: any) => m.membership_number));
+      for (const [k, m] of Array.from(store.members.entries())) {
+        if (!dbIds.has(m.id) && !dbNumbers.has(m.membership_number)) {
+          store.members.delete(k);
+        }
+      }
+
+      for (const m of formatted) {
+        if (!delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number)) {
+          store.members.set(m.id, m);
+        }
+      }
+      return formatted.filter((m: any) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number));
+    }
+  } catch (err) {
+    console.warn("[PennyGrade] Supabase members query fallback:", err);
+  }
+
   return Array.from(store.members.values())
     .filter((m) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -261,16 +448,30 @@ export const deleteMember = createServerFn({ method: "POST" })
     if (!store.cards) store.cards = new Map();
     if (!store.deletedMemberIds) store.deletedMemberIds = [];
 
-    const member = store.members.get(data.id);
-    const memberName = member?.full_name || "Member";
-    const memberNumber = member?.membership_number || "";
-
-    // 1. Add to deleted tracking list
-    if (!store.deletedMemberIds.includes(data.id)) {
-      store.deletedMemberIds.push(data.id);
+    // Find member by ID or membership_number in store.members
+    let member = store.members.get(data.id);
+    let memberKey = data.id;
+    if (!member) {
+      for (const [k, m] of store.members.entries()) {
+        if (m.id === data.id || m.membership_number === data.id) {
+          member = m;
+          memberKey = k;
+          break;
+        }
+      }
     }
-    if (memberNumber && !store.deletedMemberIds.includes(memberNumber)) {
-      store.deletedMemberIds.push(memberNumber);
+
+    const memberName = member?.full_name || "Member";
+    const memberNumber = member?.membership_number || (/^PEN-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(data.id) ? data.id : "");
+    const memberEmail = member?.email?.toLowerCase() || "";
+    const memberId = member?.id || data.id;
+
+    // 1. Add all identifiers to deleted tracking list
+    const toTrack = [data.id, memberKey, memberId, memberNumber, memberEmail].filter(Boolean);
+    for (const item of toTrack) {
+      if (!store.deletedMemberIds.includes(item)) {
+        store.deletedMemberIds.push(item);
+      }
     }
 
     // 2. Release assigned card back to AVAILABLE status if linked
@@ -281,7 +482,12 @@ export const deleteMember = createServerFn({ method: "POST" })
       card.updated_at = new Date().toISOString();
     }
     for (const card of store.cards.values()) {
-      if (card.membership_id === data.id || (memberNumber && card.membership_id === memberNumber)) {
+      if (
+        card.membership_id === data.id ||
+        card.membership_id === memberKey ||
+        card.membership_id === memberId ||
+        (memberNumber && card.membership_id === memberNumber)
+      ) {
         card.membership_id = null;
         card.status = "AVAILABLE";
         card.updated_at = new Date().toISOString();
@@ -290,29 +496,35 @@ export const deleteMember = createServerFn({ method: "POST" })
 
     // 3. Remove member from store
     store.members.delete(data.id);
+    if (memberKey) store.members.delete(memberKey);
+    if (memberId) store.members.delete(memberId);
 
     // 4. Remove any active verification sessions for this member
     if (store.sessions) {
       for (const [sId, sess] of store.sessions.entries()) {
-        if (sess.membership_id === data.id || (memberNumber && sess.membership_number === memberNumber)) {
+        if (
+          sess.membership_id === data.id ||
+          sess.membership_id === memberKey ||
+          sess.membership_id === memberId ||
+          (memberNumber && sess.membership_number === memberNumber)
+        ) {
           store.sessions.delete(sId);
         }
       }
     }
 
-    // 5. Synchronize deletion with Supabase
+    // 5. Authoritatively synchronize deletion with Supabase using server client
     try {
-      const { pub } = await import("./public.functions");
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
 
       if (isUuid) {
-        await pub().from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", data.id);
-        await pub().from("verification_logs").delete().eq("membership_id", data.id);
-        await pub().from("memberships").delete().eq("id", data.id);
+        await sb.rpc("admin_delete_member", { p_member_id: memberId });
       }
 
       if (memberNumber) {
-        const { data: dbM } = await pub()
+        const { data: dbM } = await sb
           .from("memberships")
           .select("id")
           .eq("membership_number", memberNumber)
@@ -322,10 +534,18 @@ export const deleteMember = createServerFn({ method: "POST" })
           if (!store.deletedMemberIds.includes(dbM.id)) {
             store.deletedMemberIds.push(dbM.id);
           }
-          await pub().from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", dbM.id);
-          await pub().from("verification_logs").delete().eq("membership_id", dbM.id);
-          await pub().from("memberships").delete().eq("id", dbM.id);
+          await sb.rpc("admin_delete_member", { p_member_id: dbM.id });
         }
+      }
+
+      // Direct fallback cleanup on DB tables
+      if (isUuid) {
+        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", memberId);
+        await sb.from("memberships").delete().eq("id", memberId);
+      }
+      if (memberNumber) {
+        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("card_number", memberNumber);
+        await sb.from("memberships").delete().eq("membership_number", memberNumber);
       }
     } catch (sbErr) {
       console.warn("[PennyGrade] Supabase member delete sync:", sbErr);
@@ -394,32 +614,49 @@ export const assignCardToMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+
+    let dbAssignedCardNumber: string | undefined;
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const { data: res, error } = await sb.rpc("admin_assign_card", {
+        p_member_id: data.memberId,
+        p_card_id: data.cardId,
+        p_old_card_status: data.oldCardStatus || "LOST",
+      });
+      if (!error && res?.ok) {
+        dbAssignedCardNumber = res.card_number;
+      }
+    } catch (err) {
+      console.warn("[PennyGrade] Database card assignment fallback:", err);
+    }
+
     const member = store.members.get(data.memberId);
-    if (!member) throw new Error("Member not found");
+    if (!member && !dbAssignedCardNumber) throw new Error("Member not found");
 
     const newCard = store.cards.get(data.cardId);
-    if (!newCard || newCard.status !== "AVAILABLE") {
-      throw new Error("Selected card is not available");
-    }
-
     const now = new Date().toISOString();
 
-    // If member already had a card, update its status
-    if (member.card_id && store.cards.has(member.card_id)) {
-      const oldCard = store.cards.get(member.card_id)!;
-      oldCard.status = data.oldCardStatus ?? "LOST";
-      oldCard.updated_at = now;
+    if (member && newCard) {
+      // If member already had a card, update its status
+      if (member.card_id && store.cards.has(member.card_id)) {
+        const oldCard = store.cards.get(member.card_id)!;
+        oldCard.status = data.oldCardStatus ?? "LOST";
+        oldCard.updated_at = now;
+      }
+
+      // Assign new card
+      newCard.membership_id = member.id;
+      newCard.status = "ACTIVE";
+      newCard.issued_at = now;
+      newCard.updated_at = now;
+
+      member.card_id = newCard.id;
+      member.card_number = newCard.card_number;
+      member.updated_at = now;
     }
 
-    // Assign new card
-    newCard.membership_id = member.id;
-    newCard.status = "ACTIVE";
-    newCard.issued_at = now;
-    newCard.updated_at = now;
-
-    member.card_id = newCard.id;
-    member.card_number = newCard.card_number;
-    member.updated_at = now;
+    const assignedNumber = dbAssignedCardNumber || newCard?.card_number || "";
 
     if (store.auditLogs) {
       store.auditLogs.unshift({
@@ -427,8 +664,8 @@ export const assignCardToMember = createServerFn({ method: "POST" })
         admin_user_id: admin.id,
         action: "Assigned Physical Card",
         target_type: "card",
-        target_id: newCard.id,
-        metadata: { card_number: newCard.card_number, member: member.full_name },
+        target_id: data.cardId,
+        metadata: { card_number: assignedNumber, member: member?.full_name },
         created_at: now,
         who: admin.full_name || admin.email,
       });
@@ -436,7 +673,7 @@ export const assignCardToMember = createServerFn({ method: "POST" })
 
     saveStoreToDisk();
 
-    return { ok: true, card_number: newCard.card_number };
+    return { ok: true, card_number: assignedNumber };
   });
 
 // Admin Get Admin Users (Server Function)
@@ -1231,17 +1468,17 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
     if (dbPartners && dbPartners.length > 0) {
       for (const p of dbPartners) {
         // Skip permanently deleted partners (even if still in Supabase DB due to RLS-blocked deletes)
-        if (
-          delSet.has(p.id) ||
-          delSet.has(p.slug) ||
-          store.partners.has(p.id) ||
-          isPartnerPermanentlyDeleted(p.id, p.slug, p.business_name)
-        ) {
+        if (isPartnerPermanentlyDeleted(p.id, p.slug, p.business_name)) {
           // Ensure their IDs are tracked in the deleted set so they're permanently blocked
           if (!store.deletedPartnerIds.includes(p.id)) store.deletedPartnerIds.push(p.id);
           if (p.slug && !store.deletedPartnerIds.includes(p.slug)) store.deletedPartnerIds.push(p.slug);
           continue;
         }
+
+        if (delSet.has(p.id) || (p.slug && delSet.has(p.slug))) {
+          continue;
+        }
+
         store.partners.set(p.id, {
           id: p.id,
           business_name: p.business_name,
@@ -1350,7 +1587,8 @@ export const savePartner = createServerFn({ method: "POST" })
     store.partners.set(partnerId, partner);
 
     try {
-      const { pub } = await import("./public.functions");
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
       const sbPayload: any = {
         id: partnerId,
         business_name: partner.business_name,
@@ -1371,9 +1609,9 @@ export const savePartner = createServerFn({ method: "POST" })
         featured: partner.featured,
       };
       if (existing) {
-        await pub().from("partners").update(sbPayload).eq("id", partnerId);
+        await sb.from("partners").update(sbPayload).eq("id", partnerId);
       } else {
-        await pub().from("partners").insert(sbPayload);
+        await sb.from("partners").insert(sbPayload);
       }
     } catch {
       // Non-fatal
@@ -1417,11 +1655,12 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     partner.updated_at = new Date().toISOString();
 
     try {
-      const { pub } = await import("./public.functions");
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
       const patch: any = {};
       if (data.status !== undefined) patch.status = data.status;
       if (data.featured !== undefined) patch.featured = data.featured;
-      await pub().from("partners").update(patch).eq("id", data.id);
+      await sb.from("partners").update(patch).eq("id", data.id);
     } catch {
       // Non-fatal
     }

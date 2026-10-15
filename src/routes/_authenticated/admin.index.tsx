@@ -33,6 +33,28 @@ function Dashboard() {
           fetchLogs(180),
         ]);
 
+        const errors: string[] = [];
+        if (msRes.status === "rejected") {
+          console.error("fetchMembersFn failed:", msRes.reason);
+          errors.push("Members");
+        }
+        if (cardsRes.status === "rejected") {
+          console.error("fetchCardsFn failed:", cardsRes.reason);
+          errors.push("Cards");
+        }
+        if (partnersRes.status === "rejected") {
+          console.error("fetchPartnersFn failed:", partnersRes.reason);
+          errors.push("Partners");
+        }
+        if (offersRes.status === "rejected") {
+          console.error("fetchOffersFn failed:", offersRes.reason);
+          errors.push("Offers");
+        }
+        if (logsRes.status === "rejected") {
+          console.error("fetchLogs failed:", logsRes.reason);
+          errors.push("Verification Logs");
+        }
+
         const ms = msRes.status === "fulfilled" ? (msRes.value ?? []) : [];
         const cards = cardsRes.status === "fulfilled" ? (cardsRes.value ?? []) : [];
         const partners = partnersRes.status === "fulfilled" ? (partnersRes.value ?? []) : [];
@@ -54,6 +76,7 @@ function Dashboard() {
           partners: activePartners,
           offers: activeOffers,
           logs,
+          errors,
         };
       } catch (err) {
         console.error("Dashboard error:", err);
@@ -66,6 +89,7 @@ function Dashboard() {
           partners: 0,
           offers: 0,
           logs: [],
+          errors: ["All dashboard services"],
         };
       }
     },
@@ -73,7 +97,7 @@ function Dashboard() {
 
   if (q.isLoading || !q.data) return <><PageHeader title="Dashboard" /><TableSkeleton /></>;
 
-  const { ms, logs, availableCards } = q.data;
+  const { ms, logs, availableCards, errors = [] } = q.data;
   const todayStr = new Date().toDateString();
   const todayCount = logs.filter((l) => new Date(l.created_at).toDateString() === todayStr).length;
   const monthStart = new Date();
@@ -92,6 +116,11 @@ function Dashboard() {
   return (
     <>
       <PageHeader title="Dashboard" desc="PennyGrade network at a glance" />
+      {errors.length > 0 && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-900">
+          <span>⚠️ Live statistics could not be updated for: {errors.join(", ")}. Please check service connection.</span>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Total Members" value={ms.length} />
         <Stat label="Active Members" value={q.data.active} />

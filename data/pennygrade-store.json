@@ -1,35 +1,16 @@
 {
-  "members": [
-    [
-      "608d1bb0-f63f-4812-a755-55ee853ac891",
-      {
-        "id": "608d1bb0-f63f-4812-a755-55ee853ac891",
-        "membership_number": "PEN-7X4P-92LM",
-        "full_name": "Samir Pandey",
-        "mobile": "9876543210",
-        "email": "samirjee187@gmail.com",
-        "plan_id": "fd6de953-c15d-4b7f-aae4-b97b6d21b043",
-        "plan_name": "PennyGrade 6-Month Membership",
-        "start_date": "2026-10-13",
-        "expiry_date": "2027-04-11",
-        "status": "ACTIVE",
-        "created_at": "2026-10-13T22:55:21.252Z",
-        "updated_at": "2026-10-13T22:55:21.252Z",
-        "card_number": "PEN-7X4P-92LM"
-      }
-    ]
-  ],
+  "members": [],
   "cards": [
     [
       "card-samir-001",
       {
         "id": "card-samir-001",
         "card_number": "PEN-7X4P-92LM",
-        "membership_id": "608d1bb0-f63f-4812-a755-55ee853ac891",
-        "status": "ACTIVE",
-        "issued_at": "2026-10-13T22:55:21.252Z",
+        "membership_id": null,
+        "status": "AVAILABLE",
+        "issued_at": null,
         "created_at": "2026-10-12T10:23:54.846Z",
-        "updated_at": "2026-10-13T22:55:21.252Z"
+        "updated_at": "2026-10-12T10:23:54.846Z"
       }
     ],
     [
@@ -1560,15 +1541,15 @@
         "phone": "+91 98200 11111",
         "email": "hello@abccafe.in",
         "website": "",
-        "address": "12 Hill Road, Main Market",
-        "city": "Daltonganj",
-        "latitude": 24.0416,
-        "longitude": 84.0722,
+        "address": "12 Hill Road, Bandra West",
+        "city": "Mumbai",
+        "latitude": null,
+        "longitude": null,
         "business_hours": "Mon–Sun · 8:00 AM – 11:00 PM",
         "status": "ACTIVE",
         "featured": true,
-        "created_at": "2026-10-11T06:08:58.426Z",
-        "updated_at": "2026-10-11T06:08:58.426Z"
+        "created_at": "2026-10-11T06:08:58.426279+00:00",
+        "updated_at": "2026-10-11T06:08:58.426279+00:00"
       }
     ],
     [
@@ -1585,15 +1566,15 @@
         "phone": "+91 98200 44444",
         "email": "book@glowsalon.in",
         "website": "",
-        "address": "21 Court Road",
-        "city": "Daltonganj",
-        "latitude": 24.039,
-        "longitude": 84.068,
+        "address": "21 Park Street",
+        "city": "Kolkata",
+        "latitude": null,
+        "longitude": null,
         "business_hours": "Tue–Sun · 10:00 AM – 9:00 PM",
         "status": "ACTIVE",
         "featured": false,
-        "created_at": "2026-10-11T06:08:58.426Z",
-        "updated_at": "2026-10-11T06:08:58.426Z"
+        "created_at": "2026-10-11T06:08:58.426279+00:00",
+        "updated_at": "2026-10-11T06:08:58.426279+00:00"
       }
     ],
     [
@@ -1604,21 +1585,21 @@
         "slug": "saffron-table",
         "category_id": "1034422b-089a-4797-bf64-2578eb78adb9",
         "category_name": "Restaurants",
-        "description": "Modern Indian cuisine with a seasonal dining menu.",
+        "description": "Modern Indian cuisine with a seasonal tasting menu.",
         "logo_url": "",
         "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=70",
         "phone": "+91 98200 66666",
         "email": "reserve@saffrontable.in",
         "website": "",
-        "address": "3 Cinema Road",
-        "city": "Daltonganj",
-        "latitude": 24.0425,
-        "longitude": 84.0735,
+        "address": "3 Khan Market",
+        "city": "New Delhi",
+        "latitude": null,
+        "longitude": null,
         "business_hours": "Mon–Sun · 12:00 PM – 11:30 PM",
         "status": "ACTIVE",
         "featured": false,
-        "created_at": "2026-10-11T06:08:58.426Z",
-        "updated_at": "2026-10-11T06:08:58.426Z"
+        "created_at": "2026-10-11T06:08:58.426279+00:00",
+        "updated_at": "2026-10-11T06:08:58.426279+00:00"
       }
     ],
     [
@@ -1629,21 +1610,21 @@
         "slug": "urban-brew",
         "category_id": "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
         "category_name": "Cafés",
-        "description": "Artisanal coffee roasters and cozy work-friendly café with fast Wi-Fi.",
+        "description": "Small-batch roasts, cold brews and a quiet corner to work from.",
         "logo_url": "",
         "cover_image_url": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&q=70",
         "phone": "+91 98200 22222",
-        "email": "contact@urbanbrew.in",
+        "email": "team@urbanbrew.in",
         "website": "",
-        "address": "45 Station Road",
-        "city": "Daltonganj",
-        "latitude": 24.043,
-        "longitude": 84.071,
-        "business_hours": "Mon–Sun · 9:00 AM – 10:30 PM",
+        "address": "4 Indiranagar 100ft Road",
+        "city": "Bengaluru",
+        "latitude": null,
+        "longitude": null,
+        "business_hours": "Mon–Sun · 7:30 AM – 10:00 PM",
         "status": "ACTIVE",
-        "featured": false,
-        "created_at": "2026-10-11T06:08:58.426Z",
-        "updated_at": "2026-10-11T06:08:58.426Z"
+        "featured": true,
+        "created_at": "2026-10-11T06:08:58.426279+00:00",
+        "updated_at": "2026-10-11T06:08:58.426279+00:00"
       }
     ]
   ],
@@ -3392,15 +3373,7 @@
     "test-partner-to-delete",
     "test-partner-outlet",
     "test-partner-to-delete",
-    "test-partner-outlet",
-    "c55b653f-1445-44f8-896e-c0cd58dc2a31",
-    "abc-cafe",
-    "e6a499cd-ead5-4e17-a13f-cd2d98a41fe2",
-    "urban-brew",
-    "d505adee-d353-4c15-873f-02346ef859d3",
-    "glow-salon",
-    "96406673-ccd2-4948-9936-a5b3c9ad0292",
-    "saffron-table"
+    "test-partner-outlet"
   ],
   "deletedOfferIds": [
     "offer-32ac0228-708f-4617-9c51-f876365f658b",

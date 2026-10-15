@@ -1,11 +1,13 @@
 import {
   store,
   safeRandomUUID,
+  generatePenCode,
   saveStoreToDisk,
   normalizeMembershipNumber,
   normalizeMobile,
   checkRateLimit,
   type V1Member,
+  type V1PhysicalCard,
   type V1Partner,
   type V1Offer,
   type V1VerificationSession,
@@ -749,12 +751,13 @@ export async function deletePartnerCascadeLogic(
   // 5. Synchronize cascade deletion with Supabase in strict FK dependency order
   if (process.env.NODE_ENV !== "test") {
     try {
-      const { pub } = await import("./public.functions");
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partnerId);
 
       const targetPartnerDbIds: string[] = isUuid ? [partnerId] : [];
       if (partnerSlug) {
-        const { data: dbPartner } = await pub()
+        const { data: dbPartner } = await sb
           .from("partners")
           .select("id")
           .eq("slug", partnerSlug)
@@ -771,7 +774,7 @@ export async function deletePartnerCascadeLogic(
         }
 
         // Query all database offers under this partner to record their IDs as permanently deleted
-        const { data: dbOffers } = await pub().from("offers").select("id").eq("partner_id", pId);
+        const { data: dbOffers } = await sb.from("offers").select("id").eq("partner_id", pId);
         if (dbOffers) {
           for (const dbo of dbOffers) {
             if (!store.deletedOfferIds.includes(dbo.id)) {
@@ -782,10 +785,10 @@ export async function deletePartnerCascadeLogic(
         }
 
         // Deletion cascade in proper foreign key order
-        await pub().from("verification_logs").delete().eq("partner_id", pId);
-        await pub().from("verification_sessions").delete().eq("partner_id", pId);
-        await pub().from("offers").delete().eq("partner_id", pId);
-        await pub().from("partners").delete().eq("id", pId);
+        await sb.from("verification_logs").delete().eq("partner_id", pId);
+        await sb.from("verification_sessions").delete().eq("partner_id", pId);
+        await sb.from("offers").delete().eq("partner_id", pId);
+        await sb.from("partners").delete().eq("id", pId);
       }
     } catch (sbErr) {
       console.warn("[PennyGrade] Supabase partner/offers delete sync:", sbErr);
@@ -835,11 +838,12 @@ export async function deleteOfferCascadeLogic(
   }
 
   try {
-    const { pub } = await import("./public.functions");
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offerId);
     if (isUuid) {
-      await pub().from("verification_logs").delete().eq("offer_id", offerId);
-      await pub().from("offers").delete().eq("id", offerId);
+      await sb.from("verification_logs").delete().eq("offer_id", offerId);
+      await sb.from("offers").delete().eq("id", offerId);
     }
   } catch (sbErr) {
     console.warn("[PennyGrade] Supabase offer delete sync:", sbErr);
@@ -914,3 +918,343 @@ export function syncAdminPasswordAfterSupabaseResetLogic(data: {
   }
   return { ok: true, message: "Admin store synchronized." };
 }
+
+// Generate Card Batch Business Logic
+export async function generateCardBatchLogic(
+  count: number,
+  adminUser: { id: string; full_name?: string; email: string }
+): Promise<{ ok: boolean; count: number }> {
+  if (!store.cards) store.cards = new Map();
+  if (!store.members) store.members = new Map();
+
+  let persistedCount = 0;
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const { data: rpcRes, error: rpcErr } = await sb.rpc("generate_physical_cards", {
+        p_count: count,
+      });
+      if (!rpcErr && rpcRes?.ok) {
+        persistedCount = rpcRes.count;
+      }
+    } catch (err) {
+      console.warn("[PennyGrade] Database card generation fallback:", err);
+    }
+  }
+
+  const existingCodes = new Set<string>();
+  for (const c of store.cards.values()) {
+    existingCodes.add(c.card_number);
+  }
+  for (const m of store.members.values()) {
+    existingCodes.add(m.membership_number);
+    if (m.card_number) existingCodes.add(m.card_number);
+  }
+
+  const createdCards: string[] = [];
+  const now = new Date().toISOString();
+  const countToGenerate = persistedCount > 0 ? 0 : count;
+
+  for (let i = 0; i < countToGenerate; i++) {
+    const cardId = safeRandomUUID();
+    let cardNumber = generatePenCode();
+    let attempts = 0;
+    while (existingCodes.has(cardNumber) && attempts < 100) {
+      cardNumber = generatePenCode();
+      attempts++;
+    }
+    existingCodes.add(cardNumber);
+
+    const card: V1PhysicalCard = {
+      id: cardId,
+      card_number: cardNumber,
+      membership_id: null,
+      status: "AVAILABLE",
+      issued_at: null,
+      created_at: now,
+      updated_at: now,
+    };
+    store.cards.set(cardId, card);
+    createdCards.push(cardNumber);
+  }
+
+  const totalCreated = persistedCount > 0 ? persistedCount : createdCards.length;
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: adminUser.id,
+      action: `Generated Batch (${totalCreated} Cards)`,
+      target_type: "cards",
+      target_id: `batch-${Date.now()}`,
+      metadata: { count: totalCreated },
+      created_at: now,
+      who: adminUser.full_name || adminUser.email,
+    });
+  }
+
+  saveStoreToDisk();
+  return { ok: true, count: totalCreated };
+}
+
+// Create Member Business Logic
+export async function createMemberLogic(
+  data: {
+    full_name: string;
+    mobile: string;
+    email: string;
+    plan_id: string;
+    start_date: string;
+    expiry_date: string;
+    card_id?: string;
+  },
+  adminUser: { id: string; full_name?: string; email: string }
+): Promise<{ ok: boolean; id: string; membership_number: string; card_number: string }> {
+  if (!store.members) store.members = new Map();
+  if (!store.cards) store.cards = new Map();
+
+  let dbCreated: any = null;
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const { data: res, error } = await sb.rpc("admin_create_member", {
+        p_full_name: data.full_name,
+        p_mobile: data.mobile,
+        p_email: data.email,
+        p_plan_id: data.plan_id,
+        p_start_date: data.start_date,
+        p_expiry_date: data.expiry_date,
+        p_card_id: data.card_id || null,
+      });
+      if (!error && res?.ok) {
+        dbCreated = res;
+      }
+    } catch (err) {
+      console.warn("[PennyGrade] Database member creation fallback:", err);
+    }
+  }
+
+  const membershipNumber = dbCreated?.membership_number || generatePenCode();
+  const memberId = dbCreated?.id || safeRandomUUID();
+  const now = new Date().toISOString();
+
+  let assignedCardNumber: string | undefined = dbCreated?.card_number;
+
+  if (!dbCreated) {
+    if (data.card_id && store.cards.has(data.card_id)) {
+      const card = store.cards.get(data.card_id)!;
+      card.membership_id = memberId;
+      card.status = "ACTIVE";
+      card.issued_at = now;
+      card.updated_at = now;
+      assignedCardNumber = card.card_number;
+    } else {
+      let availableCard: V1PhysicalCard | undefined;
+      for (const c of store.cards.values()) {
+        if (c.status === "AVAILABLE") {
+          availableCard = c;
+          break;
+        }
+      }
+      if (availableCard) {
+        availableCard.membership_id = memberId;
+        availableCard.status = "ACTIVE";
+        availableCard.issued_at = now;
+        availableCard.updated_at = now;
+        assignedCardNumber = availableCard.card_number;
+      }
+    }
+  }
+
+  const member: V1Member = {
+    id: memberId,
+    membership_number: membershipNumber,
+    full_name: data.full_name,
+    mobile: data.mobile,
+    email: data.email,
+    plan_id: data.plan_id,
+    plan_name: "PennyGrade 6-Month Membership",
+    start_date: data.start_date,
+    expiry_date: data.expiry_date,
+    status: "ACTIVE",
+    created_at: now,
+    updated_at: now,
+    card_id: (dbCreated?.card_id || data.card_id) || undefined,
+    card_number: assignedCardNumber || membershipNumber,
+  };
+
+  store.members.set(memberId, member);
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: adminUser.id,
+      action: "Created Member",
+      target_type: "member",
+      target_id: memberId,
+      metadata: { name: member.full_name, membership_number: member.membership_number },
+      created_at: now,
+      who: adminUser.full_name || adminUser.email,
+    });
+  }
+
+  saveStoreToDisk();
+  return {
+    ok: true,
+    id: memberId,
+    membership_number: member.membership_number,
+    card_number: member.card_number || member.membership_number,
+  };
+}
+
+// Assign Card To Member Business Logic
+export async function assignCardToMemberLogic(
+  data: { memberId: string; cardId: string; oldCardStatus?: "LOST" | "CANCELLED" },
+  adminUser: { id: string; full_name?: string; email: string }
+): Promise<{ ok: boolean; card_number: string }> {
+  if (!store.members) store.members = new Map();
+  if (!store.cards) store.cards = new Map();
+
+  let dbAssignedCardNumber: string | undefined;
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const { data: res, error } = await sb.rpc("admin_assign_card", {
+        p_member_id: data.memberId,
+        p_card_id: data.cardId,
+        p_old_card_status: data.oldCardStatus || "LOST",
+      });
+      if (!error && res?.ok) {
+        dbAssignedCardNumber = res.card_number;
+      }
+    } catch (err) {
+      console.warn("[PennyGrade] Database card assignment fallback:", err);
+    }
+  }
+
+  const member = store.members.get(data.memberId);
+  if (!member && !dbAssignedCardNumber) throw new Error("Member not found");
+
+  const newCard = store.cards.get(data.cardId);
+  const now = new Date().toISOString();
+
+  if (member && newCard) {
+    if (member.card_id && store.cards.has(member.card_id)) {
+      const oldCard = store.cards.get(member.card_id)!;
+      oldCard.status = data.oldCardStatus ?? "LOST";
+      oldCard.updated_at = now;
+    }
+
+    newCard.membership_id = member.id;
+    newCard.status = "ACTIVE";
+    newCard.issued_at = now;
+    newCard.updated_at = now;
+
+    member.card_id = newCard.id;
+    member.card_number = newCard.card_number;
+    member.updated_at = now;
+  }
+
+  const assignedNumber = dbAssignedCardNumber || newCard?.card_number || "";
+
+  if (store.auditLogs) {
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: adminUser.id,
+      action: "Assigned Physical Card",
+      target_type: "card",
+      target_id: data.cardId,
+      metadata: { card_number: assignedNumber, member: member?.full_name },
+      created_at: now,
+      who: adminUser.full_name || adminUser.email,
+    });
+  }
+
+  saveStoreToDisk();
+  return { ok: true, card_number: assignedNumber };
+}
+
+// Get Admin Cards Business Logic
+export async function getAdminCardsLogic(): Promise<
+  (V1PhysicalCard & { member: string; membership_number: string })[]
+> {
+  if (!store.cards) store.cards = new Map();
+  if (!store.members) store.members = new Map();
+
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const { data: rpcCards, error: rpcErr } = await sb.rpc("get_all_physical_cards");
+      if (!rpcErr && Array.isArray(rpcCards) && rpcCards.length > 0) {
+        for (const c of rpcCards) {
+          if (!store.cards.has(c.id)) {
+            store.cards.set(c.id, {
+              id: c.id,
+              card_number: c.card_number,
+              membership_id: c.membership_id,
+              status: c.status,
+              issued_at: c.issued_at,
+              created_at: c.created_at,
+              updated_at: c.updated_at,
+            });
+          }
+        }
+        return rpcCards;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  const cardsList = Array.from(store.cards.values()).map((c) => {
+    let memberName = "";
+    let membershipNumber = "";
+    if (c.membership_id && store.members.has(c.membership_id)) {
+      const m = store.members.get(c.membership_id)!;
+      memberName = m.full_name;
+      membershipNumber = m.membership_number;
+    }
+    return {
+      ...c,
+      member: memberName,
+      membership_number: membershipNumber,
+    };
+  });
+
+  return cardsList.sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+// Get Admin Members Business Logic
+export async function getAdminMembersLogic(): Promise<V1Member[]> {
+  if (!store.members) store.members = new Map();
+  if (!store.deletedMemberIds) store.deletedMemberIds = [];
+
+  const delMemberSet = new Set(store.deletedMemberIds);
+
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const { data: rpcMembers, error: rpcErr } = await sb.rpc("get_all_memberships");
+      if (!rpcErr && Array.isArray(rpcMembers) && rpcMembers.length > 0) {
+        for (const m of rpcMembers) {
+          if (!delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number)) {
+            store.members.set(m.id, m);
+          }
+        }
+        return rpcMembers.filter((m: any) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number));
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  return Array.from(store.members.values())
+    .filter((m) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
