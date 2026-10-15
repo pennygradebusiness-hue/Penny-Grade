@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import {
   store,
@@ -30,12 +31,14 @@ import {
   getFilteredOffersLogic,
   syncAdminPasswordAfterSupabaseResetLogic,
 } from "./v1-logic";
-import { requireAdminAuth } from "./admin-auth.server";
+import { createAdminSessionToken, requireAdminAuth } from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
+import { getServiceRoleClient } from "./supabase-admin.server";
 
 const memberSchema = z.object({
   full_name: z.string().trim().min(2, "Full name is required").max(100),
-  mobile: z.string().trim().min(10, "Valid 10-digit mobile is required").max(16),
+  mobile: z.string().trim().min(10, "Valid 10-digit mobile is required").max(16)
+    .regex(/^\+?[0-9\s()-]{10,16}$/, "Enter a valid mobile number"),
   email: z
     .string()
     .trim()
@@ -60,6 +63,24 @@ export const createMember = createServerFn({ method: "POST" })
       throw new Error("Expiry date must be after start date");
     }
 
+    // Use the database transaction as the source of truth in deployed environments.
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: result, error } = await db.rpc("admin_create_member", {
+        p_full_name: data.full_name,
+        p_mobile: data.mobile,
+        p_email: data.email?.trim() || null,
+        p_plan_id: data.plan_id,
+        p_start_date: data.start_date,
+        p_expiry_date: data.expiry_date,
+        p_card_id: data.card_id || null,
+      });
+      if (error) throw new Error(`Could not create member: ${error.message}`);
+      const payload = result as { ok?: boolean; id: string; membership_number: string; card_number: string; card_id: string | null } | null;
+      if (!payload?.ok) throw new Error("Could not create member");
+      return payload;
+    }
+
     await ensureStoreLoadedCloud();
 
     if (!store.members) store.members = new Map();
@@ -74,8 +95,11 @@ export const createMember = createServerFn({ method: "POST" })
     let assignedCardNumber = "";
     let assignedCardId = data.card_id || "";
 
-    if (assignedCardId && store.cards.has(assignedCardId)) {
-      const card = store.cards.get(assignedCardId)!;
+    if (assignedCardId) {
+      const card = store.cards.get(assignedCardId);
+      if (!card || card.status !== "AVAILABLE") {
+        throw new Error("Selected card is not available");
+      }
       card.membership_id = memberId;
       card.status = "ACTIVE";
       card.issued_at = now;
@@ -166,6 +190,14 @@ export const generateCardBatch = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: result, error } = await db.rpc("generate_physical_cards", { p_count: data.count });
+      if (error) throw new Error(`Could not generate cards: ${error.message}`);
+      const payload = result as { ok?: boolean; count: number } | null;
+      if (!payload?.ok) throw new Error("Could not generate cards");
+      return payload;
+    }
     await ensureStoreLoadedCloud();
     if (!store.cards) store.cards = new Map();
     if (!store.auditLogs) store.auditLogs = [];
@@ -203,6 +235,12 @@ export const generateCardBatch = createServerFn({ method: "POST" })
 // Admin Get Cards
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
+  const db = getServiceRoleClient();
+  if (db) {
+    const { data, error } = await db.rpc("get_all_physical_cards");
+    if (error) throw new Error(`Could not load cards: ${error.message}`);
+    return (data || []) as Array<{ id: string; card_number: string; status: string; created_at: string; issued_at: string | null; membership_id: string | null; member: string; membership_number: string }>;
+  }
   await ensureStoreLoadedCloud();
 
   if (!store.cards) store.cards = new Map();
@@ -228,6 +266,12 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
 // Admin Get Members
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
+  const db = getServiceRoleClient();
+  if (db) {
+    const { data, error } = await db.rpc("get_all_memberships");
+    if (error) throw new Error(`Could not load members: ${error.message}`);
+    return (data || []) as Array<Record<string, string | null>>;
+  }
   await ensureStoreLoadedCloud();
 
   if (!store.members) store.members = new Map();
@@ -267,6 +311,12 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { error } = await db.from("memberships").update({ status: data.status }).eq("id", data.id);
+      if (error) throw new Error(`Could not update member: ${error.message}`);
+      return { ok: true };
+    }
     await ensureStoreLoadedCloud();
 
     let targetMember: V1Member | undefined;
@@ -301,6 +351,12 @@ export const deleteMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { error } = await db.rpc("admin_delete_member", { p_member_id: data.id });
+      if (error) throw new Error(`Could not delete member: ${error.message}`);
+      return { ok: true };
+    }
     await ensureStoreLoadedCloud();
 
     if (!store.deletedMemberIds) store.deletedMemberIds = [];
@@ -364,6 +420,20 @@ export const renewMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: member, error: readError } = await db.from("memberships").select("expiry_date").eq("id", data.id).maybeSingle();
+      if (readError) throw new Error(`Could not load membership: ${readError.message}`);
+      if (!member) throw new Error("Member not found");
+      const days = data.durationDays ?? 180;
+      if (!Number.isInteger(days) || days < 1 || days > 3650) throw new Error("Renewal duration must be between 1 and 3650 days");
+      const expiry = new Date(Math.max(Date.now(), new Date(`${member.expiry_date}T00:00:00`).getTime()));
+      expiry.setDate(expiry.getDate() + days);
+      const newExpiry = expiry.toISOString().slice(0, 10);
+      const { error } = await db.from("memberships").update({ expiry_date: newExpiry, status: "ACTIVE" }).eq("id", data.id);
+      if (error) throw new Error(`Could not renew membership: ${error.message}`);
+      return { ok: true, new_expiry: newExpiry };
+    }
     await ensureStoreLoadedCloud();
 
     let targetMember: V1Member | undefined;
@@ -411,6 +481,18 @@ export const assignCardToMember = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: result, error } = await db.rpc("admin_assign_card", {
+        p_member_id: data.memberId,
+        p_card_id: data.cardId,
+        p_old_card_status: data.oldCardStatus || "LOST",
+      });
+      if (error) throw new Error(`Could not assign card: ${error.message}`);
+      const payload = result as { ok?: boolean; card_number: string } | null;
+      if (!payload?.ok) throw new Error("Could not assign card");
+      return payload;
+    }
     await ensureStoreLoadedCloud();
 
     let targetMember: V1Member | undefined;
@@ -425,6 +507,7 @@ export const assignCardToMember = createServerFn({ method: "POST" })
 
     const newCard = store.cards.get(data.cardId);
     if (!newCard) throw new Error("Card not found");
+    if (newCard.status !== "AVAILABLE") throw new Error("Selected card is not available");
 
     // If member already had a card, mark it
     for (const c of store.cards.values()) {
@@ -463,6 +546,28 @@ export const assignCardToMember = createServerFn({ method: "POST" })
 // Admin Get Admin Users (Server Function)
 export const getAdminUsers = createServerFn({ method: "GET" }).handler(async (): Promise<V1AdminUser[]> => {
   requireAdminAuth();
+  const db = getServiceRoleClient();
+  if (db) {
+    const { data: roles, error } = await db.from("user_roles").select("id,user_id,role,created_at");
+    if (error) throw new Error(`Could not load administrator roles: ${error.message}`);
+    const userIds = [...new Set((roles || []).map((r) => r.user_id))];
+    const { data: profiles, error: profileError } = userIds.length
+      ? await db.from("profiles").select("user_id,full_name,email").in("user_id", userIds)
+      : { data: [], error: null };
+    if (profileError) throw new Error(`Could not load administrator profiles: ${profileError.message}`);
+    const profileById = new Map((profiles || []).map((p) => [p.user_id, p]));
+    return (roles || []).map((r) => {
+      const profile = profileById.get(r.user_id);
+      return {
+        id: r.id,
+        user_id: r.user_id,
+        full_name: profile?.full_name || "Administrator",
+        email: profile?.email || "",
+        role: r.role as V1AdminUser["role"],
+        created_at: r.created_at,
+      };
+    });
+  }
   if (!store.adminUsers) store.adminUsers = [];
   if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
 
@@ -556,6 +661,35 @@ export const addAdmin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     requireAdminAuth(["super_admin"]);
+    const db = getServiceRoleClient();
+    if (db) {
+      if (data.email.trim().toLowerCase() === "pennygradebusiness@gmail.com" && data.role !== "super_admin") {
+        throw new Error("Action Forbidden: The primary system owner role cannot be demoted.");
+      }
+      const tempPassword = data.temporary_password?.trim() || randomBytes(18).toString("base64url");
+      const { data: created, error: createError } = await db.auth.admin.createUser({
+        email: data.email.trim().toLowerCase(),
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: data.full_name?.trim() || data.email.split("@")[0] },
+      });
+      if (createError || !created.user) throw new Error(`Could not create administrator: ${createError?.message || "Auth user was not created"}`);
+      const { error: roleError } = await db.from("user_roles").insert({ user_id: created.user.id, role: data.role });
+      if (roleError) {
+        await db.auth.admin.deleteUser(created.user.id);
+        throw new Error(`Could not grant administrator role: ${roleError.message}`);
+      }
+      const adminUser: V1AdminUser = {
+        id: created.user.id,
+        user_id: created.user.id,
+        full_name: data.full_name?.trim() || data.email.split("@")[0],
+        email: created.user.email || data.email,
+        role: data.role,
+        is_password_set: true,
+        created_at: created.user.created_at,
+      };
+      return { ok: true, message: `Role ${data.role.replace(/_/g, " ")} granted to ${adminUser.email}`, admin: adminUser, temporary_password: tempPassword };
+    }
     return addAdminLogic(data);
   });
 
@@ -569,6 +703,17 @@ export const resetAdminPassword = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     requireAdminAuth(["super_admin"]);
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: role, error: lookupError } = await db.from("user_roles").select("user_id").eq("id", data.id).maybeSingle();
+      if (lookupError) throw new Error(`Could not find administrator: ${lookupError.message}`);
+      if (!role) throw new Error("Administrator not found");
+      const newPassword = data.new_password || randomBytes(18).toString("base64url");
+      const { error } = await db.auth.admin.updateUserById(role.user_id, { password: newPassword });
+      if (error) throw new Error(`Could not reset administrator password: ${error.message}`);
+      const { data: authUser } = await db.auth.admin.getUserById(role.user_id);
+      return { ok: true, email: authUser.user?.email || "", temporary_password: newPassword };
+    }
     return resetAdminPasswordLogic(data);
   });
 
@@ -581,7 +726,38 @@ export const verifyAdminLoginCredentials = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    return verifyAdminLoginCredentialsLogic(data);
+    const result = verifyAdminLoginCredentialsLogic(data);
+    if (result.ok && result.user) {
+      return { ...result, session_token: createAdminSessionToken(result.user) };
+    }
+    return result;
+  });
+
+export const createSupabaseAdminSession = createServerFn({ method: "POST" })
+  .inputValidator((d: { access_token: string }) => z.object({ access_token: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const db = getServiceRoleClient();
+    if (!db) throw new Error("Admin session service is not configured");
+    const { data: authData, error: authError } = await db.auth.getUser(data.access_token);
+    if (authError || !authData.user) throw new Error("Unauthorized: Invalid Supabase session");
+    const [{ data: roles, error: roleError }, { data: profile }] = await Promise.all([
+      db.from("user_roles").select("role").eq("user_id", authData.user.id),
+      db.from("profiles").select("full_name,email").eq("user_id", authData.user.id).maybeSingle(),
+    ]);
+    if (roleError) throw new Error(`Could not verify administrator role: ${roleError.message}`);
+    const rolesPriority = ["super_admin", "manager", "membership_manager", "support"];
+    const role = rolesPriority.find((candidate) => roles?.some((entry) => entry.role === candidate));
+    if (!role) {
+      throw new Error("Forbidden: Administrator role required");
+    }
+    return {
+      session_token: createAdminSessionToken({
+        id: authData.user.id,
+        email: authData.user.email || profile?.email || "",
+        role: role as V1AdminUser["role"],
+        full_name: profile?.full_name || authData.user.email || "Administrator",
+      }, "supabase"),
+    };
   });
 
 // First-Time Setup / Self-Service Password Set
@@ -605,7 +781,10 @@ export const requestAdminPasswordResetCode = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    return requestAdminPasswordResetCodeLogic(data);
+    // Recovery is handled by Supabase Auth email links. Do not expose the
+    // legacy code/phone reset flow, which kept codes in process memory/logs.
+    void data;
+    return { ok: true, message: "If the account is eligible, a password recovery link will be sent to its registered email." };
   });
 
 // Admin / Primary Owner Reset Forgotten Password
@@ -618,7 +797,8 @@ export const resetAdminForgottenPassword = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    return verifyAndResetForgottenPasswordLogic(data);
+    void data;
+    throw new Error("Use the password recovery link sent to the administrator email address.");
   });
 
 // Synchronize Admin Password After Verified Supabase Auth Reset
@@ -630,7 +810,8 @@ export const syncAdminPasswordAfterSupabaseReset = createServerFn({ method: "POS
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    return syncAdminPasswordAfterSupabaseResetLogic(data);
+    void data;
+    throw new Error("Supabase Auth is the password source of truth. Use its verified recovery link to change this password.");
   });
 
 // Admin Remove Role
@@ -638,6 +819,24 @@ export const removeAdminRole = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin"]);
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: role, error: lookupError } = await db.from("user_roles").select("id,user_id,role").eq("id", data.id).maybeSingle();
+      if (lookupError) throw new Error(`Could not find administrator role: ${lookupError.message}`);
+      if (!role) throw new Error("Administrator role not found");
+      const { data: profile } = await db.from("profiles").select("email").eq("user_id", role.user_id).maybeSingle();
+      if (profile?.email?.toLowerCase() === "pennygradebusiness@gmail.com") {
+        throw new Error("Action Forbidden: The primary system owner role cannot be removed.");
+      }
+      if (role.role === "super_admin") {
+        const { count, error: countError } = await db.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "super_admin");
+        if (countError) throw new Error(`Could not verify administrator count: ${countError.message}`);
+        if ((count || 0) <= 1) throw new Error("The last super administrator cannot be removed.");
+      }
+      const { error } = await db.from("user_roles").delete().eq("id", data.id);
+      if (error) throw new Error(`Could not remove administrator role: ${error.message}`);
+      return { ok: true };
+    }
     if (!store.adminUsers) store.adminUsers = [];
     if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
 
@@ -1209,6 +1408,12 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
+  const db = getServiceRoleClient();
+  if (db) {
+    const { data, error } = await db.from("partners").select("*, category:categories(name)").order("business_name");
+    if (error) throw new Error(`Could not load partners: ${error.message}`);
+    return (data || []).map((p: any) => ({ ...p, category_name: p.category?.name || "General" }));
+  }
   await ensureStoreLoadedCloud();
 
   if (!store.partners) store.partners = seedPartners();
@@ -1269,6 +1474,31 @@ export const savePartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePartnerSchema.parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const partnerId = data.id || safeRandomUUID();
+      const { data: partner, error } = await db.from("partners").upsert({
+        id: partnerId,
+        business_name: data.business_name,
+        slug: data.slug.trim().toLowerCase(),
+        category_id: data.category_id,
+        description: data.description || null,
+        logo_url: data.logo_url || null,
+        cover_image_url: data.cover_image_url || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        website: data.website || null,
+        address: data.address || null,
+        city: data.city || "Daltonganj",
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+        business_hours: data.business_hours || null,
+        status: data.status,
+        featured: data.featured,
+      }).select().single();
+      if (error) throw new Error(`Could not save partner: ${error.message}`);
+      return { ok: true, partner };
+    }
     await ensureStoreLoadedCloud();
 
     if (!store.partners) store.partners = new Map();
@@ -1355,6 +1585,15 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const patch: Record<string, unknown> = {};
+      if (data.status !== undefined) patch.status = data.status;
+      if (data.featured !== undefined) patch.featured = data.featured;
+      const { error } = await db.from("partners").update(patch).eq("id", data.id);
+      if (error) throw new Error(`Could not update partner: ${error.message}`);
+      return { ok: true };
+    }
     await ensureStoreLoadedCloud();
 
     const partner = store.partners?.get(data.id);
@@ -1395,6 +1634,12 @@ export const deletePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { error } = await db.from("partners").delete().eq("id", data.id);
+      if (error) throw new Error(`Could not delete partner: ${error.message}`);
+      return { ok: true };
+    }
     await ensureStoreLoadedCloud();
 
     if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
@@ -1448,6 +1693,12 @@ export const deletePartner = createServerFn({ method: "POST" })
 // Admin Get Offers
 export const getAdminOffers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
+  const db = getServiceRoleClient();
+  if (db) {
+    const { data, error } = await db.from("offers").select("*, partner:partners(id,business_name,slug)").order("created_at", { ascending: false });
+    if (error) throw new Error(`Could not load offers: ${error.message}`);
+    return data || [];
+  }
   await ensureStoreLoadedCloud();
 
   if (!store.offers) store.offers = seedOffers();
@@ -1508,6 +1759,27 @@ export const saveOffer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveOfferSchema.parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: offer, error } = await db.from("offers").upsert({
+        id: data.id || safeRandomUUID(),
+        partner_id: data.partner_id,
+        title: data.title,
+        description: data.description || null,
+        discount_type: data.discount_type,
+        discount_value: data.discount_value,
+        max_discount: data.max_discount ?? null,
+        minimum_bill: data.minimum_bill,
+        valid_from: data.valid_from || null,
+        valid_until: data.valid_until || null,
+        valid_days: data.valid_days,
+        terms_conditions: data.terms_conditions || null,
+        usage_limit_type: "UNLIMITED",
+        status: data.status,
+      }).select().single();
+      if (error) throw new Error(`Could not save offer: ${error.message}`);
+      return { ok: true, offer };
+    }
     await ensureStoreLoadedCloud();
 
     if (!store.offers) store.offers = new Map();
@@ -1584,6 +1856,12 @@ export const deleteOffer = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
+    if (db) {
+      const { error } = await db.from("offers").delete().eq("id", data.id);
+      if (error) throw new Error(`Could not delete offer: ${error.message}`);
+      return { ok: true };
+    }
     await ensureStoreLoadedCloud();
 
     if (!store.deletedOfferIds) store.deletedOfferIds = [];

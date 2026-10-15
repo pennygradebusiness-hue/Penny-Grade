@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import {
   store,
   safeRandomUUID,
@@ -476,10 +477,8 @@ export function firstTimeSetPasswordLogic(data: {
     throw new Error("No administrator account registered with this email address.");
   }
 
-  if (user.temporary_password && data.current_temporary_password) {
-    if (user.temporary_password !== data.current_temporary_password.trim()) {
-      throw new Error("The initial temporary password entered is incorrect.");
-    }
+  if (!user.temporary_password || !data.current_temporary_password || user.temporary_password !== data.current_temporary_password.trim()) {
+    throw new Error("The initial temporary password entered is incorrect.");
   }
 
   user.temporary_password = data.new_password.trim();
@@ -545,7 +544,7 @@ export function requestAdminPasswordResetCodeLogic(data: { email: string }): {
   }
 
   // Generate secure 6-digit random code
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = randomInt(100000, 1000000).toString();
   const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
 
   adminPasswordResetCodes.set(cleanEmail, {
@@ -568,7 +567,7 @@ export function requestAdminPasswordResetCodeLogic(data: { email: string }): {
   }
 
   // In test and server environments, log code clearly
-  console.log(`[PennyGrade Security] Admin password recovery code for ${cleanEmail}: ${code}`);
+  // Do not log recovery codes; delivery is handled by the Supabase Auth flow.
 
   return {
     ok: true,

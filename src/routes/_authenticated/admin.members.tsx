@@ -514,7 +514,7 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
           <F label="Assign Physical Card">
             <Select className="w-full" value={f.card_id} onChange={(v) => setF({ ...f, card_id: v })}>
               <option value="">Auto-assign / New card</option>
-              {cards.data?.map((c: any) => <option key={c.id} value={c.id}>{c.card_number}</option>)}
+              {cards.data?.filter((c: any) => c.status === "AVAILABLE").map((c: any) => <option key={c.id} value={c.id}>{c.card_number}</option>)}
             </Select>
           </F>
           <F label="Start Date"><Input type="date" value={f.start_date} onChange={set("start_date")} /></F>
@@ -577,7 +577,7 @@ function CardDialog({ member, onClose, onDone }: { member: Row | null; onClose: 
           <F label="Select Available Card">
             <Select className="w-full" value={cardId} onChange={setCardId}>
               <option value="">Select available card</option>
-              {cards.data?.map((c: any) => <option key={c.id} value={c.id}>{c.card_number}</option>)}
+              {cards.data?.filter((c: any) => c.status === "AVAILABLE").map((c: any) => <option key={c.id} value={c.id}>{c.card_number}</option>)}
             </Select>
           </F>
           {!cards.data?.length && <p className="text-muted-foreground text-xs">No available cards in batch. Generate a batch under Physical Cards page.</p>}

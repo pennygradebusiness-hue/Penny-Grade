@@ -61,8 +61,8 @@ function Dashboard() {
         const offers = offersRes.status === "fulfilled" ? (offersRes.value ?? []) : [];
         const logs = logsRes.status === "fulfilled" ? (logsRes.value ?? []) : [];
 
-        const active = ms.filter((m) => m.status === "ACTIVE" && m.expiry_date >= today).length;
-        const expired = ms.filter((m) => m.status === "EXPIRED" || (m.status === "ACTIVE" && m.expiry_date < today)).length;
+        const active = ms.filter((m) => m.status === "ACTIVE" && Boolean(m.expiry_date && m.expiry_date >= today)).length;
+        const expired = ms.filter((m) => m.status === "EXPIRED" || (m.status === "ACTIVE" && (!m.expiry_date || m.expiry_date < today))).length;
         const availableCards = cards.filter((c) => c.status === "AVAILABLE").length;
         const activePartners = partners.filter((p) => p.status === "ACTIVE").length;
         const activeOffers = offers.filter((o) => o.status === "ACTIVE").length;
@@ -105,8 +105,8 @@ function Dashboard() {
   monthStart.setHours(0, 0, 0, 0);
   const monthLogs = logs.filter((l) => new Date(l.created_at) >= monthStart);
   const months = lastMonths(6);
-  const growth = groupSum(ms, (m) => monthKey(m.created_at));
-  let cum = ms.filter((m) => !months.includes(monthKey(m.created_at))).length;
+  const growth = groupSum(ms, (m) => monthKey(m.created_at ?? ""));
+  let cum = ms.filter((m) => !months.includes(monthKey(m.created_at ?? ""))).length;
   const growthData = months.map((m) => ({ m, members: (cum += growth.get(m) ?? 0) }));
   const vByMonth = groupSum(logs, (l) => monthKey(l.created_at));
   const vData = months.map((m) => ({ m, count: vByMonth.get(m) ?? 0 }));

@@ -98,6 +98,9 @@ Copy or create `.env` in the project root:
 SUPABASE_PROJECT_ID="your-project-ref"
 SUPABASE_URL="https://your-project-ref.supabase.co"
 SUPABASE_PUBLISHABLE_KEY="your-supabase-anon-or-publishable-key"
+# Server only; never prefix this key with VITE_ or expose it to the browser.
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+ADMIN_SESSION_SECRET="replace-with-a-long-random-secret"
 
 VITE_SUPABASE_PROJECT_ID="your-project-ref"
 VITE_SUPABASE_URL="https://your-project-ref.supabase.co"

@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { syncAdminPasswordAfterSupabaseReset } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/reset-password")({
   head: () => ({
@@ -208,18 +207,7 @@ function AdminResetPasswordPage() {
         return;
       }
 
-      // 2. Synchronize to administrative secondary store if user exists
-      if (userEmail) {
-        try {
-          await syncAdminPasswordAfterSupabaseReset({
-            data: { email: userEmail, new_password: newPassword },
-          });
-        } catch {
-          // Non-blocking secondary sync
-        }
-      }
-
-      // 3. Clear temporary recovery session cleanly
+      // Clear the temporary recovery session cleanly.
       try {
         await supabase.auth.signOut();
         if (typeof window !== "undefined") {

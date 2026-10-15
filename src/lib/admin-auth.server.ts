@@ -1,5 +1,35 @@
 import { getCookie, getRequestHeader } from "@tanstack/react-start/server";
 import { store, type V1AdminUser } from "./v1-store";
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+type AdminSession = { id: string; email: string; role: V1AdminUser["role"]; full_name?: string; source: "store" | "supabase"; exp: number };
+
+function sessionSecret() {
+  const secret = process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("Admin session signing secret is not configured");
+  return secret;
+}
+
+export function createAdminSessionToken(user: Pick<V1AdminUser, "id" | "email" | "role" | "full_name">, source: AdminSession["source"] = "store") {
+  const payload: AdminSession = { ...user, source, exp: Date.now() + 60 * 60 * 1000 };
+  const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = createHmac("sha256", sessionSecret()).update(encoded).digest("base64url");
+  return `${encoded}.${signature}`;
+}
+
+function readAdminSession(token: string): AdminSession | null {
+  const [encoded, suppliedSignature] = token.split(".");
+  if (!encoded || !suppliedSignature) return null;
+  const expected = createHmac("sha256", sessionSecret()).update(encoded).digest();
+  let actual: Buffer;
+  try { actual = Buffer.from(suppliedSignature, "base64url"); } catch { return null; }
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return null;
+  try {
+    const session = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as AdminSession;
+    if (!session.id || !session.email || !session.role || session.exp <= Date.now()) return null;
+    return session;
+  } catch { return null; }
+}
 
 /**
  * Authoritative Server-Side Admin Authentication & RBAC Guard
@@ -53,10 +83,9 @@ export function requireAdminAuth(requiredRoles?: string[]): V1AdminUser {
     throw new Error("Unauthorized: Administrative session required");
   }
 
-  let session: { id?: string; email?: string; role?: string };
-  try {
-    session = JSON.parse(decodeURIComponent(cookieRaw));
-  } catch {
+  let session: AdminSession | null;
+  try { session = readAdminSession(cookieRaw); } catch { session = null; }
+  if (!session) {
     throw new Error("Unauthorized: Invalid administrative session token");
   }
 
@@ -71,9 +100,16 @@ export function requireAdminAuth(requiredRoles?: string[]): V1AdminUser {
     adminUser = defaultSuper;
   }
 
-  if (!adminUser) {
-    throw new Error("Unauthorized: Administrative account not found or deactivated");
-  }
+  if (!adminUser && session.source === "supabase") adminUser = {
+    id: session.id,
+    user_id: session.id,
+    full_name: session.full_name || cleanEmail,
+    email: cleanEmail,
+    role: session.role,
+    is_password_set: true,
+    created_at: new Date().toISOString(),
+  };
+  if (!adminUser) throw new Error("Unauthorized: Administrative account is no longer active");
 
   if (requiredRoles && requiredRoles.length > 0) {
     if (!requiredRoles.includes(adminUser.role)) {

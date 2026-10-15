@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { KeyRound, ShieldCheck, CheckCircle2, Lock, ArrowRight, Eye, EyeOff, Loader2, Mail, Sparkles, RefreshCw } from "lucide-react";
 import { AuthShell } from "@/components/auth-shell";
@@ -11,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getSiteUrl } from "@/lib/seo";
 import {
   verifyAdminLoginCredentials,
+  createSupabaseAdminSession,
   firstTimeSetPassword,
 } from "@/lib/admin.functions";
 
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/admin/login")({
 });
 
 function AdminLogin() {
+  const createSupabaseSessionFn = useServerFn(createSupabaseAdminSession);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -110,11 +113,11 @@ function AdminLogin() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const saveAdminSession = (payload: { id: string; email: string; role: string }) => {
+  const saveAdminSession = (payload: { id: string; email: string; role: string }, signedToken: string) => {
     const raw = JSON.stringify(payload);
     if (typeof window !== "undefined") {
       localStorage.setItem("pennygrade_admin_session", raw);
-      document.cookie = `pennygrade_admin_session=${encodeURIComponent(raw)}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `pennygrade_admin_session=${signedToken}; path=/; max-age=43200; SameSite=Lax`;
     }
   };
 
@@ -146,7 +149,8 @@ function AdminLogin() {
           }
 
           if (isAdmin) {
-            saveAdminSession({ id: data.user.id, email: cleanEmail, role: "super_admin" });
+            const signed = await createSupabaseSessionFn({ data: { access_token: data.session.access_token } });
+            saveAdminSession({ id: data.user.id, email: cleanEmail, role: "super_admin" }, signed.session_token);
             toast.success("Welcome back, Super Admin!");
             setBusy(false);
             navigate({ to: "/admin", replace: true });
@@ -165,30 +169,14 @@ function AdminLogin() {
         },
       });
 
-      if (res.ok && res.user) {
+      if (res.ok && res.user && "session_token" in res && typeof res.session_token === "string") {
         saveAdminSession({
           id: res.user.id,
           email: res.user.email,
           role: res.user.role,
-        });
+        }, res.session_token);
 
         toast.success(`Welcome back, ${res.user.full_name || "Administrator"}!`);
-        setBusy(false);
-        navigate({ to: "/admin", replace: true });
-        return;
-      }
-
-      // 3. Resilient fallback for primary super admin
-      if (
-        (cleanEmail === "samirjee187@gmail.com" && password === "Samir@125141") ||
-        (cleanEmail === "pennygradebusiness@gmail.com" && password === "NewSupabasePass2026!")
-      ) {
-        saveAdminSession({
-          id: cleanEmail === "samirjee187@gmail.com" ? "a6956859-262f-4eda-88b1-9dc42b42563b" : "admin-primary-owner",
-          email: cleanEmail,
-          role: "super_admin",
-        });
-        toast.success("Welcome back, Super Admin!");
         setBusy(false);
         navigate({ to: "/admin", replace: true });
         return;
@@ -197,20 +185,6 @@ function AdminLogin() {
       setBusy(false);
       toast.error(res.message || "Incorrect email or password.");
     } catch {
-      if (
-        (cleanEmail === "samirjee187@gmail.com" && password === "Samir@125141") ||
-        (cleanEmail === "pennygradebusiness@gmail.com" && password === "NewSupabasePass2026!")
-      ) {
-        saveAdminSession({
-          id: cleanEmail === "samirjee187@gmail.com" ? "a6956859-262f-4eda-88b1-9dc42b42563b" : "admin-primary-owner",
-          email: cleanEmail,
-          role: "super_admin",
-        });
-        toast.success("Welcome back, Super Admin!");
-        setBusy(false);
-        navigate({ to: "/admin", replace: true });
-        return;
-      }
       setBusy(false);
       toast.error("Unable to authenticate. Please check your credentials.");
     }

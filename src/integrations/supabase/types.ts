@@ -120,7 +120,7 @@ export type Database = {
           start_date: string
           status: Database["public"]["Enums"]["membership_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -131,7 +131,7 @@ export type Database = {
           start_date?: string
           status?: Database["public"]["Enums"]["membership_status"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -142,7 +142,7 @@ export type Database = {
           start_date?: string
           status?: Database["public"]["Enums"]["membership_status"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -350,7 +350,7 @@ export type Database = {
           id: string
           mobile: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -360,7 +360,7 @@ export type Database = {
           id?: string
           mobile?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -370,7 +370,7 @@ export type Database = {
           id?: string
           mobile?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -406,7 +406,7 @@ export type Database = {
           offer_id: string | null
           partner_id: string | null
           status: string
-          user_id: string
+          user_id: string | null
           verification_session_id: string | null
         }
         Insert: {
@@ -419,7 +419,7 @@ export type Database = {
           offer_id?: string | null
           partner_id?: string | null
           status?: string
-          user_id: string
+          user_id?: string | null
           verification_session_id?: string | null
         }
         Update: {
@@ -432,7 +432,7 @@ export type Database = {
           offer_id?: string | null
           partner_id?: string | null
           status?: string
-          user_id?: string
+          user_id?: string | null
           verification_session_id?: string | null
         }
         Relationships: [
@@ -478,7 +478,7 @@ export type Database = {
           offer_id: string
           partner_id: string
           status: Database["public"]["Enums"]["session_status"]
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           bill_amount: number
@@ -491,7 +491,7 @@ export type Database = {
           offer_id: string
           partner_id: string
           status?: Database["public"]["Enums"]["session_status"]
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           bill_amount?: number
@@ -504,7 +504,7 @@ export type Database = {
           offer_id?: string
           partner_id?: string
           status?: Database["public"]["Enums"]["session_status"]
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -538,9 +538,24 @@ export type Database = {
       admin_exists: { Args: never; Returns: boolean }
       claim_first_admin: { Args: never; Returns: boolean }
       create_verification: {
-        Args: { _bill: number; _partner_slug: string }
+        Args:
+          | { _bill: number; _partner_slug: string }
+          | { _bill: number; _membership_number: string; _partner_slug: string }
         Returns: Json
       }
+      admin_create_member: {
+        Args: { p_card_id?: string | null; p_email: string | null; p_expiry_date: string; p_full_name: string; p_mobile: string; p_plan_id: string; p_start_date: string }
+        Returns: Json
+      }
+      admin_assign_card: {
+        Args: { p_member_id: string; p_card_id: string; p_old_card_status?: string }
+        Returns: Json
+      }
+      admin_delete_member: { Args: { p_member_id: string }; Returns: Json }
+      generate_physical_cards: { Args: { p_count: number }; Returns: Json }
+      get_all_memberships: { Args: never; Returns: Json }
+      get_all_physical_cards: { Args: never; Returns: Json }
+      get_dashboard_stats: { Args: never; Returns: Json }
       gen_pen_code: { Args: never; Returns: string }
       has_any_role: {
         Args: {
@@ -562,7 +577,7 @@ export type Database = {
       app_role: "super_admin" | "manager" | "membership_manager" | "support"
       card_status: "AVAILABLE" | "ACTIVE" | "LOST" | "CANCELLED"
       discount_type: "PERCENTAGE" | "FIXED"
-      membership_status: "ACTIVE" | "SUSPENDED" | "CANCELLED" | "EXPIRED"
+      membership_status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED" | "EXPIRED"
       partner_status: "ACTIVE" | "INACTIVE" | "SUSPENDED"
       record_status: "ACTIVE" | "INACTIVE"
       session_status: "ACTIVE" | "EXPIRED" | "CANCELLED"
@@ -697,7 +712,7 @@ export const Constants = {
       app_role: ["super_admin", "manager", "membership_manager", "support"],
       card_status: ["AVAILABLE", "ACTIVE", "LOST", "CANCELLED"],
       discount_type: ["PERCENTAGE", "FIXED"],
-      membership_status: ["ACTIVE", "SUSPENDED", "CANCELLED", "EXPIRED"],
+      membership_status: ["ACTIVE", "INACTIVE", "SUSPENDED", "CANCELLED", "EXPIRED"],
       partner_status: ["ACTIVE", "INACTIVE", "SUSPENDED"],
       record_status: ["ACTIVE", "INACTIVE"],
       session_status: ["ACTIVE", "EXPIRED", "CANCELLED"],

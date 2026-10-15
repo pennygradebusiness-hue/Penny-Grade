@@ -3,15 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { getRealtimeTransport } from "./config";
+import { getServiceRoleClient } from "./supabase-admin.server";
 import {
   store,
-  safeRandomUUID,
   normalizeMembershipNumber,
   normalizeMobile,
   checkRateLimit,
   type V1Member,
-  type V1VerificationSession,
-  type V1VerificationLog,
 } from "./v1-store";
 
 export function pub() {
@@ -95,6 +93,24 @@ export const getCategories = createServerFn({ method: "GET" }).handler(async () 
 export const getPartners = createServerFn({ method: "GET" }).handler(async () => {
   const delSet = new Set(store.deletedPartnerIds || []);
   const delOfferSet = new Set(store.deletedOfferIds || []);
+
+  try {
+    const { data, error } = await pub()
+      .from("partners")
+      .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)
+      .order("featured", { ascending: false })
+      .order("business_name");
+    if (!error && data) {
+      return (data as unknown as PublicPartner[])
+        .filter((p) => !delSet.has(p.id) && !delSet.has(p.slug))
+        .map((p) => ({
+          ...p,
+          offers: currentOffers((p.offers ?? []).filter((o) => !delOfferSet.has(o.id))),
+        }));
+    }
+  } catch {
+    // Fall back to the local store only when the database is unavailable.
+  }
 
   // Fetch existing offers from Supabase if available to attach
   const dbOffersMap = new Map<string, PublicOffer[]>();
@@ -182,18 +198,7 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
     });
   }
 
-  const { data, error } = await pub()
-    .from("partners")
-    .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)
-    .order("featured", { ascending: false })
-    .order("business_name");
-  if (error) { console.error(error); return [] as PublicPartner[]; }
-  return (data as unknown as PublicPartner[])
-    .filter((p) => !delSet.has(p.id) && !delSet.has(p.slug))
-    .map((p) => ({
-      ...p,
-      offers: currentOffers((p.offers ?? []).filter((o) => !delOfferSet.has(o.id))),
-    }));
+  return [] as PublicPartner[];
 });
 
 export const getPartner = createServerFn({ method: "GET" })
@@ -204,6 +209,21 @@ export const getPartner = createServerFn({ method: "GET" })
 
     if (delSet.has(data.slug)) {
       return null;
+    }
+
+    try {
+      const { data: p, error } = await pub()
+        .from("partners")
+        .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)
+        .eq("slug", data.slug)
+        .maybeSingle();
+      if (!error) {
+        if (!p || delSet.has(p.id) || delSet.has(p.slug)) return null;
+        const partner = p as unknown as PublicPartner;
+        return { ...partner, offers: currentOffers((partner.offers ?? []).filter((o) => !delOfferSet.has(o.id))) };
+      }
+    } catch {
+      // Fall back to the local store only when the database is unavailable.
     }
 
     if (store.partners && store.partners.size > 0) {
@@ -273,53 +293,10 @@ export const getPartner = createServerFn({ method: "GET" })
       }
     }
 
-    const { data: p, error } = await pub()
-      .from("partners")
-      .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)
-      .eq("slug", data.slug)
-      .maybeSingle();
-    if (error) console.error(error);
-    if (!p) return null;
-    if (store.deletedPartnerIds?.includes(p.id) || store.deletedPartnerIds?.includes(p.slug)) {
-      return null;
-    }
-    const partner = p as unknown as PublicPartner;
-    return { ...partner, offers: currentOffers(partner.offers ?? []) };
+    return null;
   });
 
 // --- PENNYGRADE V1 VERIFICATION FUNCTIONS ---
-
-// Helper to look up member by membership number or card number
-function findActiveMember(inputNumber: string): V1Member | null {
-  const normalized = normalizeMembershipNumber(inputNumber);
-  const today = new Date().toISOString().slice(0, 10);
-
-  // Check directly by membership_number
-  for (const m of store.members.values()) {
-    if (m.membership_number === normalized) {
-      if (m.status === "ACTIVE" && m.expiry_date >= today) {
-        return m;
-      }
-      return null;
-    }
-  }
-
-  // Check by physical card number
-  for (const card of store.cards.values()) {
-    if (card.card_number === normalized) {
-      if (card.status !== "ACTIVE" && card.status !== "AVAILABLE") return null;
-      if (card.membership_id && store.members.has(card.membership_id)) {
-        const m = store.members.get(card.membership_id)!;
-        if (m.status === "ACTIVE" && m.expiry_date >= today) {
-          return m;
-        }
-      }
-      return null;
-    }
-  }
-
-  return null;
-}
 
 // 1. Verify membership number (server-side, generic errors, rate limited)
 export const verifyMemberInput = createServerFn({ method: "POST" })
@@ -335,19 +312,25 @@ export const verifyMemberInput = createServerFn({ method: "POST" })
       };
     }
 
-    const member = findActiveMember(data.membershipNumber);
-    if (!member) {
-      return {
-        ok: false,
-        message: "Unable to verify membership. Please check your membership number and try again.",
-      };
+    const db = getServiceRoleClient();
+    if (db) {
+      const normalized = normalizeMembershipNumber(data.membershipNumber);
+      const { data: member, error } = await db.from("memberships")
+        .select("id,membership_number,full_name,status,expiry_date")
+        .eq("membership_number", normalized).maybeSingle();
+      if (!error && member && member.status === "ACTIVE" && member.expiry_date >= new Date().toISOString().slice(0, 10)) {
+        return { ok: true, membership_number: member.membership_number, member_name: member.full_name || "Member" };
+      }
+      if (!member) {
+        const { data: card } = await db.from("physical_cards").select("membership:memberships(id,membership_number,full_name,status,expiry_date)")
+          .eq("card_number", normalized).eq("status", "ACTIVE").maybeSingle();
+        const linked = card?.membership as unknown as { membership_number: string; full_name: string | null; status: string; expiry_date: string } | null;
+        if (linked?.status === "ACTIVE" && linked.expiry_date >= new Date().toISOString().slice(0, 10)) {
+          return { ok: true, membership_number: linked.membership_number, member_name: linked.full_name || "Member" };
+        }
+      }
     }
-
-    return {
-      ok: true,
-      membership_number: member.membership_number,
-      member_name: member.full_name,
-    };
+    return { ok: false, message: "Unable to verify membership. Please check your membership number and try again." };
   });
 
 // 2. Create unauthenticated verification session (server-side calculation only)
@@ -368,125 +351,20 @@ export const createPublicVerification = createServerFn({ method: "POST" })
       };
     }
 
-    const member = findActiveMember(data.membershipNumber);
-    if (!member) {
-      return {
-        ok: false,
-        message: "Unable to verify membership. Please check your membership number and try again.",
-      };
+    const db = getServiceRoleClient();
+    if (!db) {
+      return { ok: false, message: "Verification is temporarily unavailable. Please contact PennyGrade support." };
     }
-
-    // Retrieve partner from Supabase
-    const { data: p, error: pErr } = await pub()
-      .from("partners")
-      .select(`${PARTNER_COLS},offers(${OFFER_COLS})`)
-      .eq("slug", data.partnerSlug)
-      .eq("status", "ACTIVE")
-      .maybeSingle();
-
-    if (pErr || !p) {
-      return {
-        ok: false,
-        message: "This PennyGrade partner could not be found.",
-      };
+    const { data: result, error } = await db.rpc("create_verification", {
+      _partner_slug: data.partnerSlug,
+      _membership_number: normalizeMembershipNumber(data.membershipNumber),
+      _bill: Math.round(data.billAmount * 100) / 100,
+    });
+    if (error) {
+      console.error("[createPublicVerification] Database operation failed:", error.message);
+      return { ok: false, message: "Verification is temporarily unavailable. Please try again." };
     }
-
-    const today = new Date().toISOString().slice(0, 10);
-    // India time day-of-week 0 (Sun) - 6 (Sat)
-    const dow = new Date().getDay();
-
-    const offers = (p.offers ?? []) as PublicOffer[];
-    const activeOffer = offers.find(
-      (o) =>
-        (!o.valid_from || o.valid_from <= today) &&
-        (!o.valid_until || o.valid_until >= today)
-    );
-
-    if (!activeOffer) {
-      return {
-        ok: false,
-        message: "This offer is currently unavailable.",
-      };
-    }
-
-    if (activeOffer.valid_days && !activeOffer.valid_days.includes(dow)) {
-      return {
-        ok: false,
-        message: "This offer is not valid today.",
-      };
-    }
-
-    const bill = Math.round(data.billAmount * 100) / 100;
-    if (activeOffer.minimum_bill && bill < activeOffer.minimum_bill) {
-      return {
-        ok: false,
-        message: `This offer requires a minimum bill of ₹${activeOffer.minimum_bill.toLocaleString("en-IN")}.`,
-      };
-    }
-
-    // SERVER-SIDE DISCOUNT CALCULATION
-    let discount = 0;
-    if (activeOffer.discount_type === "PERCENTAGE") {
-      discount = Math.round((bill * activeOffer.discount_value) / 100 * 100) / 100;
-    } else {
-      discount = activeOffer.discount_value;
-    }
-
-    if (activeOffer.max_discount && discount > activeOffer.max_discount) {
-      discount = activeOffer.max_discount;
-    }
-
-    if (discount > bill) {
-      discount = bill;
-    }
-
-    const finalAmount = Math.max(0, Math.round((bill - discount) * 100) / 100);
-    const sessionId = safeRandomUUID();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes validity
-    const createdAt = new Date().toISOString();
-
-    const session: V1VerificationSession = {
-      id: sessionId,
-      membership_id: member.id,
-      membership_number: member.membership_number,
-      member_name: member.full_name,
-      partner_id: p.id,
-      partner_name: p.business_name,
-      partner_slug: p.slug,
-      offer_id: activeOffer.id,
-      discount_type: activeOffer.discount_type,
-      discount_value: activeOffer.discount_value,
-      bill_amount: bill,
-      discount_amount: discount,
-      final_amount: finalAmount,
-      status: "ACTIVE",
-      expires_at: expiresAt,
-      created_at: createdAt,
-    };
-
-    const log: V1VerificationLog = {
-      id: safeRandomUUID(),
-      verification_session_id: sessionId,
-      membership_id: member.id,
-      membership_number: member.membership_number,
-      partner_id: p.id,
-      partner_name: p.business_name,
-      offer_id: activeOffer.id,
-      offer_title: activeOffer.title,
-      bill_amount: bill,
-      discount_amount: discount,
-      final_amount: finalAmount,
-      status: "VERIFIED",
-      created_at: createdAt,
-    };
-
-    store.sessions.set(sessionId, session);
-    store.logs.unshift(log);
-
-    return {
-      ok: true,
-      session_id: sessionId,
-    };
+    return result as { ok: boolean; session_id?: string; message?: string };
   });
 
 // 3. Get live verification session data (publicly readable for live display, sanitized)
@@ -495,6 +373,31 @@ export const getPublicVerificationSession = createServerFn({ method: "GET" })
     z.object({ sessionId: z.string().uuid() }).parse(d)
   )
   .handler(async ({ data }) => {
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: session, error } = await db.from("verification_sessions")
+        .select("id,bill_amount,discount_amount,final_amount,status,expires_at,created_at,membership:memberships(full_name,membership_number),partner:partners(business_name,slug),offer:offers(discount_type,discount_value)")
+        .eq("id", data.sessionId).maybeSingle();
+      if (error || !session) return null;
+      const member = session.membership as unknown as { full_name: string; membership_number: string } | null;
+      const partner = session.partner as unknown as { business_name: string; slug: string } | null;
+      const offer = session.offer as unknown as { discount_type: "PERCENTAGE" | "FIXED"; discount_value: number } | null;
+      return {
+        id: session.id,
+        partner_name: partner?.business_name || "Partner",
+        partner_slug: partner?.slug || "",
+        member_name: member?.full_name || "Member",
+        membership_number: member?.membership_number || "",
+        discount_type: offer?.discount_type || "PERCENTAGE",
+        discount_value: Number(offer?.discount_value || 0),
+        bill_amount: Number(session.bill_amount),
+        discount_amount: Number(session.discount_amount),
+        final_amount: Number(session.final_amount),
+        status: new Date(session.expires_at).getTime() < Date.now() ? "EXPIRED" : session.status,
+        expires_at: session.expires_at,
+        created_at: session.created_at,
+      };
+    }
     const s = store.sessions.get(data.sessionId);
     if (!s) return null;
 
@@ -538,6 +441,37 @@ export const getPublicCustomerHistory = createServerFn({ method: "POST" })
 
     const normalizedNum = normalizeMembershipNumber(data.membershipNumber);
     const normalizedMob = normalizeMobile(data.mobile);
+
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: member, error } = await db.from("memberships")
+        .select("id,full_name,membership_number,status,expiry_date,mobile,plan:membership_plans(name)")
+        .eq("membership_number", normalizedNum).maybeSingle();
+      if (error || !member || normalizeMobile(member.mobile || "") !== normalizedMob) {
+        return { ok: false, message: "Unable to verify membership details. Please check your membership number and registered mobile number." };
+      }
+      const { data: logs, error: logError } = await db.from("verification_logs")
+        .select("id,verification_session_id,bill_amount,discount_amount,final_amount,created_at,partner:partners(business_name),offer:offers(title)")
+        .eq("membership_id", member.id).order("created_at", { ascending: false }).limit(50);
+      if (logError) return { ok: false, message: "Unable to load membership history. Please try again." };
+      const today = new Date().toISOString().slice(0, 10);
+      const effectiveStatus = member.status === "ACTIVE" && member.expiry_date < today ? "EXPIRED" : member.status;
+      const plan = member.plan as unknown as { name: string } | null;
+      return {
+        ok: true,
+        member: { full_name: member.full_name || "Member", membership_number: member.membership_number, status: effectiveStatus, expiry_date: member.expiry_date, plan_name: plan?.name || "PennyGrade Membership" },
+        history: (logs || []).map((log: any) => ({
+          id: log.id,
+          verification_session_id: log.verification_session_id,
+          partner_name: log.partner?.business_name || "Partner",
+          offer_title: log.offer?.title || "Offer",
+          bill_amount: Number(log.bill_amount),
+          discount_amount: Number(log.discount_amount),
+          final_amount: Number(log.final_amount),
+          created_at: log.created_at,
+        })),
+      };
+    }
 
     let foundMember: V1Member | null = null;
     for (const m of store.members.values()) {

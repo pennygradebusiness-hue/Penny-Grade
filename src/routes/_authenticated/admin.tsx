@@ -39,20 +39,13 @@ export const Route = createFileRoute("/_authenticated/admin")({
     }
 
     if (typeof window !== "undefined") {
-      let raw = localStorage.getItem("pennygrade_admin_session");
-      if (!raw && typeof document !== "undefined") {
-        const match = document.cookie.match(/(?:^|;\s*)pennygrade_admin_session=([^;]+)/);
-        if (match) raw = decodeURIComponent(match[1]);
-      }
+      const raw = localStorage.getItem("pennygrade_admin_session");
       if (raw) {
-        if (typeof document !== "undefined") {
-          document.cookie = `pennygrade_admin_session=${encodeURIComponent(raw)}; path=/; max-age=604800; SameSite=Lax`;
-        }
         try {
           const parsed = JSON.parse(raw);
-          return { roles: [parsed.role || "super_admin"] };
+          if (parsed?.id && parsed?.email && parsed?.role) return { roles: [parsed.role] };
         } catch {
-          return { roles: ["super_admin"] };
+          // Invalid client-side session state must not grant frontend admin access.
         }
       }
     }

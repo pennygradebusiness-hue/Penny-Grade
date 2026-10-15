@@ -10,17 +10,6 @@ export const Route = createFileRoute("/_authenticated")({
     try {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
-        if (typeof document !== "undefined") {
-          const sess = JSON.stringify({
-            id: data.user.id,
-            email: data.user.email ?? "pennygradebusiness@gmail.com",
-            role: "super_admin",
-          });
-          document.cookie = `pennygrade_admin_session=${encodeURIComponent(sess)}; path=/; max-age=604800; SameSite=Lax`;
-          if (typeof localStorage !== "undefined") {
-            localStorage.setItem("pennygrade_admin_session", sess);
-          }
-        }
         return { user: data.user };
       }
     } catch {
@@ -35,9 +24,6 @@ export const Route = createFileRoute("/_authenticated")({
         if (match) raw = decodeURIComponent(match[1]);
       }
       if (raw) {
-        if (typeof document !== "undefined") {
-          document.cookie = `pennygrade_admin_session=${encodeURIComponent(raw)}; path=/; max-age=604800; SameSite=Lax`;
-        }
         try {
           const parsed = JSON.parse(raw);
           if (parsed && parsed.id && parsed.email) {
