@@ -24,11 +24,27 @@ ALTER TABLE public.memberships ADD COLUMN IF NOT EXISTS email text;
 ALTER TABLE public.memberships ADD COLUMN IF NOT EXISTS card_number text;
 
 -- Step 2: Seed existing active member (Samir Pandey)
+-- The initial schema seeded this plan with a generated UUID, while older
+-- persistence code assumed a fixed UUID. Resolve an existing plan by name;
+-- if none exists, create it with the stable ID used by application defaults.
+INSERT INTO public.membership_plans (id, name, description, price, duration_days, status)
+SELECT
+  'fd6de953-c15d-4b7f-aae4-b97b6d21b043'::uuid,
+  'PennyGrade 6-Month Membership',
+  'Full access to every PennyGrade partner benefit for 6 months.',
+  500,
+  180,
+  'ACTIVE'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.membership_plans WHERE name = 'PennyGrade 6-Month Membership'
+)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO public.memberships (
   id, plan_id, membership_number, start_date, expiry_date, status, full_name, mobile, email, card_number, created_at, updated_at
-) VALUES (
+) SELECT
   '608d1bb0-f63f-4812-a755-55ee853ac891',
-  'fd6de953-c15d-4b7f-aae4-b97b6d21b043',
+  p.id,
   'PEN-7X4P-92LM',
   '2026-10-13',
   '2027-04-11',
@@ -39,7 +55,11 @@ INSERT INTO public.memberships (
   'PEN-7X4P-92LM',
   '2026-10-13T22:55:21.252Z',
   '2026-10-13T22:55:21.252Z'
-)
+FROM public.membership_plans p
+WHERE p.id = 'fd6de953-c15d-4b7f-aae4-b97b6d21b043'::uuid
+   OR p.name = 'PennyGrade 6-Month Membership'
+ORDER BY (p.id = 'fd6de953-c15d-4b7f-aae4-b97b6d21b043'::uuid) DESC, p.created_at
+LIMIT 1
 ON CONFLICT (id) DO NOTHING;
 
 -- Step 3: Seed 127 physical cards
@@ -475,10 +495,10 @@ END;
 $$;
 
 -- Step 9: Grant execution privileges
-GRANT EXECUTE ON FUNCTION public.generate_physical_cards(int) TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.admin_create_member(text, text, text, uuid, date, date, uuid) TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.admin_assign_card(uuid, uuid, text) TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.admin_delete_member(uuid) TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.get_all_physical_cards() TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.get_all_memberships() TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.get_dashboard_stats() TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.generate_physical_cards(int) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_create_member(text, text, text, uuid, date, date, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_assign_card(uuid, uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_delete_member(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_all_physical_cards() TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_all_memberships() TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_dashboard_stats() TO service_role;

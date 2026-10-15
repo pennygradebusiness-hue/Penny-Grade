@@ -1,12 +1,7 @@
 import { getAdminVerificationLogs } from "@/lib/admin.functions";
 
 export async function fetchLogs(sinceDays = 365) {
-  try {
-    const logs = await getAdminVerificationLogs({ data: { sinceDays } });
-    return logs;
-  } catch {
-    return [];
-  }
+  return getAdminVerificationLogs({ data: { sinceDays } });
 }
 
 export function monthKey(d: string) {

@@ -13,6 +13,23 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 const axis = { fontSize: 11, stroke: "var(--muted-foreground)" };
+const ADMIN_QUERY_TIMEOUT_MS = 15_000;
+
+function withAdminQueryTimeout<T>(request: Promise<T>, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} request timed out after 15 seconds`)), ADMIN_QUERY_TIMEOUT_MS);
+    request.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (reason: unknown) => { clearTimeout(timer); reject(reason); },
+    );
+  });
+}
+
+function errorMessage(reason: unknown): string {
+  if (reason instanceof Error) return reason.message;
+  if (typeof reason === "string") return reason;
+  return "Unknown server error";
+}
 
 function Dashboard() {
   const fetchMembersFn = useServerFn(getAdminMembers);
@@ -26,33 +43,33 @@ function Dashboard() {
       const today = new Date().toISOString().slice(0, 10);
       try {
         const [msRes, cardsRes, partnersRes, offersRes, logsRes] = await Promise.allSettled([
-          fetchMembersFn(),
-          fetchCardsFn(),
-          fetchPartnersFn(),
-          fetchOffersFn(),
-          fetchLogs(180),
+          withAdminQueryTimeout(fetchMembersFn(), "Members"),
+          withAdminQueryTimeout(fetchCardsFn(), "Cards"),
+          withAdminQueryTimeout(fetchPartnersFn(), "Partners"),
+          withAdminQueryTimeout(fetchOffersFn(), "Offers"),
+          withAdminQueryTimeout(fetchLogs(180), "Verification logs"),
         ]);
 
         const errors: string[] = [];
         if (msRes.status === "rejected") {
           console.error("fetchMembersFn failed:", msRes.reason);
-          errors.push("Members");
+          errors.push(`Members: ${errorMessage(msRes.reason)}`);
         }
         if (cardsRes.status === "rejected") {
           console.error("fetchCardsFn failed:", cardsRes.reason);
-          errors.push("Cards");
+          errors.push(`Cards: ${errorMessage(cardsRes.reason)}`);
         }
         if (partnersRes.status === "rejected") {
           console.error("fetchPartnersFn failed:", partnersRes.reason);
-          errors.push("Partners");
+          errors.push(`Partners: ${errorMessage(partnersRes.reason)}`);
         }
         if (offersRes.status === "rejected") {
           console.error("fetchOffersFn failed:", offersRes.reason);
-          errors.push("Offers");
+          errors.push(`Offers: ${errorMessage(offersRes.reason)}`);
         }
         if (logsRes.status === "rejected") {
           console.error("fetchLogs failed:", logsRes.reason);
-          errors.push("Verification Logs");
+          errors.push(`Verification logs: ${errorMessage(logsRes.reason)}`);
         }
 
         const ms = msRes.status === "fulfilled" ? (msRes.value ?? []) : [];
@@ -98,6 +115,7 @@ function Dashboard() {
   if (q.isLoading || !q.data) return <><PageHeader title="Dashboard" /><TableSkeleton /></>;
 
   const { ms, logs, availableCards, errors = [] } = q.data;
+  const sessionExpired = errors.some((error) => /unauthorized|invalid administrative session/i.test(error));
   const todayStr = new Date().toDateString();
   const todayCount = logs.filter((l) => new Date(l.created_at).toDateString() === todayStr).length;
   const monthStart = new Date();
@@ -118,7 +136,12 @@ function Dashboard() {
       <PageHeader title="Dashboard" desc="PennyGrade network at a glance" />
       {errors.length > 0 && (
         <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-900">
-          <span>⚠️ Live statistics could not be updated for: {errors.join(", ")}. Please check service connection.</span>
+          <span>
+            ⚠️ {sessionExpired
+              ? "Your admin session expired or is no longer valid. Sign out and sign in again. "
+              : "Live statistics could not be updated. "}
+            {errors.join(", ")}
+          </span>
         </div>
       )}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

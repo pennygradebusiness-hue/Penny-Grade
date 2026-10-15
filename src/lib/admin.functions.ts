@@ -33,7 +33,7 @@ import {
 } from "./v1-logic";
 import { createAdminSessionToken, requireAdminAuth } from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
-import { getServiceRoleClient } from "./supabase-admin.server";
+import { getServiceRoleClient as getRawServiceRoleClient } from "./supabase-admin.server";
 
 const memberSchema = z.object({
   full_name: z.string().trim().min(2, "Full name is required").max(100),
@@ -54,11 +54,33 @@ const memberSchema = z.object({
   card_id: z.string().optional().or(z.literal("")),
 });
 
+type AdminVerificationLog = {
+  id: string;
+  verification_session_id: string | null;
+  user_id: string | null;
+  bill_amount: number;
+  discount_amount: number;
+  final_amount: number;
+  status: string;
+  created_at: string;
+  partner: { id: string; business_name: string; category: { name: string } | null } | null;
+  offer: { title: string } | null;
+  membership: { membership_number: string } | null;
+};
+
+function getServiceRoleClient() {
+  const db = getRawServiceRoleClient();
+  if (!db && process.env.NODE_ENV === "production") {
+    throw new Error("Admin database is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the server.");
+  }
+  return db;
+}
+
 // Admin Create Member — NO customer password, NO customer Supabase Auth account, Email optional
 export const createMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => memberSchema.parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     if (data.expiry_date < data.start_date) {
       throw new Error("Expiry date must be after start date");
     }
@@ -189,7 +211,7 @@ export const generateCardBatch = createServerFn({ method: "POST" })
     z.object({ count: z.number().int().min(1).max(2000) }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { data: result, error } = await db.rpc("generate_physical_cards", { p_count: data.count });
@@ -234,7 +256,7 @@ export const generateCardBatch = createServerFn({ method: "POST" })
 
 // Admin Get Cards
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "membership_manager"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data, error } = await db.rpc("get_all_physical_cards");
@@ -265,7 +287,7 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
 
 // Admin Get Members
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "membership_manager"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data, error } = await db.rpc("get_all_memberships");
@@ -310,7 +332,7 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { error } = await db.from("memberships").update({ status: data.status }).eq("id", data.id);
@@ -350,7 +372,7 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
 export const deleteMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { error } = await db.rpc("admin_delete_member", { p_member_id: data.id });
@@ -419,7 +441,7 @@ export const renewMember = createServerFn({ method: "POST" })
     z.object({ id: z.string(), durationDays: z.number().optional() }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { data: member, error: readError } = await db.from("memberships").select("expiry_date").eq("id", data.id).maybeSingle();
@@ -480,7 +502,7 @@ export const assignCardToMember = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { data: result, error } = await db.rpc("admin_assign_card", {
@@ -545,7 +567,7 @@ export const assignCardToMember = createServerFn({ method: "POST" })
 
 // Admin Get Admin Users (Server Function)
 export const getAdminUsers = createServerFn({ method: "GET" }).handler(async (): Promise<V1AdminUser[]> => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data: roles, error } = await db.from("user_roles").select("id,user_id,role,created_at");
@@ -892,12 +914,36 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
   .inputValidator((d: { sinceDays?: number } | undefined) =>
     z.object({ sinceDays: z.number().optional() }).optional().parse(d)
   )
-  .handler(async ({ data }) => {
-    requireAdminAuth();
+  .handler(async ({ data }): Promise<AdminVerificationLog[]> => {
+    requireAdminAuth(["super_admin", "manager"]);
     const days = data?.sinceDays ?? 365;
     const since = new Date(Date.now() - days * 864e5).toISOString();
 
-    const storeLogs = (store.logs || [])
+    // Admin verification history is private. Read it with the server-only
+    // service role after the signed admin session has been validated above;
+    // the server's publishable client has no browser Auth session attached.
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: dbData, error } = await db
+        .from("verification_logs")
+        .select("id,verification_session_id,user_id,bill_amount,discount_amount,final_amount,status,created_at,partner:partners(id,business_name,category:categories(name)),offer:offers(title),membership:memberships(membership_number)")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(5000);
+
+      if (error) throw new Error(`Could not load verification history: ${error.message}`);
+      // Supabase's generated join type models these many-to-one relations as
+      // arrays, while PostgREST returns one object (or null) for each FK.
+      return (dbData ?? []) as unknown as AdminVerificationLog[];
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Could not load verification history: server database credentials are not configured");
+    }
+
+    await ensureStoreLoadedCloud();
+
+    const storeLogs: AdminVerificationLog[] = (store.logs || [])
       .filter((l) => l.created_at >= since)
       .map((l) => ({
         id: l.id,
@@ -921,34 +967,35 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
         },
       }));
 
-    try {
-      const { data: dbData, error } = await supabase
-        .from("verification_logs")
-        .select("id,verification_session_id,bill_amount,discount_amount,final_amount,status,created_at,partner:partners(id,business_name,category:categories(name)),offer:offers(title),membership:memberships(membership_number)")
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(5000);
-
-      if (!error && dbData && dbData.length > 0) {
-        const seen = new Set(storeLogs.map((l) => l.id));
-        const merged = [...storeLogs];
-        for (const d of dbData) {
-          if (!seen.has(d.id)) {
-            merged.push(d as unknown as typeof storeLogs[0]);
-          }
-        }
-        return merged.sort((a, b) => b.created_at.localeCompare(a.created_at));
-      }
-    } catch {
-      // Fallback to store logs
-    }
-
     return storeLogs.sort((a, b) => b.created_at.localeCompare(a.created_at));
   });
 
 // Admin Get Audit Logs (Server Function)
 export const getAdminAuditLogs = createServerFn({ method: "GET" }).handler(async (): Promise<V1AuditLog[]> => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "manager"]);
+  const db = getServiceRoleClient();
+  if (db) {
+    const [{ data: rows, error }, { data: profiles, error: profileError }] = await Promise.all([
+      db.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(500),
+      db.from("profiles").select("user_id,full_name,email"),
+    ]);
+    if (error) throw new Error(`Could not load audit history: ${error.message}`);
+    if (profileError) throw new Error(`Could not load audit actors: ${profileError.message}`);
+    const profileById = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
+    return (rows ?? []).map((row) => ({
+      id: row.id,
+      admin_user_id: row.admin_user_id,
+      action: row.action,
+      target_type: row.target_type ?? "general",
+      target_id: row.target_id,
+      metadata: (row.metadata ?? {}) as Record<string, unknown>,
+      created_at: row.created_at,
+      who: profileById.get(row.admin_user_id)?.full_name || profileById.get(row.admin_user_id)?.email || "Administrator",
+    }));
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Could not load audit history: server database credentials are not configured");
+  }
   await ensureStoreLoadedCloud();
   if (!store.auditLogs) store.auditLogs = [];
   const storeAudits: V1AuditLog[] = (store.auditLogs || []).map((a) => ({
@@ -1066,6 +1113,7 @@ export const recordAdminAuditFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
+    const db = getServiceRoleClient();
     const auditEntry: V1AuditLog = {
       id: safeRandomUUID(),
       admin_user_id: admin.id,
@@ -1079,16 +1127,15 @@ export const recordAdminAuditFn = createServerFn({ method: "POST" })
     if (!store.auditLogs) store.auditLogs = [];
     store.auditLogs.unshift(auditEntry);
 
-    try {
-      await supabase.from("audit_logs").insert({
+    if (db) {
+      const { error } = await db.from("audit_logs").insert({
         admin_user_id: auditEntry.admin_user_id,
         action: auditEntry.action,
         target_type: auditEntry.target_type,
         target_id: auditEntry.target_id,
         metadata: auditEntry.metadata as never,
       });
-    } catch {
-      // ignore
+      if (error) throw new Error(`Could not save audit entry: ${error.message}`);
     }
 
     saveStoreToDisk();
@@ -1159,7 +1206,7 @@ export const submitMemberApplication = createServerFn({ method: "POST" })
   });
 
 export const getMemberApplications = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "membership_manager"]);
   const apps = store.memberApplications || [];
   return [...apps].sort((a, b) => b.created_at.localeCompare(a.created_at));
 });
@@ -1173,7 +1220,7 @@ export const updateMemberApplicationStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     if (!store.memberApplications) return { ok: false, message: "No applications found" };
     const app = store.memberApplications.find((a) => a.id === data.id);
     if (!app) throw new Error("Application not found");
@@ -1207,7 +1254,7 @@ export const approveAndIssueMemberCard = createServerFn({ method: "POST" })
     z.object({ applicationId: z.string(), cardId: z.string().optional() }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     if (!store.memberApplications) throw new Error("No applications");
     const app = store.memberApplications.find((a) => a.id === data.applicationId);
     if (!app) throw new Error("Application not found");
@@ -1362,7 +1409,7 @@ export const submitPartnerApplication = createServerFn({ method: "POST" })
   });
 
 export const getPartnerApplications = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "manager"]);
   const apps = store.partnerApplications || [];
   return [...apps].sort((a, b) => b.created_at.localeCompare(a.created_at));
 });
@@ -1376,7 +1423,7 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "manager"]);
     if (!store.partnerApplications) return { ok: false, message: "No applications found" };
     const app = store.partnerApplications.find((a) => a.id === data.id);
     if (!app) throw new Error("Application not found");
@@ -1407,7 +1454,7 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
 // ---------------- PARTNERS & OFFERS MANAGEMENT (Cloud Persisted) ----------------
 
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "manager", "support"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data, error } = await db.from("partners").select("*, category:categories(name)").order("business_name");
@@ -1473,7 +1520,7 @@ const savePartnerSchema = z.object({
 export const savePartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePartnerSchema.parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const partnerId = data.id || safeRandomUUID();
@@ -1584,7 +1631,7 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const patch: Record<string, unknown> = {};
@@ -1633,7 +1680,7 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
 export const deletePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { error } = await db.from("partners").delete().eq("id", data.id);
@@ -1692,7 +1739,7 @@ export const deletePartner = createServerFn({ method: "POST" })
 
 // Admin Get Offers
 export const getAdminOffers = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth();
+  requireAdminAuth(["super_admin", "manager", "support"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data, error } = await db.from("offers").select("*, partner:partners(id,business_name,slug)").order("created_at", { ascending: false });
@@ -1758,7 +1805,7 @@ const saveOfferSchema = z.object({
 export const saveOffer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveOfferSchema.parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { data: offer, error } = await db.from("offers").upsert({
@@ -1855,7 +1902,7 @@ export const saveOffer = createServerFn({ method: "POST" })
 export const deleteOffer = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
       const { error } = await db.from("offers").delete().eq("id", data.id);

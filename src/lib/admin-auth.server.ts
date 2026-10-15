@@ -3,6 +3,7 @@ import { store, type V1AdminUser } from "./v1-store";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 type AdminSession = { id: string; email: string; role: V1AdminUser["role"]; full_name?: string; source: "store" | "supabase"; exp: number };
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 function sessionSecret() {
   const secret = process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -11,7 +12,8 @@ function sessionSecret() {
 }
 
 export function createAdminSessionToken(user: Pick<V1AdminUser, "id" | "email" | "role" | "full_name">, source: AdminSession["source"] = "store") {
-  const payload: AdminSession = { ...user, source, exp: Date.now() + 60 * 60 * 1000 };
+  // Keep the signed token lifetime aligned with the 12-hour browser cookie.
+  const payload: AdminSession = { ...user, source, exp: Date.now() + ADMIN_SESSION_TTL_MS };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = createHmac("sha256", sessionSecret()).update(encoded).digest("base64url");
   return `${encoded}.${signature}`;

@@ -30,6 +30,18 @@ import { effectiveStatus, fmtDate } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/admin/members")({ component: Members });
 
 const PAGE = 20;
+const MEMBERS_QUERY_TIMEOUT_MS = 15_000;
+
+function withMembersQueryTimeout<T>(request: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Members request timed out after 15 seconds. Check the database connection and server logs.")), MEMBERS_QUERY_TIMEOUT_MS);
+    request.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (reason: unknown) => { clearTimeout(timer); reject(reason); },
+    );
+  });
+}
+
 type Row = {
   id: string;
   membership_number: string;
@@ -60,7 +72,7 @@ function Members() {
   const q = useQuery({
     queryKey: ["admin", "members"],
     queryFn: async () => {
-      const members = await fetchMembersFn();
+      const members = await withMembersQueryTimeout(fetchMembersFn());
       return (members ?? []) as unknown as Row[];
     },
     refetchOnWindowFocus: true,

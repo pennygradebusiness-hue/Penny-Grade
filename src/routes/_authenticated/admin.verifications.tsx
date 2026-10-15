@@ -38,7 +38,13 @@ function Logs() {
         <Select value={f.offer} onChange={(v) => setF({ ...f, offer: v })}><option value="">All offers</option>{opts((l) => l.offer?.title).map((o) => <option key={o}>{o}</option>)}</Select>
         <Select value={f.status} onChange={(v) => setF({ ...f, status: v })}><option value="">All statuses</option><option>VERIFIED</option></Select>
       </div>
-      {q.isLoading ? <TableSkeleton /> : (
+      {q.isLoading ? <TableSkeleton /> : q.error ? (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
+          <p className="text-sm font-medium text-destructive">Failed to load verification history</p>
+          <p className="mt-1 text-xs text-muted-foreground">{(q.error as Error).message}</p>
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => q.refetch()}>Retry</Button>
+        </div>
+      ) : (
         <DataTable head={["Member", "Partner", "Bill", "Discount", "Final amount", "Date/time", "Verification ID", "Status"]} empty={!rows.length}>
           {rows.slice(0, 500).map((l) => (
             <tr key={l.id}>
