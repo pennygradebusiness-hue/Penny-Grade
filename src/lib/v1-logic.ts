@@ -693,104 +693,28 @@ export function verifyAndResetForgottenPasswordLogic(data: {
   };
 }
 
-// Partner Cascade Deletion Logic: permanently removes partner and all associated offers
-export async function deletePartnerCascadeLogic(
+// Partner archive logic: preserve the partner and history while disabling future activity.
+export async function archivePartnerLogic(
   partnerId: string,
   adminWho?: string
-): Promise<{ ok: boolean; deletedOfferIds: string[] }> {
+): Promise<{ ok: boolean; archivedOfferIds: string[] }> {
   if (!store.partners) store.partners = new Map();
   if (!store.offers) store.offers = new Map();
-  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
-  if (!store.deletedOfferIds) store.deletedOfferIds = [];
 
   const partner = store.partners.get(partnerId);
-  const partnerName = partner?.business_name || "Partner";
-  const partnerSlug = partner?.slug || "";
+  if (!partner) throw new Error("Partner not found");
+  const partnerName = partner.business_name || "Partner";
+  const now = new Date().toISOString();
+  partner.status = "INACTIVE";
+  partner.featured = false;
+  partner.updated_at = now;
 
-  // 1. Add partner ID and slug to deleted tracking list
-  if (!store.deletedPartnerIds.includes(partnerId)) {
-    store.deletedPartnerIds.push(partnerId);
-  }
-  if (partnerSlug && !store.deletedPartnerIds.includes(partnerSlug)) {
-    store.deletedPartnerIds.push(partnerSlug);
-  }
-
-  // 2. Cascade delete all related offers in the store and track their IDs
-  const relatedOfferIds: string[] = [];
-  for (const [oId, offer] of Array.from(store.offers.entries())) {
-    if (offer.partner_id === partnerId || (partnerSlug && offer.partner_id === partnerSlug)) {
-      relatedOfferIds.push(oId);
-      store.offers.delete(oId);
-      if (!store.deletedOfferIds.includes(oId)) {
-        store.deletedOfferIds.push(oId);
-      }
-    }
-  }
-
-  // Always blacklist synthetic/fallback offer IDs for this partner
-  const syntheticOfferIds = [`offer-${partnerId}`, `offer-${partnerSlug}`];
-  for (const synId of syntheticOfferIds) {
-    if (!store.deletedOfferIds.includes(synId)) {
-      store.deletedOfferIds.push(synId);
-    }
-  }
-
-  // 3. Remove partner from in-memory store
-  store.partners.delete(partnerId);
-
-  // 4. Remove any active verification sessions for this partner
-  if (store.sessions) {
-    for (const [sId, sess] of store.sessions.entries()) {
-      if (sess.partner_id === partnerId || sess.partner_slug === partnerSlug) {
-        store.sessions.delete(sId);
-      }
-    }
-  }
-
-  // 5. Synchronize cascade deletion with Supabase in strict FK dependency order
-  if (process.env.NODE_ENV !== "test") {
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partnerId);
-
-      const targetPartnerDbIds: string[] = isUuid ? [partnerId] : [];
-      if (partnerSlug) {
-        const { data: dbPartner } = await sb
-          .from("partners")
-          .select("id")
-          .eq("slug", partnerSlug)
-          .maybeSingle();
-
-        if (dbPartner?.id && !targetPartnerDbIds.includes(dbPartner.id)) {
-          targetPartnerDbIds.push(dbPartner.id);
-        }
-      }
-
-      for (const pId of targetPartnerDbIds) {
-        if (!store.deletedPartnerIds.includes(pId)) {
-          store.deletedPartnerIds.push(pId);
-        }
-
-        // Query all database offers under this partner to record their IDs as permanently deleted
-        const { data: dbOffers } = await sb.from("offers").select("id").eq("partner_id", pId);
-        if (dbOffers) {
-          for (const dbo of dbOffers) {
-            if (!store.deletedOfferIds.includes(dbo.id)) {
-              store.deletedOfferIds.push(dbo.id);
-            }
-            relatedOfferIds.push(dbo.id);
-          }
-        }
-
-        // Deletion cascade in proper foreign key order
-        await sb.from("verification_logs").delete().eq("partner_id", pId);
-        await sb.from("verification_sessions").delete().eq("partner_id", pId);
-        await sb.from("offers").delete().eq("partner_id", pId);
-        await sb.from("partners").delete().eq("id", pId);
-      }
-    } catch (sbErr) {
-      console.warn("[PennyGrade] Supabase partner/offers delete sync:", sbErr);
+  const archivedOfferIds: string[] = [];
+  for (const offer of store.offers.values()) {
+    if (offer.partner_id === partnerId) {
+      offer.status = "INACTIVE";
+      offer.updated_at = now;
+      archivedOfferIds.push(offer.id);
     }
   }
 
@@ -798,17 +722,17 @@ export async function deletePartnerCascadeLogic(
     store.auditLogs.unshift({
       id: safeRandomUUID(),
       admin_user_id: "admin",
-      action: `Deleted Partner: ${partnerName} & ${relatedOfferIds.length} related offers`,
+      action: `Archived Partner: ${partnerName}`,
       target_type: "partner",
       target_id: partnerId,
-      metadata: { name: partnerName, slug: partnerSlug, deletedOfferCount: relatedOfferIds.length },
+      metadata: { name: partnerName, slug: partner.slug, archivedOfferCount: archivedOfferIds.length },
       created_at: new Date().toISOString(),
       who: adminWho || "Administrator",
     });
   }
 
   saveStoreToDisk();
-  return { ok: true, deletedOfferIds: relatedOfferIds };
+  return { ok: true, archivedOfferIds };
 }
 
 // Offer Deletion Logic: permanently removes offer from store and Supabase

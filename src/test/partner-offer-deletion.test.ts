@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { store, saveStoreToDisk, seedPartners, seedOffers, type V1Partner, type V1Offer } from "@/lib/v1-store";
 import {
-  deletePartnerCascadeLogic,
+  archivePartnerLogic,
   deleteOfferCascadeLogic,
   getFilteredOffersLogic,
 } from "@/lib/v1-logic";
 
-describe("Permanent Partner & Offer Cascade Deletion Tests", () => {
-  it("cascades deletion of related offers when a partner is deleted", async () => {
+describe("Partner archiving preserves historical data", () => {
+  it("archives the partner and disables offers without deleting the records", async () => {
     // 1. Create a test partner and offer
     const testPartnerId = "test-partner-xyz-123";
     const testSlug = "test-cafe-xyz";
+    store.deletedPartnerIds = store.deletedPartnerIds.filter((id) => id !== testPartnerId && id !== testSlug);
     const testPartner: V1Partner = {
       id: testPartnerId,
       business_name: "Test Café XYZ",
@@ -26,6 +27,7 @@ describe("Permanent Partner & Offer Cascade Deletion Tests", () => {
     store.partners.set(testPartnerId, testPartner);
 
     const testOfferId = "test-offer-xyz-123";
+    store.deletedOfferIds = store.deletedOfferIds.filter((id) => id !== testOfferId);
     const testOffer: V1Offer = {
       id: testOfferId,
       partner_id: testPartnerId,
@@ -55,25 +57,36 @@ describe("Permanent Partner & Offer Cascade Deletion Tests", () => {
     expect(store.partners.has(testPartnerId)).toBe(true);
     expect(store.offers.has(testOfferId)).toBe(true);
 
-    // 2. Perform cascade deletion of the partner
-    const result = await deletePartnerCascadeLogic(testPartnerId, "Super Admin Tester");
+    const verificationLog = {
+      id: "test-verification-log-1",
+      verification_session_id: "test-session-1",
+      membership_id: "test-member-1",
+      membership_number: "PEN-TEST-0001",
+      partner_id: testPartnerId,
+      partner_name: testPartner.business_name,
+      offer_id: testOfferId,
+      offer_title: testOffer.title,
+      bill_amount: 1000,
+      discount_amount: 250,
+      final_amount: 750,
+      status: "VERIFIED",
+      created_at: new Date().toISOString(),
+    };
+    store.logs.push(verificationLog);
+
+    // Archive the partner; the history and records must remain.
+    const result = await archivePartnerLogic(testPartnerId, "Super Admin Tester");
     expect(result.ok).toBe(true);
 
-    // 3. Verify partner is permanently removed from store & tracked in deletedPartnerIds
-    expect(store.partners.has(testPartnerId)).toBe(false);
-    expect(store.deletedPartnerIds).toContain(testPartnerId);
-    expect(store.deletedPartnerIds).toContain(testSlug);
+    expect(store.partners.get(testPartnerId)?.status).toBe("INACTIVE");
+    expect(store.deletedPartnerIds).not.toContain(testPartnerId);
+    expect(store.deletedPartnerIds).not.toContain(testSlug);
 
-    // 4. Verify related offer is permanently removed from store & tracked in deletedOfferIds
-    expect(store.offers.has(testOfferId)).toBe(false);
-    expect(store.deletedOfferIds).toContain(testOfferId);
-    expect(store.deletedOfferIds).toContain(`offer-${testPartnerId}`);
-    expect(store.deletedOfferIds).toContain(`offer-${testSlug}`);
+    expect(store.offers.get(testOfferId)?.status).toBe("INACTIVE");
+    expect(store.offers.has(testOfferId)).toBe(true);
+    expect(store.deletedOfferIds).not.toContain(testOfferId);
 
-    // 5. Verify getFilteredOffersLogic filters out the deleted offer
-    const filteredOffers = await getFilteredOffersLogic();
-    expect(filteredOffers.some((o) => o.id === testOfferId)).toBe(false);
-    expect(filteredOffers.some((o) => o.partner_id === testPartnerId)).toBe(false);
+    expect(store.logs.some((log) => log.id === verificationLog.id && log.partner_id === testPartnerId)).toBe(true);
   });
 
   it("permanently deletes an individual offer and prevents resurrection", async () => {
@@ -121,16 +134,19 @@ describe("Permanent Partner & Offer Cascade Deletion Tests", () => {
     const seededOffers = seedOffers();
 
     for (const delP of store.deletedPartnerIds) {
-      expect(store.partners.has(delP)).toBe(false);
+      const partner = store.partners.get(delP);
+      expect(partner === undefined || partner.status === "INACTIVE").toBe(true);
     }
     for (const delO of store.deletedOfferIds) {
-      expect(store.offers.has(delO)).toBe(false);
+      const offer = store.offers.get(delO);
+      expect(offer === undefined || offer.status === "INACTIVE").toBe(true);
     }
   });
 
-  it("partner deletion completely removes the partner from QR codes and sitemap entries", async () => {
+  it("archived partners remain in admin records but are no longer active", async () => {
     const qrPartnerId = "test-partner-qr-999";
     const qrPartnerSlug = "test-qr-cafe";
+    store.deletedPartnerIds = store.deletedPartnerIds.filter((id) => id !== qrPartnerId && id !== qrPartnerSlug);
     const qrPartner: V1Partner = {
       id: qrPartnerId,
       business_name: "Test QR Cafe",
@@ -145,18 +161,16 @@ describe("Permanent Partner & Offer Cascade Deletion Tests", () => {
 
     expect(store.partners.has(qrPartnerId)).toBe(true);
 
-    // Perform cascade deletion
-    await deletePartnerCascadeLogic(qrPartnerId, "Admin Tester");
+    await archivePartnerLogic(qrPartnerId, "Admin Tester");
 
-    // Must be gone from store and in deletedPartnerIds
-    expect(store.partners.has(qrPartnerId)).toBe(false);
-    expect(store.deletedPartnerIds).toContain(qrPartnerId);
-    expect(store.deletedPartnerIds).toContain(qrPartnerSlug);
+    expect(store.partners.get(qrPartnerId)?.status).toBe("INACTIVE");
+    expect(store.deletedPartnerIds).not.toContain(qrPartnerId);
+    expect(store.deletedPartnerIds).not.toContain(qrPartnerSlug);
 
     // List of partners available for QR generation must exclude this partner
     const activePartners = Array.from(store.partners.values()).filter(
       (p) => !store.deletedPartnerIds.includes(p.id) && !store.deletedPartnerIds.includes(p.slug)
     );
-    expect(activePartners.some((p) => p.id === qrPartnerId || p.slug === qrPartnerSlug)).toBe(false);
+    expect(activePartners.find((p) => p.id === qrPartnerId)?.status).toBe("INACTIVE");
   });
 });

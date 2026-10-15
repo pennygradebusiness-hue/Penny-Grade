@@ -7,7 +7,7 @@ import { getSiteUrl } from "@/lib/seo";
 import {
   MoreHorizontal,
   Star,
-  Trash2,
+  Archive,
   Building2,
   Globe,
   MapPin,
@@ -33,7 +33,7 @@ import {
   getAdminPartners,
   savePartner,
   updatePartnerStatus,
-  deletePartner,
+  archivePartner,
   getPartnerApplications,
   updatePartnerApplicationStatus,
   saveOffer,
@@ -83,7 +83,7 @@ function Partners() {
   const fetchPartnersFn = useServerFn(getAdminPartners);
   const savePartnerFn = useServerFn(savePartner);
   const updatePartnerStatusFn = useServerFn(updatePartnerStatus);
-  const deletePartnerFn = useServerFn(deletePartner);
+  const archivePartnerFn = useServerFn(archivePartner);
   const fetchPartnerAppsFn = useServerFn(getPartnerApplications);
   const updatePartnerAppFn = useServerFn(updatePartnerApplicationStatus);
   const saveOfferFn = useServerFn(saveOffer);
@@ -339,16 +339,15 @@ function Partners() {
   };
 
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to permanently delete "${name}" and all of its associated offers? This action cannot be undone.`)) return;
+  const handleArchive = async (id: string, name: string) => {
+    if (!confirm(`Archive "${name}"? New verifications will stop and its active offers will be disabled. Past verification history will remain available.`)) return;
     try {
-      // Optimistic cache update for instant UI feedback
       qc.setQueryData<V1Partner[]>(["admin", "partners"], (old) =>
-        (old ?? []).filter((item) => item.id !== id && item.slug !== id)
+        (old ?? []).map((item) => item.id === id ? { ...item, status: "INACTIVE", featured: false } : item)
       );
 
-      await deletePartnerFn({ data: { id } });
-      toast.success(`Partner "${name}" and related offers permanently deleted`);
+      await archivePartnerFn({ data: { id } });
+      toast.success(`Partner "${name}" archived. Verification history was preserved.`);
       qc.invalidateQueries({ queryKey: ["admin", "partners"] });
       qc.invalidateQueries({ queryKey: ["admin", "offers"] });
       qc.invalidateQueries({ queryKey: ["admin", "qr"] });
@@ -356,7 +355,7 @@ function Partners() {
       qc.invalidateQueries({ queryKey: ["public", "partners"] });
       refresh();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to delete partner");
+      toast.error(err?.message || "Failed to archive partner");
       refresh();
     }
   };
@@ -626,10 +625,10 @@ function Partners() {
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-destructive font-semibold cursor-pointer hover:bg-destructive/10"
-                            onClick={() => handleDelete(p.id, p.business_name)}
+                            className="text-amber-700 font-semibold cursor-pointer hover:bg-amber-50"
+                            onClick={() => handleArchive(p.id, p.business_name)}
                           >
-                            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete partner
+                            <Archive className="h-3.5 w-3.5 mr-1.5" /> Archive partner
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

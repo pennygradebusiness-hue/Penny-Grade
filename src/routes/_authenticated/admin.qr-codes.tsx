@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/use-session";
-import { getAdminPartners, deletePartner } from "@/lib/admin.functions";
+import { getAdminPartners, archivePartner } from "@/lib/admin.functions";
 import type { V1Partner } from "@/lib/v1-store";
 import { getSiteUrl } from "@/lib/seo";
 
@@ -22,7 +22,7 @@ const qrUrl = (slug: string) => `${typeof window !== "undefined" && window.locat
 function QrCodes() {
   const qc = useQueryClient();
   const fetchPartnersFn = useServerFn(getAdminPartners);
-  const deletePartnerFn = useServerFn(deletePartner);
+  const archivePartnerFn = useServerFn(archivePartner);
 
   const q = useQuery({
     queryKey: ["admin", "qr"],
@@ -58,22 +58,14 @@ function QrCodes() {
     qc.invalidateQueries({ queryKey: ["admin", "qr"] });
   };
 
-  const handleDelete = async (p: P) => {
-    if (!confirm(`Are you sure you want to permanently delete the QR code and partner "${p.business_name}"? This will permanently delete the partner, their QR code, and all associated offers.`)) {
+  const handleArchive = async (p: P) => {
+    if (!confirm(`Archive "${p.business_name}"? New verifications will stop and its active offers will be disabled. Past verification history will remain available.`)) {
       return;
     }
     try {
-      await deletePartnerFn({ data: { id: p.id } });
-      try {
-        await supabase.from("verification_logs").delete().eq("partner_id", p.id);
-        await supabase.from("verification_sessions").delete().eq("partner_id", p.id);
-        await supabase.from("offers").delete().eq("partner_id", p.id);
-        await supabase.from("partners").delete().eq("id", p.id);
-      } catch {
-        // non-fatal
-      }
-      await logAudit("Deleted partner and QR code", "partner", p.id, { slug: p.slug });
-      toast.success(`Partner "${p.business_name}" and QR code permanently deleted`);
+      await archivePartnerFn({ data: { id: p.id } });
+      await logAudit("Archived partner and QR code", "partner", p.id, { slug: p.slug });
+      toast.success(`Partner "${p.business_name}" archived. Verification history was preserved.`);
       qc.invalidateQueries({ queryKey: ["admin", "qr"] });
       qc.invalidateQueries({ queryKey: ["admin", "partners"] });
       qc.invalidateQueries({ queryKey: ["admin", "offers"] });
@@ -100,7 +92,7 @@ function QrCodes() {
                 <Button size="sm" variant="ghost" onClick={() => setPreview(p)}>Preview / Print</Button>
                 <Button size="sm" variant="ghost" onClick={() => download(p)}>Download</Button>
                 <Button size="sm" variant="ghost" onClick={() => regenerate(p)}>Regenerate</Button>
-                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDelete(p)}>Delete</Button>
+                <Button size="sm" variant="ghost" className="text-amber-700 hover:bg-amber-50" onClick={() => handleArchive(p)}>Archive</Button>
               </td>
             </tr>
           ))}

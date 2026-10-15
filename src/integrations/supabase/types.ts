@@ -535,6 +535,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_archive_partner: { Args: { p_partner_id: string }; Returns: undefined }
       admin_exists: { Args: never; Returns: boolean }
       claim_first_admin: { Args: never; Returns: boolean }
       create_verification: {

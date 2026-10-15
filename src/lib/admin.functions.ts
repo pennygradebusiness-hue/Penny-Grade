@@ -26,7 +26,6 @@ import {
   firstTimeSetPasswordLogic,
   requestAdminPasswordResetCodeLogic,
   verifyAndResetForgottenPasswordLogic,
-  deletePartnerCascadeLogic,
   deleteOfferCascadeLogic,
   getFilteredOffersLogic,
   syncAdminPasswordAfterSupabaseResetLogic,
@@ -1677,62 +1676,43 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const deletePartner = createServerFn({ method: "POST" })
+export const archivePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { error } = await db.from("partners").delete().eq("id", data.id);
-      if (error) throw new Error(`Could not delete partner: ${error.message}`);
+      const { error } = await db.rpc("admin_archive_partner", { p_partner_id: data.id });
+      if (error) throw new Error(`Could not archive partner: ${error.message}`);
       return { ok: true };
     }
     await ensureStoreLoadedCloud();
 
-    if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
-    if (!store.deletedOfferIds) store.deletedOfferIds = [];
-
     const partner = store.partners?.get(data.id);
-    store.deletedPartnerIds.push(data.id);
-    if (partner?.slug) {
-      store.deletedPartnerIds.push(partner.slug);
-    }
-
-    if (store.partners) {
-      store.partners.delete(data.id);
-    }
-
-    // Cascade delete partner's offers
-    if (store.offers) {
-      for (const [offerId, offer] of Array.from(store.offers.entries())) {
-        if (offer.partner_id === data.id) {
-          store.offers.delete(offerId);
-          store.deletedOfferIds.push(offerId);
-        }
+    if (!partner) throw new Error("Partner not found");
+    const now = new Date().toISOString();
+    partner.status = "INACTIVE";
+    partner.featured = false;
+    partner.updated_at = now;
+    for (const offer of store.offers?.values() ?? []) {
+      if (offer.partner_id === data.id) {
+        offer.status = "INACTIVE";
+        offer.updated_at = now;
       }
     }
 
     store.auditLogs.unshift({
       id: safeRandomUUID(),
       admin_user_id: admin.id,
-      action: "Deleted Partner",
+      action: "Archived Partner",
       target_type: "partner",
       target_id: data.id,
-      metadata: { deleted_name: partner?.business_name || "Partner" },
+      metadata: { name: partner.business_name || "Partner", slug: partner.slug },
       created_at: new Date().toISOString(),
       who: admin.full_name || "Admin",
     });
 
     await persistStoreCloud();
-
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      await sb.from("offers").delete().eq("partner_id", data.id);
-      await sb.from("partners").delete().eq("id", data.id);
-    } catch {
-      // Non-blocking
-    }
 
     return { ok: true };
   });

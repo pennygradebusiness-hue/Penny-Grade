@@ -14,7 +14,7 @@ import {
   assignCardToMemberLogic,
   getAdminCardsLogic,
   getAdminMembersLogic,
-  deletePartnerCascadeLogic,
+  archivePartnerLogic,
 } from "@/lib/v1-logic";
 
 describe("PennyGrade Production Persistence & Release Verification", () => {
@@ -144,7 +144,7 @@ describe("PennyGrade Production Persistence & Release Verification", () => {
     }
   });
 
-  it("synchronizes active partners and supports legitimate cascading deletion", async () => {
+  it("archives partners and disables their offers without removing records", async () => {
     // 1. Setup active partner & offer
     const partnerId = "legit-partner-001";
     const offerId = "legit-offer-001";
@@ -179,15 +179,14 @@ describe("PennyGrade Production Persistence & Release Verification", () => {
     expect(store.partners.has(partnerId)).toBe(true);
     expect(store.offers.has(offerId)).toBe(true);
 
-    // 2. Perform cascade deletion
-    const delRes = await deletePartnerCascadeLogic(partnerId, "Super Admin Tester");
-    expect(delRes.ok).toBe(true);
-    expect(delRes.deletedOfferIds).toContain(offerId);
+    const archiveRes = await archivePartnerLogic(partnerId, "Super Admin Tester");
+    expect(archiveRes.ok).toBe(true);
+    expect(archiveRes.archivedOfferIds).toContain(offerId);
 
-    // 3. Confirm both are removed from active store
-    expect(store.partners.has(partnerId)).toBe(false);
-    expect(store.offers.has(offerId)).toBe(false);
-    expect(store.deletedPartnerIds).toContain(partnerId);
+    expect(store.partners.get(partnerId)?.status).toBe("INACTIVE");
+    expect(store.offers.get(offerId)?.status).toBe("INACTIVE");
+    expect(store.offers.has(offerId)).toBe(true);
+    expect(store.deletedPartnerIds).not.toContain(partnerId);
   });
 
   it("ensures test data is isolated and does not persist to disk", () => {
