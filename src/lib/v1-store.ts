@@ -281,6 +281,139 @@ function getStoreFilePath(): string {
 
 const STORE_PATH = getStoreFilePath();
 
+export function serializeStore(s: PennyGradeStore) {
+  return {
+    members: Array.from(s.members?.entries() || []),
+    cards: Array.from(s.cards?.entries() || []),
+    partners: Array.from(s.partners?.entries() || []),
+    offers: Array.from(s.offers?.entries() || []),
+    sessions: Array.from(s.sessions?.entries() || []),
+    logs: s.logs || [],
+    auditLogs: s.auditLogs || [],
+    adminUsers: s.adminUsers || [],
+    memberApplications: s.memberApplications || [],
+    partnerApplications: s.partnerApplications || [],
+    deletedPartnerIds: s.deletedPartnerIds || [],
+    deletedOfferIds: s.deletedOfferIds || [],
+    deletedMemberIds: s.deletedMemberIds || [],
+    deletedAdminUserIds: s.deletedAdminUserIds || [],
+    seededPartners: s.seededPartners ?? true,
+    seededOffers: s.seededOffers ?? true,
+    seededAdminUsers: s.seededAdminUsers ?? true,
+  };
+}
+
+export function hydrateStore(parsed: any): void {
+  if (!parsed || typeof parsed !== "object") return;
+  const s = globalThis.__pennyGradeStore || store;
+
+  const deletedPartnerIds: string[] = Array.isArray(parsed.deletedPartnerIds) ? parsed.deletedPartnerIds : [];
+  const deletedOfferIds: string[] = Array.isArray(parsed.deletedOfferIds) ? parsed.deletedOfferIds : [];
+  const deletedMemberIds: string[] = Array.isArray(parsed.deletedMemberIds) ? parsed.deletedMemberIds : [];
+  const deletedAdminUserIds: string[] = Array.isArray(parsed.deletedAdminUserIds) ? parsed.deletedAdminUserIds : [];
+
+  const delPartnerSet = new Set([...(s.deletedPartnerIds || []), ...deletedPartnerIds]);
+  const delOfferSet = new Set([...(s.deletedOfferIds || []), ...deletedOfferIds]);
+  const delMemberSet = new Set([...(s.deletedMemberIds || []), ...deletedMemberIds]);
+  const delAdminSet = new Set([...(s.deletedAdminUserIds || []), ...deletedAdminUserIds].map((x) => x.toLowerCase()));
+
+  s.deletedPartnerIds = Array.from(delPartnerSet);
+  s.deletedOfferIds = Array.from(delOfferSet);
+  s.deletedMemberIds = Array.from(delMemberSet);
+  s.deletedAdminUserIds = Array.from(delAdminSet);
+
+  if (Array.isArray(parsed.members)) {
+    if (!s.members) s.members = new Map();
+    for (const [k, v] of parsed.members) {
+      const m = v as V1Member;
+      if (!delMemberSet.has(k) && !delMemberSet.has(m?.membership_number) && !delMemberSet.has(m?.id)) {
+        s.members.set(k, m);
+      }
+    }
+    for (const k of Array.from(s.members.keys())) {
+      const m = s.members.get(k);
+      if (delMemberSet.has(k) || (m && (delMemberSet.has(m.id) || delMemberSet.has(m.membership_number)))) {
+        s.members.delete(k);
+      }
+    }
+  }
+
+  if (Array.isArray(parsed.cards) && parsed.cards.length > 0) {
+    if (!s.cards) s.cards = new Map();
+    for (const [k, v] of parsed.cards) {
+      s.cards.set(k, v);
+    }
+  }
+
+  if (Array.isArray(parsed.partners)) {
+    if (!s.partners) s.partners = new Map();
+    for (const [k, v] of parsed.partners) {
+      const p = v as V1Partner;
+      if (!delPartnerSet.has(k) && !delPartnerSet.has(p?.id) && !delPartnerSet.has(p?.slug)) {
+        s.partners.set(k, p);
+      }
+    }
+    for (const k of Array.from(s.partners.keys())) {
+      const p = s.partners.get(k);
+      if (delPartnerSet.has(k) || (p && (delPartnerSet.has(p.id) || delPartnerSet.has(p.slug)))) {
+        s.partners.delete(k);
+      }
+    }
+  }
+
+  if (Array.isArray(parsed.offers)) {
+    if (!s.offers) s.offers = new Map();
+    for (const [k, v] of parsed.offers) {
+      const o = v as V1Offer;
+      if (!delOfferSet.has(k) && !delOfferSet.has(o?.id) && !delPartnerSet.has(o?.partner_id)) {
+        s.offers.set(k, o);
+      }
+    }
+    for (const k of Array.from(s.offers.keys())) {
+      const o = s.offers.get(k);
+      if (delOfferSet.has(k) || (o && (delOfferSet.has(o.id) || delPartnerSet.has(o.partner_id)))) {
+        s.offers.delete(k);
+      }
+    }
+  }
+
+  if (Array.isArray(parsed.auditLogs) && parsed.auditLogs.length > 0) {
+    s.auditLogs = parsed.auditLogs;
+  }
+}
+
+/**
+ * Persists store to Netlify Blobs (cloud global storage) and disk.
+ */
+export async function persistStoreCloud(): Promise<void> {
+  saveStoreToDisk();
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const blobStore = getStore("pennygrade-data");
+    const s = globalThis.__pennyGradeStore || store;
+    const serialized = serializeStore(s);
+    await blobStore.setJSON("production_store_v1", serialized);
+  } catch {
+    // Expected outside of Netlify environment (e.g. local dev / tests)
+  }
+}
+
+/**
+ * Loads latest persistent state from Netlify Blobs on serverless cold starts.
+ */
+export async function ensureStoreLoadedCloud(): Promise<void> {
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const blobStore = getStore("pennygrade-data");
+    const data = await blobStore.get("production_store_v1", { type: "json" });
+    if (data && typeof data === "object") {
+      hydrateStore(data);
+    }
+  } catch {
+    // Expected outside of Netlify environment
+  }
+}
+
 /**
  * Persists the entire store atomically to disk so server restarts/rebuilds never lose cards or applications.
  */
@@ -305,25 +438,7 @@ export function saveStoreToDisk(): void {
       }
     }
 
-    const serialized = {
-      members: Array.from(s.members?.entries() || []),
-      cards: Array.from(s.cards?.entries() || []),
-      partners: Array.from(s.partners?.entries() || []),
-      offers: Array.from(s.offers?.entries() || []),
-      sessions: Array.from(s.sessions?.entries() || []),
-      logs: s.logs || [],
-      auditLogs: s.auditLogs || [],
-      adminUsers: s.adminUsers || [],
-      memberApplications: s.memberApplications || [],
-      partnerApplications: s.partnerApplications || [],
-      deletedPartnerIds: s.deletedPartnerIds || [],
-      deletedOfferIds: s.deletedOfferIds || [],
-      deletedMemberIds: s.deletedMemberIds || [],
-      deletedAdminUserIds: s.deletedAdminUserIds || [],
-      seededPartners: s.seededPartners ?? true,
-      seededOffers: s.seededOffers ?? true,
-      seededAdminUsers: s.seededAdminUsers ?? true,
-    };
+    const serialized = serializeStore(s);
     fs.writeFileSync(targetPath, JSON.stringify(serialized, null, 2), "utf-8");
   } catch (err) {
     console.error("[PennyGrade] Failed to persist store to disk:", err);

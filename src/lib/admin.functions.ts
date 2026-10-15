@@ -5,7 +5,10 @@ import {
   generatePenCode,
   safeRandomUUID,
   saveStoreToDisk,
+  persistStoreCloud,
+  ensureStoreLoadedCloud,
   seedPartners,
+  seedOffers,
   type V1Member,
   type V1PhysicalCard,
   type V1Partner,
@@ -52,126 +55,209 @@ const memberSchema = z.object({
 export const createMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => memberSchema.parse(d))
   .handler(async ({ data }) => {
-    requireAdminAuth();
+    const admin = requireAdminAuth();
     if (data.expiry_date < data.start_date) {
       throw new Error("Expiry date must be after start date");
     }
 
-    const cleanEmail = data.email?.trim() || null;
+    await ensureStoreLoadedCloud();
 
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
+    if (!store.members) store.members = new Map();
+    if (!store.cards) store.cards = new Map();
+    if (!store.auditLogs) store.auditLogs = [];
 
-    // Ensure valid plan UUID
-    let planIdToUse = data.plan_id;
-    const isPlanUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planIdToUse);
-    if (!isPlanUuid) {
-      const { data: dbPlans, error: plansErr } = await sb.from("membership_plans").select("id").limit(1);
-      if (plansErr) throw new Error(`Could not load membership plans: ${plansErr.message}`);
-      if (!dbPlans || dbPlans.length === 0) throw new Error("No membership plans found in database");
-      planIdToUse = dbPlans[0].id;
+    const memberId = safeRandomUUID();
+    const membershipNumber = generatePenCode();
+    const cleanEmail = data.email?.trim() || "";
+    const now = new Date().toISOString();
+
+    let assignedCardNumber = "";
+    let assignedCardId = data.card_id || "";
+
+    if (assignedCardId && store.cards.has(assignedCardId)) {
+      const card = store.cards.get(assignedCardId)!;
+      card.membership_id = memberId;
+      card.status = "ACTIVE";
+      card.issued_at = now;
+      card.updated_at = now;
+      assignedCardNumber = card.card_number;
+    } else {
+      // Find first available card
+      for (const c of store.cards.values()) {
+        if (c.status === "AVAILABLE") {
+          c.membership_id = memberId;
+          c.status = "ACTIVE";
+          c.issued_at = now;
+          c.updated_at = now;
+          assignedCardNumber = c.card_number;
+          assignedCardId = c.id;
+          break;
+        }
+      }
+      // If still no card available, generate one
+      if (!assignedCardNumber) {
+        const newCardCode = generatePenCode();
+        const newCardId = safeRandomUUID();
+        const newCard: V1PhysicalCard = {
+          id: newCardId,
+          card_number: newCardCode,
+          membership_id: memberId,
+          status: "ACTIVE",
+          issued_at: now,
+          created_at: now,
+          updated_at: now,
+        };
+        store.cards.set(newCardId, newCard);
+        assignedCardNumber = newCardCode;
+        assignedCardId = newCardId;
+      }
     }
 
-    const { data: res, error } = await sb.rpc("admin_create_member", {
-      p_full_name: data.full_name,
-      p_mobile: data.mobile,
-      p_email: cleanEmail,
-      p_plan_id: planIdToUse,
-      p_start_date: data.start_date,
-      p_expiry_date: data.expiry_date,
-      p_card_id: data.card_id || null,
+    const newMember: V1Member = {
+      id: memberId,
+      membership_number: membershipNumber,
+      full_name: data.full_name,
+      mobile: data.mobile,
+      email: cleanEmail,
+      plan_id: data.plan_id || "fd6de953-c15d-4b7f-aae4-b97b6d21b043",
+      plan_name: "PennyGrade 6-Month Membership",
+      start_date: data.start_date,
+      expiry_date: data.expiry_date,
+      status: "ACTIVE",
+      created_at: now,
+      updated_at: now,
+      card_id: assignedCardId,
+      card_number: assignedCardNumber || membershipNumber,
+    };
+
+    store.members.set(memberId, newMember);
+
+    // Audit log
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Created Member",
+      target_type: "membership",
+      target_id: memberId,
+      metadata: {
+        full_name: data.full_name,
+        mobile: data.mobile,
+        membership_number: membershipNumber,
+        card_number: assignedCardNumber,
+      },
+      created_at: now,
+      who: admin.full_name || "Admin",
     });
 
-    if (error) throw new Error(`Failed to create member: ${error.message}`);
-    if (!res?.ok) throw new Error("Member creation failed — database returned not-ok");
+    await persistStoreCloud();
 
     return {
       ok: true,
-      membership_number: res.membership_number,
-      card_number: res.card_number,
+      id: memberId,
+      membership_number: membershipNumber,
+      card_number: assignedCardNumber || membershipNumber,
     };
   });
 
-
-
-// Admin Generate Card Batch — writes directly to Supabase
+// Admin Generate Card Batch
 export const generateCardBatch = createServerFn({ method: "POST" })
   .inputValidator((d: { count: number }) =>
     z.object({ count: z.number().int().min(1).max(2000) }).parse(d)
   )
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    const { data: rpcRes, error: rpcErr } = await sb.rpc("generate_physical_cards", { p_count: data.count });
-    if (rpcErr) throw new Error(`Card generation failed: ${rpcErr.message}`);
-    if (!rpcRes?.ok) throw new Error("Card generation returned not-ok");
-    return { ok: true, count: rpcRes.count as number };
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
+    if (!store.cards) store.cards = new Map();
+    if (!store.auditLogs) store.auditLogs = [];
+
+    const now = new Date().toISOString();
+    for (let i = 0; i < data.count; i++) {
+      const id = safeRandomUUID();
+      const code = generatePenCode();
+      store.cards.set(id, {
+        id,
+        card_number: code,
+        membership_id: null,
+        status: "AVAILABLE",
+        issued_at: null,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Generated Card Batch",
+      target_type: "cards",
+      target_id: `batch-${Date.now()}`,
+      metadata: { count: data.count, status: "AVAILABLE" },
+      created_at: now,
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+    return { ok: true, count: data.count };
   });
 
-// Admin Get Cards — Supabase only
+// Admin Get Cards
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  const { getServerSupabase } = await import("./supabase-admin.server");
-  const sb = getServerSupabase();
+  await ensureStoreLoadedCloud();
 
-  const { data: rpcCards, error: rpcErr } = await sb.rpc("get_all_physical_cards");
-  if (!rpcErr && Array.isArray(rpcCards)) return rpcCards;
+  if (!store.cards) store.cards = new Map();
+  if (!store.members) store.members = new Map();
 
-  // Fallback to direct select
-  const { data: dbCards, error: dbErr } = await sb
-    .from("physical_cards")
-    .select("id,card_number,status,created_at,issued_at,membership_id,memberships(id,membership_number,full_name)")
-    .order("created_at", { ascending: false });
+  const cardsList = Array.from(store.cards.values()).map((c) => {
+    const member = c.membership_id ? store.members.get(c.membership_id) : undefined;
+    return {
+      id: c.id,
+      card_number: c.card_number,
+      status: c.status,
+      created_at: c.created_at,
+      issued_at: c.issued_at,
+      membership_id: c.membership_id,
+      member: member?.full_name || "",
+      membership_number: member?.membership_number || "",
+    };
+  });
 
-  if (dbErr) throw new Error(`Failed to load cards: ${dbErr.message}`);
-  return (dbCards ?? []).map((c: any) => ({
-    id: c.id,
-    card_number: c.card_number,
-    status: c.status,
-    created_at: c.created_at,
-    issued_at: c.issued_at,
-    membership_id: c.membership_id,
-    member: c.memberships?.full_name || "",
-    membership_number: c.memberships?.membership_number || "",
-  }));
+  return cardsList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 });
 
-// Admin Get Members — Supabase only, no v1-store fallback for data
+// Admin Get Members
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  const { getServerSupabase } = await import("./supabase-admin.server");
-  const sb = getServerSupabase();
+  await ensureStoreLoadedCloud();
 
-  const { data: rpcMembers, error: rpcErr } = await sb.rpc("get_all_memberships");
-  if (!rpcErr && Array.isArray(rpcMembers)) return rpcMembers;
+  if (!store.members) store.members = new Map();
+  if (!store.deletedMemberIds) store.deletedMemberIds = [];
 
-  // Fallback to direct select
-  const { data: dbMembers, error: dbErr } = await sb
-    .from("memberships")
-    .select("id,membership_number,full_name,mobile,email,plan_id,start_date,expiry_date,status,card_number,created_at,updated_at,plan:membership_plans(name),card_id:physical_cards(id)")
-    .order("created_at", { ascending: false });
+  const delSet = new Set(store.deletedMemberIds);
 
-  if (dbErr) throw new Error(`Failed to load members: ${dbErr.message}`);
-  return (dbMembers ?? []).map((m: any) => ({
-    id: m.id,
-    membership_number: m.membership_number,
-    full_name: m.full_name || "",
-    mobile: m.mobile || "",
-    email: m.email || "",
-    plan_id: m.plan_id,
-    plan_name: (Array.isArray(m.plan) ? m.plan[0]?.name : m.plan?.name) || "PennyGrade 6-Month Membership",
-    start_date: m.start_date,
-    expiry_date: m.expiry_date,
-    status: m.status,
-    created_at: m.created_at,
-    updated_at: m.updated_at,
-    card_number: m.card_number || m.membership_number,
-    card_id: Array.isArray(m.card_id) ? m.card_id[0]?.id : m.card_id?.id,
-  }));
+  const membersList = Array.from(store.members.values())
+    .filter((m) => !delSet.has(m.id) && !delSet.has(m.membership_number))
+    .map((m) => ({
+      id: m.id,
+      membership_number: m.membership_number,
+      full_name: m.full_name || "",
+      mobile: m.mobile || "",
+      email: m.email || "",
+      plan_id: m.plan_id || "fd6de953-c15d-4b7f-aae4-b97b6d21b043",
+      plan_name: m.plan_name || "PennyGrade 6-Month Membership",
+      start_date: m.start_date,
+      expiry_date: m.expiry_date,
+      status: m.status,
+      created_at: m.created_at,
+      updated_at: m.updated_at,
+      card_number: m.card_number || m.membership_number,
+      card_id: m.card_id || "",
+    }));
+
+  return membersList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 });
 
-// Admin Update Member Status — Supabase only
+// Admin Update Member Status
 export const updateMemberStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED" }) =>
     z.object({
@@ -180,84 +266,141 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    const { error } = await sb.from("memberships").update({ status: data.status }).eq("id", data.id);
-    if (error) throw new Error(`Failed to update member status: ${error.message}`);
-    return { ok: true };
-  });
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
 
-// Admin Delete Member — Supabase only
-export const deleteMember = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
-  .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
-
-    if (isUuid) {
-      // Use the authoritative RPC that cascades cleanly
-      const { error } = await sb.rpc("admin_delete_member", { p_member_id: data.id });
-      if (error) {
-        // Fallback: direct delete
-        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", data.id);
-        const { error: delErr } = await sb.from("memberships").delete().eq("id", data.id);
-        if (delErr) throw new Error(`Failed to delete member: ${delErr.message}`);
-      }
-    } else {
-      // data.id might be a membership_number — look up the UUID first
-      const { data: dbM, error: lookupErr } = await sb
-        .from("memberships")
-        .select("id")
-        .eq("membership_number", data.id)
-        .maybeSingle();
-      if (lookupErr) throw new Error(`Failed to look up member: ${lookupErr.message}`);
-      if (!dbM?.id) throw new Error("Member not found");
-      const { error } = await sb.rpc("admin_delete_member", { p_member_id: dbM.id });
-      if (error) {
-        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", dbM.id);
-        const { error: delErr } = await sb.from("memberships").delete().eq("id", dbM.id);
-        if (delErr) throw new Error(`Failed to delete member: ${delErr.message}`);
+    let targetMember: V1Member | undefined;
+    for (const m of store.members.values()) {
+      if (m.id === data.id || m.membership_number === data.id) {
+        m.status = data.status;
+        m.updated_at = new Date().toISOString();
+        targetMember = m;
+        break;
       }
     }
 
+    if (!targetMember) throw new Error("Member not found");
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Updated Member Status",
+      target_type: "membership",
+      target_id: targetMember.id,
+      metadata: { status: data.status, name: targetMember.full_name },
+      created_at: new Date().toISOString(),
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
     return { ok: true };
   });
 
-// Admin Renew Membership — Supabase only
+// Admin Delete Member
+export const deleteMember = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
+
+    if (!store.deletedMemberIds) store.deletedMemberIds = [];
+
+    let targetKey: string | null = null;
+    let memberRecord: V1Member | null = null;
+
+    for (const [k, v] of store.members.entries()) {
+      if (k === data.id || v.id === data.id || v.membership_number === data.id) {
+        targetKey = k;
+        memberRecord = v;
+        break;
+      }
+    }
+
+    if (memberRecord) {
+      store.deletedMemberIds.push(memberRecord.id);
+      if (memberRecord.membership_number) {
+        store.deletedMemberIds.push(memberRecord.membership_number);
+      }
+    } else {
+      store.deletedMemberIds.push(data.id);
+    }
+
+    if (targetKey) {
+      store.members.delete(targetKey);
+    }
+
+    // Free associated physical card
+    for (const card of store.cards.values()) {
+      if (
+        card.membership_id === data.id ||
+        (memberRecord && card.membership_id === memberRecord.id) ||
+        (memberRecord && card.card_number === memberRecord.card_number)
+      ) {
+        card.membership_id = null;
+        card.status = "AVAILABLE";
+        card.updated_at = new Date().toISOString();
+      }
+    }
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Deleted Member",
+      target_type: "membership",
+      target_id: data.id,
+      metadata: { deleted_name: memberRecord?.full_name || "Member" },
+      created_at: new Date().toISOString(),
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+    return { ok: true };
+  });
+
+// Admin Renew Membership
 export const renewMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; durationDays?: number }) =>
     z.object({ id: z.string(), durationDays: z.number().optional() }).parse(d)
   )
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
 
-    // Fetch current member from DB
-    const { data: member, error: fetchErr } = await sb
-      .from("memberships")
-      .select("id,expiry_date,status")
-      .eq("id", data.id)
-      .maybeSingle();
-    if (fetchErr) throw new Error(`Failed to fetch member: ${fetchErr.message}`);
-    if (!member) throw new Error("Member not found");
+    let targetMember: V1Member | undefined;
+    for (const m of store.members.values()) {
+      if (m.id === data.id || m.membership_number === data.id) {
+        targetMember = m;
+        break;
+      }
+    }
+
+    if (!targetMember) throw new Error("Member not found");
 
     const days = data.durationDays ?? 180;
-    const currentExpiry = new Date(Math.max(Date.now(), new Date(member.expiry_date).getTime()));
+    const currentExpiry = new Date(Math.max(Date.now(), new Date(targetMember.expiry_date).getTime()));
     currentExpiry.setDate(currentExpiry.getDate() + days);
     const newExpiry = currentExpiry.toISOString().slice(0, 10);
 
-    const { error } = await sb.from("memberships").update({ expiry_date: newExpiry, status: "ACTIVE" }).eq("id", data.id);
-    if (error) throw new Error(`Failed to renew member: ${error.message}`);
+    targetMember.expiry_date = newExpiry;
+    targetMember.status = "ACTIVE";
+    targetMember.updated_at = new Date().toISOString();
 
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Renewed Membership",
+      target_type: "membership",
+      target_id: targetMember.id,
+      metadata: { new_expiry: newExpiry, duration_days: days, name: targetMember.full_name },
+      created_at: new Date().toISOString(),
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
     return { ok: true, new_expiry: newExpiry };
   });
 
-// Admin Assign / Replace Card — Supabase only
+// Admin Assign / Replace Card
 export const assignCardToMember = createServerFn({ method: "POST" })
   .inputValidator((d: { memberId: string; cardId: string; oldCardStatus?: "LOST" | "CANCELLED" }) =>
     z.object({
@@ -267,17 +410,54 @@ export const assignCardToMember = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    const { data: res, error } = await sb.rpc("admin_assign_card", {
-      p_member_id: data.memberId,
-      p_card_id: data.cardId,
-      p_old_card_status: data.oldCardStatus || "LOST",
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
+
+    let targetMember: V1Member | undefined;
+    for (const m of store.members.values()) {
+      if (m.id === data.memberId || m.membership_number === data.memberId) {
+        targetMember = m;
+        break;
+      }
+    }
+
+    if (!targetMember) throw new Error("Member not found");
+
+    const newCard = store.cards.get(data.cardId);
+    if (!newCard) throw new Error("Card not found");
+
+    // If member already had a card, mark it
+    for (const c of store.cards.values()) {
+      if (c.membership_id === targetMember.id && c.id !== newCard.id) {
+        c.status = data.oldCardStatus || "CANCELLED";
+        c.membership_id = null;
+        c.updated_at = new Date().toISOString();
+      }
+    }
+
+    const now = new Date().toISOString();
+    newCard.status = "ACTIVE";
+    newCard.membership_id = targetMember.id;
+    newCard.issued_at = now;
+    newCard.updated_at = now;
+
+    targetMember.card_id = newCard.id;
+    targetMember.card_number = newCard.card_number;
+    targetMember.updated_at = now;
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Assigned Card",
+      target_type: "cards",
+      target_id: newCard.id,
+      metadata: { card_number: newCard.card_number, member: targetMember.full_name },
+      created_at: now,
+      who: admin.full_name || "Admin",
     });
-    if (error) throw new Error(`Failed to assign card: ${error.message}`);
-    if (!res?.ok) throw new Error("Card assignment returned not-ok");
-    return { ok: true, card_number: res.card_number as string };
+
+    await persistStoreCloud();
+    return { ok: true, card_number: newCard.card_number };
   });
 
 // Admin Get Admin Users (Server Function)
@@ -570,6 +750,8 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
 // Admin Get Audit Logs (Server Function)
 export const getAdminAuditLogs = createServerFn({ method: "GET" }).handler(async (): Promise<V1AuditLog[]> => {
   requireAdminAuth();
+  await ensureStoreLoadedCloud();
+  if (!store.auditLogs) store.auditLogs = [];
   const storeAudits: V1AuditLog[] = (store.auditLogs || []).map((a) => ({
     id: a.id,
     admin_user_id: a.admin_user_id,
@@ -1023,42 +1205,43 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
     return { ok: true, status: app.status };
   });
 
-// ---------------- PARTNERS MANAGEMENT (Supabase only) ----------------
+// ---------------- PARTNERS & OFFERS MANAGEMENT (Cloud Persisted) ----------------
 
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  const { getServerSupabase } = await import("./supabase-admin.server");
-  const sb = getServerSupabase();
+  await ensureStoreLoadedCloud();
 
-  const { data: dbPartners, error } = await sb
-    .from("partners")
-    .select("*, category:categories(id, name, slug)")
-    .order("business_name", { ascending: true });
+  if (!store.partners) store.partners = seedPartners();
+  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
 
-  if (error) throw new Error(`Failed to load partners: ${error.message}`);
+  const delSet = new Set(store.deletedPartnerIds);
 
-  return (dbPartners ?? []).map((p: any) => ({
-    id: p.id,
-    business_name: p.business_name,
-    slug: p.slug,
-    category_id: p.category_id,
-    category_name: p.category?.name || "General",
-    description: p.description || "",
-    logo_url: p.logo_url || "",
-    cover_image_url: p.cover_image_url || "",
-    phone: p.phone || "",
-    email: p.email || "",
-    website: p.website || "",
-    address: p.address || "",
-    city: p.city || "Daltonganj",
-    latitude: p.latitude ?? null,
-    longitude: p.longitude ?? null,
-    business_hours: p.business_hours || "",
-    status: p.status,
-    featured: Boolean(p.featured),
-    created_at: p.created_at,
-    updated_at: p.updated_at,
-  }));
+  const partnersList = Array.from(store.partners.values())
+    .filter((p) => !delSet.has(p.id) && !delSet.has(p.slug))
+    .map((p) => ({
+      id: p.id,
+      business_name: p.business_name,
+      slug: p.slug,
+      category_id: p.category_id,
+      category_name: p.category_name || "General",
+      description: p.description || "",
+      logo_url: p.logo_url || "",
+      cover_image_url: p.cover_image_url || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+      phone: p.phone || "",
+      email: p.email || "",
+      website: p.website || "",
+      address: p.address || "",
+      city: p.city || "Daltonganj",
+      latitude: p.latitude ?? null,
+      longitude: p.longitude ?? null,
+      business_hours: p.business_hours || "",
+      status: p.status,
+      featured: Boolean(p.featured),
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+    }));
+
+  return partnersList.sort((a, b) => a.business_name.localeCompare(b.business_name));
 });
 
 const savePartnerSchema = z.object({
@@ -1085,43 +1268,81 @@ const savePartnerSchema = z.object({
 export const savePartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePartnerSchema.parse(d))
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
 
-    const isExisting = !!data.id;
+    if (!store.partners) store.partners = new Map();
+    if (!store.auditLogs) store.auditLogs = [];
+
     const partnerId = data.id || safeRandomUUID();
+    const now = new Date().toISOString();
 
-    const sbPayload: any = {
+    const partnerRecord: V1Partner = {
       id: partnerId,
       business_name: data.business_name,
       slug: data.slug.trim().toLowerCase(),
       category_id: data.category_id,
-      description: data.description || null,
-      logo_url: data.logo_url || null,
-      cover_image_url: data.cover_image_url ||
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
-      phone: data.phone || null,
-      email: data.email || null,
-      website: data.website || null,
-      address: data.address || null,
+      category_name: data.category_name || "General",
+      description: data.description || "",
+      logo_url: data.logo_url || "",
+      cover_image_url: data.cover_image_url || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+      phone: data.phone || "",
+      email: data.email || "",
+      website: data.website || "",
+      address: data.address || "",
       city: data.city || "Daltonganj",
       latitude: data.latitude ?? null,
       longitude: data.longitude ?? null,
-      business_hours: data.business_hours || null,
+      business_hours: data.business_hours || "",
       status: data.status,
       featured: data.featured,
+      created_at: now,
+      updated_at: now,
     };
 
-    if (isExisting) {
-      const { error } = await sb.from("partners").update(sbPayload).eq("id", partnerId);
-      if (error) throw new Error(`Failed to update partner: ${error.message}`);
-    } else {
-      const { error } = await sb.from("partners").insert(sbPayload);
-      if (error) throw new Error(`Failed to create partner: ${error.message}`);
+    store.partners.set(partnerId, partnerRecord);
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: data.id ? "Updated Partner" : "Created Partner",
+      target_type: "partner",
+      target_id: partnerId,
+      metadata: { name: data.business_name, slug: partnerRecord.slug },
+      created_at: now,
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+
+    // Background attempt to mirror to Supabase if configured
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      await sb.from("partners").upsert({
+        id: partnerId,
+        business_name: data.business_name,
+        slug: partnerRecord.slug,
+        category_id: data.category_id,
+        description: data.description || null,
+        logo_url: data.logo_url || null,
+        cover_image_url: partnerRecord.cover_image_url,
+        phone: data.phone || null,
+        email: data.email || null,
+        website: data.website || null,
+        address: data.address || null,
+        city: data.city || "Daltonganj",
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+        business_hours: data.business_hours || null,
+        status: data.status,
+        featured: data.featured,
+      });
+    } catch {
+      // Non-blocking mirror
     }
 
-    return { ok: true, partner: { ...sbPayload, category_name: data.category_name || "General" } };
+    return { ok: true, partner: partnerRecord };
   });
 
 export const updatePartnerStatus = createServerFn({ method: "POST" })
@@ -1133,62 +1354,136 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    const patch: any = {};
-    if (data.status !== undefined) patch.status = data.status;
-    if (data.featured !== undefined) patch.featured = data.featured;
-    const { error } = await sb.from("partners").update(patch).eq("id", data.id);
-    if (error) throw new Error(`Failed to update partner status: ${error.message}`);
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
+
+    const partner = store.partners?.get(data.id);
+    if (!partner) throw new Error("Partner not found");
+
+    if (data.status !== undefined) partner.status = data.status;
+    if (data.featured !== undefined) partner.featured = data.featured;
+    partner.updated_at = new Date().toISOString();
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Updated Partner Status",
+      target_type: "partner",
+      target_id: data.id,
+      metadata: { status: data.status, featured: data.featured, name: partner.business_name },
+      created_at: new Date().toISOString(),
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      const patch: any = {};
+      if (data.status !== undefined) patch.status = data.status;
+      if (data.featured !== undefined) patch.featured = data.featured;
+      await sb.from("partners").update(patch).eq("id", data.id);
+    } catch {
+      // Non-blocking
+    }
+
     return { ok: true };
   });
 
 export const deletePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    // Cascade: delete offers first, then partner
-    await sb.from("offers").delete().eq("partner_id", data.id);
-    const { error } = await sb.from("partners").delete().eq("id", data.id);
-    if (error) throw new Error(`Failed to delete partner: ${error.message}`);
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
+
+    if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
+    if (!store.deletedOfferIds) store.deletedOfferIds = [];
+
+    const partner = store.partners?.get(data.id);
+    store.deletedPartnerIds.push(data.id);
+    if (partner?.slug) {
+      store.deletedPartnerIds.push(partner.slug);
+    }
+
+    if (store.partners) {
+      store.partners.delete(data.id);
+    }
+
+    // Cascade delete partner's offers
+    if (store.offers) {
+      for (const [offerId, offer] of Array.from(store.offers.entries())) {
+        if (offer.partner_id === data.id) {
+          store.offers.delete(offerId);
+          store.deletedOfferIds.push(offerId);
+        }
+      }
+    }
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Deleted Partner",
+      target_type: "partner",
+      target_id: data.id,
+      metadata: { deleted_name: partner?.business_name || "Partner" },
+      created_at: new Date().toISOString(),
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      await sb.from("offers").delete().eq("partner_id", data.id);
+      await sb.from("partners").delete().eq("id", data.id);
+    } catch {
+      // Non-blocking
+    }
+
     return { ok: true };
   });
 
-// Admin Get Offers — Supabase only
+// Admin Get Offers
 export const getAdminOffers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  const { getServerSupabase } = await import("./supabase-admin.server");
-  const sb = getServerSupabase();
+  await ensureStoreLoadedCloud();
 
-  const { data: dbOffers, error } = await sb
-    .from("offers")
-    .select("*, partner:partners(id, business_name, slug)")
-    .order("created_at", { ascending: false });
+  if (!store.offers) store.offers = seedOffers();
+  if (!store.partners) store.partners = seedPartners();
+  if (!store.deletedOfferIds) store.deletedOfferIds = [];
+  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
 
-  if (error) throw new Error(`Failed to load offers: ${error.message}`);
+  const delOffers = new Set(store.deletedOfferIds);
+  const delPartners = new Set(store.deletedPartnerIds);
 
-  return (dbOffers ?? []).map((o: any) => ({
-    id: o.id,
-    partner_id: o.partner_id,
-    title: o.title,
-    description: o.description || "",
-    discount_type: o.discount_type,
-    discount_value: Number(o.discount_value),
-    max_discount: o.max_discount ? Number(o.max_discount) : null,
-    minimum_bill: Number(o.minimum_bill),
-    valid_from: o.valid_from,
-    valid_until: o.valid_until,
-    valid_days: o.valid_days || [0, 1, 2, 3, 4, 5, 6],
-    terms_conditions: o.terms_conditions || "",
-    usage_limit_type: o.usage_limit_type,
-    status: o.status,
-    created_at: o.created_at,
-    updated_at: o.updated_at,
-    partner: o.partner ? { id: o.partner.id, business_name: o.partner.business_name, slug: o.partner.slug } : undefined,
-  }));
+  const offersList = Array.from(store.offers.values())
+    .filter((o) => !delOffers.has(o.id) && !delPartners.has(o.partner_id))
+    .map((o) => {
+      const partner = store.partners.get(o.partner_id);
+      return {
+        id: o.id,
+        partner_id: o.partner_id,
+        title: o.title,
+        description: o.description || "",
+        discount_type: o.discount_type,
+        discount_value: Number(o.discount_value),
+        max_discount: o.max_discount ? Number(o.max_discount) : null,
+        minimum_bill: Number(o.minimum_bill),
+        valid_from: o.valid_from,
+        valid_until: o.valid_until,
+        valid_days: o.valid_days || [0, 1, 2, 3, 4, 5, 6],
+        terms_conditions: o.terms_conditions || "",
+        usage_limit_type: o.usage_limit_type,
+        status: o.status,
+        created_at: o.created_at,
+        updated_at: o.updated_at,
+        partner: partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined,
+      };
+    });
+
+  return offersList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 });
 
 const saveOfferSchema = z.object({
@@ -1208,22 +1503,26 @@ const saveOfferSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 });
 
-// Admin Save (Create / Update) Offer — Supabase only
+// Admin Save Offer
 export const saveOffer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveOfferSchema.parse(d))
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
 
-    const isExisting = !!data.id;
+    if (!store.offers) store.offers = new Map();
+    if (!store.auditLogs) store.auditLogs = [];
+
     const offerId = data.id || safeRandomUUID();
+    const now = new Date().toISOString();
 
-    const payload = {
+    const partner = store.partners?.get(data.partner_id);
+
+    const offerRecord: V1Offer = {
       id: offerId,
       partner_id: data.partner_id,
       title: data.title,
-      description: data.description || null,
+      description: data.description || "",
       discount_type: data.discount_type,
       discount_value: data.discount_value,
       max_discount: data.max_discount ?? null,
@@ -1231,30 +1530,91 @@ export const saveOffer = createServerFn({ method: "POST" })
       valid_from: data.valid_from || null,
       valid_until: data.valid_until || null,
       valid_days: data.valid_days,
-      terms_conditions: data.terms_conditions || null,
-      usage_limit_type: "UNLIMITED" as const,
+      terms_conditions: data.terms_conditions || "",
+      usage_limit_type: "UNLIMITED",
       status: data.status,
+      created_at: now,
+      updated_at: now,
+      partner: partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined,
     };
 
-    if (isExisting) {
-      const { error } = await sb.from("offers").update(payload).eq("id", offerId);
-      if (error) throw new Error(`Failed to update offer: ${error.message}`);
-    } else {
-      const { error } = await sb.from("offers").insert(payload);
-      if (error) throw new Error(`Failed to create offer: ${error.message}`);
+    store.offers.set(offerId, offerRecord);
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: data.id ? "Updated Offer" : "Created Offer",
+      target_type: "offer",
+      target_id: offerId,
+      metadata: { title: data.title, partner: partner?.business_name },
+      created_at: now,
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      await sb.from("offers").upsert({
+        id: offerId,
+        partner_id: data.partner_id,
+        title: data.title,
+        description: data.description || null,
+        discount_type: data.discount_type,
+        discount_value: data.discount_value,
+        max_discount: data.max_discount ?? null,
+        minimum_bill: data.minimum_bill,
+        valid_from: data.valid_from || null,
+        valid_until: data.valid_until || null,
+        valid_days: data.valid_days,
+        terms_conditions: data.terms_conditions || null,
+        usage_limit_type: "UNLIMITED" as const,
+        status: data.status,
+      });
+    } catch {
+      // Non-blocking
     }
 
-    return { ok: true, offer: payload };
+    return { ok: true, offer: offerRecord };
   });
 
-// Admin Delete Offer — Supabase only
+// Admin Delete Offer
 export const deleteOffer = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    requireAdminAuth();
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    const { error } = await sb.from("offers").delete().eq("id", data.id);
-    if (error) throw new Error(`Failed to delete offer: ${error.message}`);
+    const admin = requireAdminAuth();
+    await ensureStoreLoadedCloud();
+
+    if (!store.deletedOfferIds) store.deletedOfferIds = [];
+
+    const offer = store.offers?.get(data.id);
+    store.deletedOfferIds.push(data.id);
+    if (store.offers) {
+      store.offers.delete(data.id);
+    }
+
+    store.auditLogs.unshift({
+      id: safeRandomUUID(),
+      admin_user_id: admin.id,
+      action: "Deleted Offer",
+      target_type: "offer",
+      target_id: data.id,
+      metadata: { title: offer?.title || "Offer" },
+      created_at: new Date().toISOString(),
+      who: admin.full_name || "Admin",
+    });
+
+    await persistStoreCloud();
+
+    try {
+      const { getServerSupabase } = await import("./supabase-admin.server");
+      const sb = getServerSupabase();
+      await sb.from("offers").delete().eq("id", data.id);
+    } catch {
+      // Non-blocking
+    }
+
     return { ok: true };
   });
+
