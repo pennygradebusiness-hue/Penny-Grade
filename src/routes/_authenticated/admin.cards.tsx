@@ -38,7 +38,11 @@ function Cards() {
       const cards = await fetchCardsFn();
       return (cards ?? []) as Card[];
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
   });
+
 
   const rows = (q.data ?? []).filter((c) => !status || c.status === status);
   const counts = (q.data ?? []).reduce<Record<string, number>>(

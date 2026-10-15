@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Plus, Trash2, RefreshCw } from "lucide-react";
 import { PageHeader, DataTable, td, TableSkeleton, Select, downloadCsv } from "@/components/admin-ui";
 import { StatusBadge } from "@/components/brand";
 import { Button } from "@/components/ui/button";
@@ -63,8 +63,10 @@ function Members() {
       const members = await fetchMembersFn();
       return (members ?? []) as unknown as Row[];
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
   });
-
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -91,31 +93,39 @@ function Members() {
       const res = await fetchAppsFn();
       return (res ?? []) as V1MemberApplication[];
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
   });
 
   const paged = rows.slice(page * PAGE, page * PAGE + PAGE);
+
   const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["admin"] });
+    qc.invalidateQueries({ queryKey: ["admin", "members"] });
+    qc.invalidateQueries({ queryKey: ["admin", "cards"] });
+    qc.invalidateQueries({ queryKey: ["admin", "available-cards"] });
+    qc.invalidateQueries({ queryKey: ["admin", "member-applications"] });
   };
 
   const setMStatus = async (m: Row, s: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED") => {
+    qc.setQueryData<Row[]>(["admin", "members"], (old) =>
+      (old ?? []).map((item) => item.id === m.id ? { ...item, status: s } : item)
+    );
     try {
       await updateStatusFn({ data: { id: m.id, status: s } });
       toast.success(`Membership ${s.toLowerCase()}`);
       refresh();
-    } catch {
-      toast.error("Failed to update status");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update status");
+      refresh();
     }
   };
 
   const handleDeleteMember = async (m: Row) => {
     if (!confirm(`Are you sure you want to permanently delete member "${m.full_name}" (${m.membership_number})? This action cannot be undone.`)) return;
+    qc.setQueryData<Row[]>(["admin", "members"], (old) =>
+      (old ?? []).filter((item) => item.id !== m.id && item.membership_number !== m.membership_number)
+    );
     try {
-      // Optimistic cache update: remove immediately so UI responds in 0ms with no flicker
-      qc.setQueryData<Row[]>(["admin", "members"], (old) =>
-        (old ?? []).filter((item) => item.id !== m.id && item.membership_number !== m.membership_number)
-      );
-
       await deleteMemberFn({ data: { id: m.id } });
       toast.success(`Member "${m.full_name}" deleted`);
       refresh();
@@ -130,8 +140,8 @@ function Members() {
       const res = await renewFn({ data: { id: m.id, durationDays: 180 } });
       toast.success(`Renewed until ${fmtDate(res.new_expiry)}`);
       refresh();
-    } catch {
-      toast.error("Failed to renew");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to renew");
     }
   };
 
@@ -149,7 +159,7 @@ function Members() {
     try {
       await updateAppStatusFn({ data: { id: appId, status } });
       toast.success(`Application marked as ${status.replace(/_/g, " ")}`);
-      refresh();
+      qc.invalidateQueries({ queryKey: ["admin", "member-applications"] });
     } catch (err: any) {
       toast.error(err?.message || "Failed to update status");
     }
@@ -184,17 +194,24 @@ function Members() {
                 ])
               }
             >
-              Export
+              Export CSV
             </Button>
-            <Button size="sm" onClick={() => setCreating(true)} className="bg-gold font-semibold text-accent-foreground hover:bg-gold-soft">
-              <Plus className="h-4 w-4" /> Create member
+            <Button variant="outline" size="sm" onClick={() => refresh()} disabled={q.isFetching}>
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${q.isFetching ? "animate-spin" : ""}`} />
+              {q.isFetching ? "Refreshing…" : "Refresh"}
+            </Button>
+            <Button
+              size="sm"
+              className="bg-gold font-bold text-accent-foreground hover:bg-gold-soft"
+              onClick={() => setCreating(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" /> New Member
             </Button>
           </>
         }
       />
 
-      {/* Tabs */}
-      <div className="mb-5 flex items-center gap-2 border-b border-border pb-3">
+      <div className="mb-4 flex items-center gap-1 rounded-xl border bg-card p-1 w-fit">
         <button
           type="button"
           onClick={() => setActiveTab("members")}
@@ -225,12 +242,10 @@ function Members() {
       </div>
 
       {activeTab === "applications" ? (
-        /* Applications Table */
         <div>
           <div className="mb-4 text-xs text-muted-foreground">
             Applications received from the public <strong className="text-foreground">"Become a Member"</strong> page. Contact willing members to verify details and click "Approve & Issue Card" to assign a physical card.
           </div>
-
           {appsQ.isLoading ? (
             <TableSkeleton />
           ) : (
@@ -242,24 +257,17 @@ function Members() {
                 <tr key={app.id} className="hover:bg-muted/40">
                   <td className={`${td} font-mono text-xs font-semibold`}>
                     {app.application_number}
-                    <div className="text-[10px] text-muted-foreground font-normal">
-                      {fmtDate(app.created_at)}
-                    </div>
+                    <div className="text-[10px] text-muted-foreground font-normal">{fmtDate(app.created_at)}</div>
                   </td>
                   <td className={`${td} font-medium`}>
                     <p className="font-bold text-foreground">{app.full_name}</p>
                     <p className="text-xs text-muted-foreground">{app.email}</p>
                     {app.notes && (
-                      <p className="mt-1 text-[11px] text-amber-800 bg-amber-50 rounded px-1.5 py-0.5 inline-block">
-                        Note: {app.notes}
-                      </p>
+                      <p className="mt-1 text-[11px] text-amber-800 bg-amber-50 rounded px-1.5 py-0.5 inline-block">Note: {app.notes}</p>
                     )}
                   </td>
                   <td className={td}>
-                    <a
-                      href={`tel:+91${app.mobile}`}
-                      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-                    >
+                    <a href={`tel:+91${app.mobile}`} className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">
                       +91 {app.mobile}
                     </a>
                   </td>
@@ -267,64 +275,32 @@ function Members() {
                     <p className="font-semibold text-xs">{app.city}</p>
                     <p className="text-[11px] text-muted-foreground">{app.delivery_preference}</p>
                   </td>
-                  <td className={`${td} text-xs text-muted-foreground`}>
-                    {app.payment_preference}
-                  </td>
+                  <td className={`${td} text-xs text-muted-foreground`}>{app.payment_preference}</td>
                   <td className={td}>
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                        app.status === "APPROVED"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : app.status === "CONTACTED"
-                          ? "bg-blue-100 text-blue-800"
-                          : app.status === "REJECTED"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      app.status === "APPROVED" ? "bg-emerald-100 text-emerald-800"
+                      : app.status === "CONTACTED" ? "bg-blue-100 text-blue-800"
+                      : app.status === "REJECTED" ? "bg-red-100 text-red-800"
+                      : "bg-amber-100 text-amber-800"
+                    }`}>
                       {app.status.replace(/_/g, " ")}
                     </span>
                     {app.assigned_card_number && (
-                      <div className="mt-1 font-mono text-[10px] font-bold text-slate-700">
-                        Card: {app.assigned_card_number}
-                      </div>
+                      <div className="mt-1 font-mono text-[10px] font-bold text-slate-700">Card: {app.assigned_card_number}</div>
                     )}
                   </td>
                   <td className={td}>
                     <div className="flex items-center gap-1.5">
                       {app.status === "PENDING_VERIFICATION" && (
                         <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs"
-                            onClick={() => handleUpdateAppStatus(app.id, "CONTACTED")}
-                          >
-                            Mark Contacted
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="h-7 bg-gold font-bold text-accent-foreground hover:bg-gold-soft text-xs"
-                            onClick={() => handleApproveApp(app.id)}
-                          >
-                            Approve & Issue Card
-                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleUpdateAppStatus(app.id, "CONTACTED")}>Mark Contacted</Button>
+                          <Button size="sm" className="h-7 bg-gold font-bold text-accent-foreground hover:bg-gold-soft text-xs" onClick={() => handleApproveApp(app.id)}>Approve & Issue Card</Button>
                         </>
                       )}
                       {app.status === "CONTACTED" && (
-                        <Button
-                          size="sm"
-                          className="h-7 bg-gold font-bold text-accent-foreground hover:bg-gold-soft text-xs"
-                          onClick={() => handleApproveApp(app.id)}
-                        >
-                          Approve & Issue Card
-                        </Button>
+                        <Button size="sm" className="h-7 bg-gold font-bold text-accent-foreground hover:bg-gold-soft text-xs" onClick={() => handleApproveApp(app.id)}>Approve & Issue Card</Button>
                       )}
-                      {app.status === "APPROVED" && (
-                        <span className="text-xs text-emerald-600 font-semibold">
-                          ✓ Card Issued
-                        </span>
-                      )}
+                      {app.status === "APPROVED" && <span className="text-xs text-emerald-600 font-semibold">✓ Card Issued</span>}
                     </div>
                   </td>
                 </tr>
@@ -333,20 +309,12 @@ function Members() {
           )}
         </div>
       ) : (
-        /* Active Members Table */
         <div>
           <div className="mb-4 flex flex-wrap gap-2">
-            <Input
-              placeholder="Search name, email, mobile, ID"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              className="h-9 max-w-xs bg-card"
-            />
+            <Input placeholder="Search name, email, mobile, ID" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="h-9 max-w-xs bg-card" />
             <Select value={status} onChange={(v) => { setStatus(v); setPage(0); }}>
               <option value="">All statuses</option>
-              {["ACTIVE", "EXPIRED", "SUSPENDED", "CANCELLED"].map((s) => (
-                <option key={s}>{s}</option>
-              ))}
+              {["ACTIVE", "EXPIRED", "SUSPENDED", "CANCELLED"].map((s) => <option key={s}>{s}</option>)}
             </Select>
             <Select value={sort} onChange={setSort}>
               <option value="new">Newest</option>
@@ -354,85 +322,62 @@ function Members() {
               <option value="expiry">Expiry soonest</option>
             </Select>
           </div>
-
           {q.isLoading ? (
             <TableSkeleton />
+          ) : q.error ? (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
+              <p className="text-sm text-destructive font-medium">Failed to load members</p>
+              <p className="text-xs text-muted-foreground mt-1">{(q.error as Error).message}</p>
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => refresh()}>Retry</Button>
+            </div>
           ) : (
-            <DataTable
-              head={["Name", "Mobile", "Email", "Membership ID", "Card Number", "Plan", "Start", "Expiry", "Status", ""]}
-              empty={!paged.length}
-            >
-          {paged.map((m) => {
-            const st = effectiveStatus(m);
-            return (
-              <tr key={m.id} className="hover:bg-muted/40">
-                <td className={`${td} font-medium`}>{m.full_name || "—"}</td>
-                <td className={td}>{m.mobile || "—"}</td>
-                <td className={td}>{m.email || "—"}</td>
-                <td className={`${td} font-mono text-xs font-semibold`}>{m.membership_number}</td>
-                <td className={`${td} font-mono text-xs text-muted-foreground`}>{m.card_number || "—"}</td>
-                <td className={td}>{m.plan_name?.replace(/annual/i, "6-Month") || "6-Month"}</td>
-                <td className={td}>{m.start_date}</td>
-                <td className={td}>{m.expiry_date}</td>
-                <td className={td}><StatusBadge status={st} /></td>
-                <td className={td}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="cursor-pointer"><MoreHorizontal className="h-4 w-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem className="cursor-pointer" onClick={() => setView(m)}>View details</DropdownMenuItem>
-                      <DropdownMenuItem className="cursor-pointer" onClick={() => setCardFor(m)}>
-                        {m.card_number ? "Replace card" : "Assign card"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="cursor-pointer" onClick={() => handleRenew(m)}>Renew (180 days)</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {m.status !== "ACTIVE" && (
-                        <DropdownMenuItem className="cursor-pointer font-medium text-emerald-700" onClick={() => setMStatus(m, "ACTIVE")}>
-                          Activate
-                        </DropdownMenuItem>
-                      )}
-                      {m.status === "ACTIVE" && (
-                        <DropdownMenuItem className="cursor-pointer font-medium text-slate-700" onClick={() => setMStatus(m, "INACTIVE")}>
-                          Deactivate
-                        </DropdownMenuItem>
-                      )}
-                      {m.status !== "SUSPENDED" && (
-                        <DropdownMenuItem className="cursor-pointer text-amber-700" onClick={() => setMStatus(m, "SUSPENDED")}>
-                          Suspend
-                        </DropdownMenuItem>
-                      )}
-                      {m.status !== "CANCELLED" && (
-                        <DropdownMenuItem
-                          className="cursor-pointer text-slate-600"
-                          onClick={() => confirm("Cancel this membership?") && setMStatus(m, "CANCELLED")}
-                        >
-                          Cancel
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive font-semibold cursor-pointer hover:bg-destructive/10"
-                        onClick={() => handleDeleteMember(m)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete member
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            );
-          })}
-        </DataTable>
-      )}
-
-        {rows.length > PAGE && (
-          <div className="mt-4 flex items-center justify-end gap-2 text-sm">
-            <span className="text-muted-foreground">Page {page + 1} of {Math.ceil(rows.length / PAGE)}</span>
-            <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Prev</Button>
-            <Button size="sm" variant="outline" disabled={(page + 1) * PAGE >= rows.length} onClick={() => setPage(page + 1)}>Next</Button>
-          </div>
-        )}
+            <DataTable head={["Name", "Mobile", "Email", "Membership ID", "Card Number", "Plan", "Start", "Expiry", "Status", ""]} empty={!paged.length}>
+              {paged.map((m) => {
+                const st = effectiveStatus(m);
+                return (
+                  <tr key={m.id} className="hover:bg-muted/40">
+                    <td className={`${td} font-medium`}>{m.full_name || "—"}</td>
+                    <td className={td}>{m.mobile || "—"}</td>
+                    <td className={td}>{m.email || "—"}</td>
+                    <td className={`${td} font-mono text-xs font-semibold`}>{m.membership_number}</td>
+                    <td className={`${td} font-mono text-xs text-muted-foreground`}>{m.card_number || "—"}</td>
+                    <td className={td}>{m.plan_name?.replace(/annual/i, "6-Month") || "6-Month"}</td>
+                    <td className={td}>{m.start_date}</td>
+                    <td className={td}>{m.expiry_date}</td>
+                    <td className={td}><StatusBadge status={st} /></td>
+                    <td className={td}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="cursor-pointer"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => setView(m)}>View details</DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => setCardFor(m)}>{m.card_number ? "Replace card" : "Assign card"}</DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleRenew(m)}>Renew (180 days)</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {m.status !== "ACTIVE" && <DropdownMenuItem className="cursor-pointer font-medium text-emerald-700" onClick={() => setMStatus(m, "ACTIVE")}>Activate</DropdownMenuItem>}
+                          {m.status === "ACTIVE" && <DropdownMenuItem className="cursor-pointer font-medium text-slate-700" onClick={() => setMStatus(m, "INACTIVE")}>Deactivate</DropdownMenuItem>}
+                          {m.status !== "SUSPENDED" && <DropdownMenuItem className="cursor-pointer text-amber-700" onClick={() => setMStatus(m, "SUSPENDED")}>Suspend</DropdownMenuItem>}
+                          {m.status !== "CANCELLED" && <DropdownMenuItem className="cursor-pointer text-slate-600" onClick={() => confirm("Cancel this membership?") && setMStatus(m, "CANCELLED")}>Cancel</DropdownMenuItem>}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive font-semibold cursor-pointer hover:bg-destructive/10" onClick={() => handleDeleteMember(m)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete member
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                );
+              })}
+            </DataTable>
+          )}
+          {rows.length > PAGE && (
+            <div className="mt-4 flex items-center justify-end gap-2 text-sm">
+              <span className="text-muted-foreground">Page {page + 1} of {Math.ceil(rows.length / PAGE)}</span>
+              <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Prev</Button>
+              <Button size="sm" variant="outline" disabled={(page + 1) * PAGE >= rows.length} onClick={() => setPage(page + 1)}>Next</Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -470,10 +415,12 @@ function Members() {
 function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
   const create = useServerFn(createMember);
   const fetchCardsFn = useServerFn(getAdminCards);
+  const qc = useQueryClient();
 
   const plans = useQuery({
     queryKey: ["admin", "plans"],
     queryFn: async () => (await supabase.from("membership_plans").select("*").order("created_at")).data ?? [],
+    staleTime: 60_000,
   });
 
   const cards = useQuery({
@@ -481,7 +428,7 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
     enabled: open,
     queryFn: async () => {
       const allCards = await fetchCardsFn();
-      return (allCards ?? []).filter((c) => c.status === "AVAILABLE");
+      return (allCards ?? []).filter((c: any) => c.status === "AVAILABLE");
     },
   });
 
@@ -500,7 +447,7 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
   const plan = plans.data?.find((p) => p.id === (f.plan_id || plans.data?.[0]?.id));
   const autoExpiry = (start: string) => {
     const d = new Date(start);
-    d.setDate(d.getDate() + 180); // Strict 6-Month validity (180 days)
+    d.setDate(d.getDate() + 180);
     return d.toISOString().slice(0, 10);
   };
 
@@ -511,19 +458,39 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
     e.preventDefault();
     setBusy(true);
     try {
-      const r = await create({
-        data: {
-          ...f,
-          plan_id: f.plan_id || plan?.id || "f5aef446-7c6e-4781-9fdd-e5fa4dc1c935",
-          expiry_date: f.expiry_date || autoExpiry(f.start_date),
-        },
+      const payload = {
+        ...f,
+        plan_id: f.plan_id || plan?.id || "f5aef446-7c6e-4781-9fdd-e5fa4dc1c935",
+        expiry_date: f.expiry_date || autoExpiry(f.start_date),
+        card_id: f.card_id || undefined,
+        email: f.email?.trim() || undefined,
+      };
+      const r = await create({ data: payload });
+
+      // Optimistic insert into cache so it shows immediately
+      qc.setQueryData<Row[]>(["admin", "members"], (old) => {
+        const newRow: Row = {
+          id: r.membership_number, // temp id; real refetch will correct
+          membership_number: r.membership_number,
+          full_name: f.full_name,
+          mobile: f.mobile,
+          email: f.email || "",
+          plan_id: payload.plan_id,
+          plan_name: plan?.name || "PennyGrade 6-Month Membership",
+          start_date: payload.start_date,
+          expiry_date: payload.expiry_date,
+          status: "ACTIVE",
+          card_number: r.card_number || r.membership_number,
+        };
+        return [newRow, ...(old ?? [])];
       });
+
       toast.success(`Member created · ${r.membership_number}`);
       onDone();
       onClose();
       setF({ full_name: "", mobile: "", email: "", plan_id: "", start_date: today, expiry_date: "", card_id: "" });
-    } catch (err) {
-      toast.error((err as Error).message || "Could not create member");
+    } catch (err: any) {
+      toast.error(err?.message || "Could not create member");
     }
     setBusy(false);
   };
@@ -531,66 +498,29 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create Member</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>Create Member</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
-          <F label="Full Name">
-            <Input required placeholder="e.g. Rahul Sharma" value={f.full_name} onChange={set("full_name")} />
-          </F>
-          <F label="Mobile">
-            <Input required placeholder="e.g. 9876543210" value={f.mobile} onChange={set("mobile")} />
-          </F>
-          <F label="Email (Optional)">
-            <Input type="email" placeholder="e.g. rahul@example.com (optional)" value={f.email} onChange={set("email")} />
-          </F>
+          <F label="Full Name"><Input required placeholder="e.g. Rahul Sharma" value={f.full_name} onChange={set("full_name")} /></F>
+          <F label="Mobile"><Input required placeholder="e.g. 9876543210" value={f.mobile} onChange={set("mobile")} /></F>
+          <F label="Email (Optional)"><Input type="email" placeholder="e.g. rahul@example.com (optional)" value={f.email} onChange={set("email")} /></F>
           <F label="Plan">
-            <Select
-              className="w-full"
-              value={f.plan_id || plan?.id || ""}
-              onChange={(v) => setF({ ...f, plan_id: v })}
-            >
-              {plans.data && plans.data.length > 0 ? (
-                plans.data.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name.replace(/annual/i, "6-Month")} (₹{p.price} · 6 Months)
-                  </option>
-                ))
-              ) : (
-                <option value="f5aef446-7c6e-4781-9fdd-e5fa4dc1c935">PennyGrade 6-Month Membership (₹500 · 6 Months)</option>
-              )}
+            <Select className="w-full" value={f.plan_id || plan?.id || ""} onChange={(v) => setF({ ...f, plan_id: v })}>
+              {plans.data && plans.data.length > 0
+                ? plans.data.map((p) => <option key={p.id} value={p.id}>{p.name.replace(/annual/i, "6-Month")} (Rs.{p.price} · 6 Months)</option>)
+                : <option value="f5aef446-7c6e-4781-9fdd-e5fa4dc1c935">PennyGrade 6-Month Membership (Rs.500 · 6 Months)</option>
+              }
             </Select>
           </F>
           <F label="Assign Physical Card">
-            <Select
-              className="w-full"
-              value={f.card_id}
-              onChange={(v) => setF({ ...f, card_id: v })}
-            >
+            <Select className="w-full" value={f.card_id} onChange={(v) => setF({ ...f, card_id: v })}>
               <option value="">Auto-assign / New card</option>
-              {cards.data?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.card_number}
-                </option>
-              ))}
+              {cards.data?.map((c: any) => <option key={c.id} value={c.id}>{c.card_number}</option>)}
             </Select>
           </F>
-          <F label="Start Date">
-            <Input type="date" value={f.start_date} onChange={set("start_date")} />
-          </F>
-          <F label="Expiry Date">
-            <Input
-              type="date"
-              value={f.expiry_date || autoExpiry(f.start_date)}
-              onChange={set("expiry_date")}
-            />
-          </F>
-          <p className="text-xs text-muted-foreground sm:col-span-2">
-            No customer login account or password required. A unique cryptographically secure membership number is generated automatically.
-          </p>
-          <Button className="sm:col-span-2 bg-gold font-bold text-accent-foreground hover:bg-gold-soft" disabled={busy}>
-            {busy ? "Creating…" : "Create Member"}
-          </Button>
+          <F label="Start Date"><Input type="date" value={f.start_date} onChange={set("start_date")} /></F>
+          <F label="Expiry Date"><Input type="date" value={f.expiry_date || autoExpiry(f.start_date)} onChange={set("expiry_date")} /></F>
+          <p className="text-xs text-muted-foreground sm:col-span-2">No customer login account or password required. A unique cryptographically secure membership number is generated automatically.</p>
+          <Button className="sm:col-span-2 bg-gold font-bold text-accent-foreground hover:bg-gold-soft" disabled={busy}>{busy ? "Creating..." : "Create Member"}</Button>
         </form>
       </DialogContent>
     </Dialog>
@@ -600,58 +530,45 @@ function CreateMemberDialog({ open, onClose, onDone }: { open: boolean; onClose:
 function CardDialog({ member, onClose, onDone }: { member: Row | null; onClose: () => void; onDone: () => void }) {
   const fetchCardsFn = useServerFn(getAdminCards);
   const assignFn = useServerFn(assignCardToMember);
-
   const cards = useQuery({
     queryKey: ["admin", "available-cards"],
     enabled: !!member,
     queryFn: async () => {
       const allCards = await fetchCardsFn();
-      return (allCards ?? []).filter((c) => c.status === "AVAILABLE");
+      return (allCards ?? []).filter((c: any) => c.status === "AVAILABLE");
     },
   });
-
   const [cardId, setCardId] = useState("");
   const [oldStatus, setOldStatus] = useState<"LOST" | "CANCELLED">("LOST");
+  const [busy, setBusy] = useState(false);
 
   if (!member) return null;
   const currentCard = member.card_number;
 
   const handleConfirm = async () => {
     if (!cardId) return toast.error("Please choose a card");
+    setBusy(true);
     try {
-      await assignFn({
-        data: {
-          memberId: member.id,
-          cardId,
-          oldCardStatus: oldStatus,
-        },
-      });
-      toast.success(currentCard ? "Card replaced successfully" : "Card assigned successfully");
+      const res = await assignFn({ data: { memberId: member.id, cardId, oldCardStatus: oldStatus } });
+      toast.success(`Card ${res.card_number} ${currentCard ? "replaced" : "assigned"} successfully`);
       setCardId("");
       onDone();
       onClose();
-    } catch (e) {
+    } catch (e: any) {
       toast.error((e as Error).message || "Could not assign card");
     }
+    setBusy(false);
   };
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{currentCard ? "Replace Physical Card" : "Assign Physical Card"}</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>{currentCard ? "Replace Physical Card" : "Assign Physical Card"}</DialogTitle></DialogHeader>
         <div className="space-y-4 text-sm">
-          <p>
-            Member: <strong>{member.full_name}</strong> · {member.membership_number}
-          </p>
+          <p>Member: <strong>{member.full_name}</strong> · {member.membership_number}</p>
           {currentCard && (
             <F label={`Current card (${currentCard}) becomes`}>
-              <Select
-                className="w-full"
-                value={oldStatus}
-                onChange={(v) => setOldStatus(v as "LOST")}
-              >
+              <Select className="w-full" value={oldStatus} onChange={(v) => setOldStatus(v as "LOST")}>
                 <option value="LOST">LOST</option>
                 <option value="CANCELLED">CANCELLED</option>
               </Select>
@@ -660,21 +577,11 @@ function CardDialog({ member, onClose, onDone }: { member: Row | null; onClose: 
           <F label="Select Available Card">
             <Select className="w-full" value={cardId} onChange={setCardId}>
               <option value="">Select available card</option>
-              {cards.data?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.card_number}
-                </option>
-              ))}
+              {cards.data?.map((c: any) => <option key={c.id} value={c.id}>{c.card_number}</option>)}
             </Select>
           </F>
-          {!cards.data?.length && (
-            <p className="text-muted-foreground text-xs">
-              No available cards in batch. Generate a batch under Physical Cards page.
-            </p>
-          )}
-          <Button className="w-full bg-gold font-bold text-accent-foreground hover:bg-gold-soft" onClick={handleConfirm}>
-            Confirm Assignment
-          </Button>
+          {!cards.data?.length && <p className="text-muted-foreground text-xs">No available cards in batch. Generate a batch under Physical Cards page.</p>}
+          <Button className="w-full bg-gold font-bold text-accent-foreground hover:bg-gold-soft" onClick={handleConfirm} disabled={busy}>{busy ? "Assigning..." : "Confirm Assignment"}</Button>
         </div>
       </DialogContent>
     </Dialog>

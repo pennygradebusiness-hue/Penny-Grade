@@ -93,14 +93,12 @@ function Partners() {
   const q = useQuery({
     queryKey: ["admin", "partners"],
     queryFn: async () => {
-      try {
-        const res = await fetchPartnersFn();
-        if (Array.isArray(res)) return res as V1Partner[];
-      } catch (err) {
-        console.warn("fetchPartnersFn failed:", err);
-      }
-      return [] as V1Partner[];
+      const res = await fetchPartnersFn();
+      return (res ?? []) as V1Partner[];
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
   });
 
   const cats = useQuery({
@@ -124,12 +122,11 @@ function Partners() {
   const offersQ = useQuery({
     queryKey: ["admin", "offers"],
     queryFn: async () => {
-      try {
-        const res = await getAdminOffersFn();
-        if (res) return res;
-      } catch {}
-      return [];
+      const res = await getAdminOffersFn();
+      return res ?? [];
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
   });
 
   const [edit, setEdit] = useState<Form | null>(null);
@@ -256,17 +253,17 @@ function Partners() {
   };
 
   const upd = async (id: string, patch: { status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }, action: string) => {
+    // Optimistic update
+    qc.setQueryData<V1Partner[]>(["admin", "partners"], (old) =>
+      (old ?? []).map((p) => p.id === id ? { ...p, ...patch } : p)
+    );
     try {
       await updatePartnerStatusFn({ data: { id, ...patch } });
-      try {
-        await supabase.from("partners").update(patch as any).eq("id", id);
-      } catch {
-        // ignore
-      }
       toast.success(action);
       refresh();
     } catch (err: any) {
       toast.error(err?.message || "Failed to update partner");
+      refresh();
     }
   };
 
@@ -304,8 +301,8 @@ function Partners() {
         },
       });
 
+      // Auto-create initial offer if requested (new partner only)
       const newPartnerId = id || (partnerRes as any)?.partner?.id;
-
       if (!id && f.create_offer && newPartnerId) {
         try {
           await saveOfferFn({
@@ -324,34 +321,6 @@ function Partners() {
         }
       }
 
-      try {
-        const sbPayload: any = {
-          business_name: f.business_name.trim(),
-          slug: f.slug.trim().toLowerCase(),
-          category_id: f.category_id,
-          description: f.description?.trim() || "",
-          logo_url: f.logo_url?.trim() || null,
-          cover_image_url: f.cover_image_url?.trim() || null,
-          phone: f.phone?.trim() || null,
-          email: f.email?.trim() || null,
-          website: f.website?.trim() || null,
-          address: f.address?.trim() || null,
-          city: f.city?.trim() || "Daltonganj",
-          latitude: num(f.latitude),
-          longitude: num(f.longitude),
-          business_hours: f.business_hours?.trim() || null,
-          status: (f.status || "ACTIVE") as any,
-          featured: Boolean(f.featured),
-        };
-        if (id) {
-          await supabase.from("partners").update(sbPayload).eq("id", id);
-        } else {
-          await supabase.from("partners").insert(sbPayload);
-        }
-      } catch {
-        // ignore
-      }
-
       toast.success(
         id
           ? "Partner updated successfully"
@@ -368,6 +337,7 @@ function Partners() {
       setSaving(false);
     }
   };
+
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to permanently delete "${name}" and all of its associated offers? This action cannot be undone.`)) return;
