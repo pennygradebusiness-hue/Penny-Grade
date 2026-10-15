@@ -60,25 +60,11 @@ function Members() {
   const q = useQuery({
     queryKey: ["admin", "members"],
     queryFn: async () => {
-      // Fetch from V1 store
-      try {
-        const storeMembers = await fetchMembersFn();
-        if (Array.isArray(storeMembers)) {
-          return storeMembers as unknown as Row[];
-        }
-      } catch (err) {
-        console.warn("fetchMembersFn failed, falling back to Supabase query:", err);
-      }
-
-      // Fallback query to Supabase if any exist
-      const { data: ms } = await supabase
-        .from("memberships")
-        .select("id,membership_number,start_date,expiry_date,status,plan_id,cards:physical_cards(id,card_number,status)")
-        .order("created_at", { ascending: false });
-
-      return ((ms ?? []) as unknown as Row[]);
+      const members = await fetchMembersFn();
+      return (members ?? []) as unknown as Row[];
     },
   });
+
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");

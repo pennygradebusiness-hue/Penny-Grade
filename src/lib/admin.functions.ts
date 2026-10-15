@@ -52,361 +52,126 @@ const memberSchema = z.object({
 export const createMember = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => memberSchema.parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
+    requireAdminAuth();
     if (data.expiry_date < data.start_date) {
       throw new Error("Expiry date must be after start date");
     }
 
-    const cleanEmail = data.email?.trim() || "";
+    const cleanEmail = data.email?.trim() || null;
 
-    let dbCreated: any = null;
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
 
-      // Ensure valid plan UUID
-      let planIdToUse = data.plan_id;
-      const isPlanUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planIdToUse);
-      if (!isPlanUuid) {
-        const { data: dbPlans } = await sb.from("membership_plans").select("id").limit(1);
-        if (dbPlans && dbPlans.length > 0) {
-          planIdToUse = dbPlans[0].id;
-        }
-      }
-
-      const { data: res, error } = await sb.rpc("admin_create_member", {
-        p_full_name: data.full_name,
-        p_mobile: data.mobile,
-        p_email: cleanEmail || null,
-        p_plan_id: planIdToUse,
-        p_start_date: data.start_date,
-        p_expiry_date: data.expiry_date,
-        p_card_id: data.card_id || null,
-      });
-
-      if (!error && res?.ok) {
-        dbCreated = res;
-      } else if (error) {
-        console.warn("[PennyGrade] admin_create_member RPC error:", error);
-      }
-    } catch (err) {
-      console.warn("[PennyGrade] Database member creation fallback:", err);
+    // Ensure valid plan UUID
+    let planIdToUse = data.plan_id;
+    const isPlanUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planIdToUse);
+    if (!isPlanUuid) {
+      const { data: dbPlans, error: plansErr } = await sb.from("membership_plans").select("id").limit(1);
+      if (plansErr) throw new Error(`Could not load membership plans: ${plansErr.message}`);
+      if (!dbPlans || dbPlans.length === 0) throw new Error("No membership plans found in database");
+      planIdToUse = dbPlans[0].id;
     }
 
-    const membershipNumber = dbCreated?.membership_number || generatePenCode();
-    const memberId = dbCreated?.id || safeRandomUUID();
-    const now = new Date().toISOString();
+    const { data: res, error } = await sb.rpc("admin_create_member", {
+      p_full_name: data.full_name,
+      p_mobile: data.mobile,
+      p_email: cleanEmail,
+      p_plan_id: planIdToUse,
+      p_start_date: data.start_date,
+      p_expiry_date: data.expiry_date,
+      p_card_id: data.card_id || null,
+    });
 
-    let assignedCardNumber: string | undefined = dbCreated?.card_number;
-
-    if (!dbCreated) {
-      // If card_id was provided, assign that physical card
-      if (data.card_id && store.cards.has(data.card_id)) {
-        const card = store.cards.get(data.card_id)!;
-        card.membership_id = memberId;
-        card.status = "ACTIVE";
-        card.issued_at = now;
-        card.updated_at = now;
-        assignedCardNumber = card.card_number;
-      } else {
-        // Find an available card or create one
-        let availableCard: V1PhysicalCard | undefined;
-        for (const c of store.cards.values()) {
-          if (c.status === "AVAILABLE") {
-            availableCard = c;
-            break;
-          }
-        }
-
-        if (availableCard) {
-          availableCard.membership_id = memberId;
-          availableCard.status = "ACTIVE";
-          availableCard.issued_at = now;
-          availableCard.updated_at = now;
-          assignedCardNumber = availableCard.card_number;
-        }
-      }
-    }
-
-    const member: V1Member = {
-      id: memberId,
-      membership_number: membershipNumber,
-      full_name: data.full_name,
-      mobile: data.mobile,
-      email: data.email,
-      plan_id: data.plan_id,
-      plan_name: "PennyGrade 6-Month Membership",
-      start_date: data.start_date,
-      expiry_date: data.expiry_date,
-      status: "ACTIVE",
-      created_at: now,
-      updated_at: now,
-      card_id: (dbCreated?.card_id || data.card_id) || undefined,
-      card_number: assignedCardNumber || membershipNumber,
-    };
-
-    store.members.set(memberId, member);
-
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: "Created Member",
-        target_type: "member",
-        target_id: memberId,
-        metadata: { name: member.full_name, membership_number: member.membership_number },
-        created_at: now,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
+    if (error) throw new Error(`Failed to create member: ${error.message}`);
+    if (!res?.ok) throw new Error("Member creation failed — database returned not-ok");
 
     return {
       ok: true,
-      membership_number: member.membership_number,
-      card_number: member.card_number,
+      membership_number: res.membership_number,
+      card_number: res.card_number,
     };
   });
 
-// Admin Generate Card Batch
+
+
+// Admin Generate Card Batch — writes directly to Supabase
 export const generateCardBatch = createServerFn({ method: "POST" })
   .inputValidator((d: { count: number }) =>
     z.object({ count: z.number().int().min(1).max(2000) }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    const createdCards: string[] = [];
-    const now = new Date().toISOString();
-
-    let persistedCount = 0;
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      
-      const { data: rpcRes, error: rpcErr } = await sb.rpc("generate_physical_cards", {
-        p_count: data.count,
-      });
-
-      if (!rpcErr && rpcRes?.ok) {
-        persistedCount = rpcRes.count;
-      }
-    } catch (err) {
-      console.warn("[PennyGrade] Database card generation RPC error, using application generator:", err);
-    }
-
-    const existingCodes = new Set<string>();
-    for (const c of store.cards.values()) {
-      existingCodes.add(c.card_number);
-    }
-    for (const m of store.members.values()) {
-      existingCodes.add(m.membership_number);
-      if (m.card_number) existingCodes.add(m.card_number);
-    }
-
-    const countToGenerate = persistedCount > 0 ? 0 : data.count;
-    for (let i = 0; i < countToGenerate; i++) {
-      const cardId = safeRandomUUID();
-      let cardNumber = generatePenCode();
-      let attempts = 0;
-      while (existingCodes.has(cardNumber) && attempts < 100) {
-        cardNumber = generatePenCode();
-        attempts++;
-      }
-      existingCodes.add(cardNumber);
-
-      const card: V1PhysicalCard = {
-        id: cardId,
-        card_number: cardNumber,
-        membership_id: null,
-        status: "AVAILABLE",
-        issued_at: null,
-        created_at: now,
-        updated_at: now,
-      };
-      store.cards.set(cardId, card);
-      createdCards.push(cardNumber);
-    }
-
-    const totalCreated = persistedCount > 0 ? persistedCount : createdCards.length;
-
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: `Generated Batch (${totalCreated} Cards)`,
-        target_type: "cards",
-        target_id: `batch-${Date.now()}`,
-        metadata: { count: totalCreated },
-        created_at: now,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
-
-    return {
-      ok: true,
-      count: totalCreated,
-    };
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    const { data: rpcRes, error: rpcErr } = await sb.rpc("generate_physical_cards", { p_count: data.count });
+    if (rpcErr) throw new Error(`Card generation failed: ${rpcErr.message}`);
+    if (!rpcRes?.ok) throw new Error("Card generation returned not-ok");
+    return { ok: true, count: rpcRes.count as number };
   });
 
-// Admin Get Cards
+// Admin Get Cards — Supabase only
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
+  const { getServerSupabase } = await import("./supabase-admin.server");
+  const sb = getServerSupabase();
 
-  try {
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
-    
-    // First try RPC
-    const { data: rpcCards, error: rpcErr } = await sb.rpc("get_all_physical_cards");
-    if (!rpcErr && Array.isArray(rpcCards) && rpcCards.length > 0) {
-      for (const c of rpcCards) {
-        store.cards.set(c.id, {
-          id: c.id,
-          card_number: c.card_number,
-          membership_id: c.membership_id,
-          status: c.status,
-          issued_at: c.issued_at,
-          created_at: c.created_at,
-          updated_at: c.updated_at || c.created_at,
-        });
-      }
-      return rpcCards;
-    }
+  const { data: rpcCards, error: rpcErr } = await sb.rpc("get_all_physical_cards");
+  if (!rpcErr && Array.isArray(rpcCards)) return rpcCards;
 
-    // Try direct select
-    const { data: dbCards, error: dbErr } = await sb
-      .from("physical_cards")
-      .select("id,card_number,status,created_at,issued_at,membership_id,memberships(id,membership_number,full_name)")
-      .order("created_at", { ascending: false });
+  // Fallback to direct select
+  const { data: dbCards, error: dbErr } = await sb
+    .from("physical_cards")
+    .select("id,card_number,status,created_at,issued_at,membership_id,memberships(id,membership_number,full_name)")
+    .order("created_at", { ascending: false });
 
-    if (!dbErr && dbCards && dbCards.length > 0) {
-      const formatted = dbCards.map((c: any) => ({
-        id: c.id,
-        card_number: c.card_number,
-        status: c.status,
-        created_at: c.created_at,
-        issued_at: c.issued_at,
-        membership_id: c.membership_id,
-        member: c.memberships?.full_name || "",
-        membership_number: c.memberships?.membership_number || "",
-      }));
-      for (const c of formatted) {
-        store.cards.set(c.id, {
-          id: c.id,
-          card_number: c.card_number,
-          membership_id: c.membership_id,
-          status: c.status,
-          issued_at: c.issued_at,
-          created_at: c.created_at,
-          updated_at: c.created_at,
-        });
-      }
-      return formatted;
-    }
-  } catch (err) {
-    console.warn("[PennyGrade] Supabase physical cards query fallback:", err);
-  }
-
-  const cardsList = Array.from(store.cards.values()).map((c) => {
-    let memberName = "";
-    let membershipNumber = "";
-    if (c.membership_id && store.members.has(c.membership_id)) {
-      const m = store.members.get(c.membership_id)!;
-      memberName = m.full_name;
-      membershipNumber = m.membership_number;
-    }
-    return {
-      ...c,
-      member: memberName,
-      membership_number: membershipNumber,
-    };
-  });
-
-  return cardsList.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (dbErr) throw new Error(`Failed to load cards: ${dbErr.message}`);
+  return (dbCards ?? []).map((c: any) => ({
+    id: c.id,
+    card_number: c.card_number,
+    status: c.status,
+    created_at: c.created_at,
+    issued_at: c.issued_at,
+    membership_id: c.membership_id,
+    member: c.memberships?.full_name || "",
+    membership_number: c.memberships?.membership_number || "",
+  }));
 });
 
-// Admin Get Members
+// Admin Get Members — Supabase only, no v1-store fallback for data
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  if (!store.members) store.members = new Map();
-  if (!store.deletedMemberIds) store.deletedMemberIds = [];
+  const { getServerSupabase } = await import("./supabase-admin.server");
+  const sb = getServerSupabase();
 
-  const delMemberSet = new Set(store.deletedMemberIds);
+  const { data: rpcMembers, error: rpcErr } = await sb.rpc("get_all_memberships");
+  if (!rpcErr && Array.isArray(rpcMembers)) return rpcMembers;
 
-  try {
-    const { getServerSupabase } = await import("./supabase-admin.server");
-    const sb = getServerSupabase();
+  // Fallback to direct select
+  const { data: dbMembers, error: dbErr } = await sb
+    .from("memberships")
+    .select("id,membership_number,full_name,mobile,email,plan_id,start_date,expiry_date,status,card_number,created_at,updated_at,plan:membership_plans(name),card_id:physical_cards(id)")
+    .order("created_at", { ascending: false });
 
-    const { data: rpcMembers, error: rpcErr } = await sb.rpc("get_all_memberships");
-    if (!rpcErr && Array.isArray(rpcMembers)) {
-      const dbIds = new Set(rpcMembers.map((m: any) => m.id));
-      const dbNumbers = new Set(rpcMembers.map((m: any) => m.membership_number));
-
-      // Synchronize in-memory store: remove deleted members not in DB
-      for (const [k, m] of Array.from(store.members.entries())) {
-        if (!dbIds.has(m.id) && !dbNumbers.has(m.membership_number)) {
-          store.members.delete(k);
-        }
-      }
-
-      for (const m of rpcMembers) {
-        if (!delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number)) {
-          store.members.set(m.id, m);
-        }
-      }
-      return rpcMembers.filter((m: any) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number));
-    }
-
-    const { data: dbMembers, error: dbErr } = await sb
-      .from("memberships")
-      .select("*, plan:membership_plans(name)")
-      .order("created_at", { ascending: false });
-
-    if (!dbErr && Array.isArray(dbMembers)) {
-      const formatted = dbMembers.map((m: any) => ({
-        id: m.id,
-        membership_number: m.membership_number,
-        full_name: m.full_name || "",
-        mobile: m.mobile || "",
-        email: m.email || "",
-        plan_id: m.plan_id,
-        plan_name: m.plan?.name || "PennyGrade 6-Month Membership",
-        start_date: m.start_date,
-        expiry_date: m.expiry_date,
-        status: m.status,
-        created_at: m.created_at,
-        updated_at: m.updated_at,
-        card_number: m.card_number || m.membership_number,
-      }));
-
-      const dbIds = new Set(formatted.map((m: any) => m.id));
-      const dbNumbers = new Set(formatted.map((m: any) => m.membership_number));
-      for (const [k, m] of Array.from(store.members.entries())) {
-        if (!dbIds.has(m.id) && !dbNumbers.has(m.membership_number)) {
-          store.members.delete(k);
-        }
-      }
-
-      for (const m of formatted) {
-        if (!delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number)) {
-          store.members.set(m.id, m);
-        }
-      }
-      return formatted.filter((m: any) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number));
-    }
-  } catch (err) {
-    console.warn("[PennyGrade] Supabase members query fallback:", err);
-  }
-
-  return Array.from(store.members.values())
-    .filter((m) => !delMemberSet.has(m.id) && !delMemberSet.has(m.membership_number))
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (dbErr) throw new Error(`Failed to load members: ${dbErr.message}`);
+  return (dbMembers ?? []).map((m: any) => ({
+    id: m.id,
+    membership_number: m.membership_number,
+    full_name: m.full_name || "",
+    mobile: m.mobile || "",
+    email: m.email || "",
+    plan_id: m.plan_id,
+    plan_name: (Array.isArray(m.plan) ? m.plan[0]?.name : m.plan?.name) || "PennyGrade 6-Month Membership",
+    start_date: m.start_date,
+    expiry_date: m.expiry_date,
+    status: m.status,
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+    card_number: m.card_number || m.membership_number,
+    card_id: Array.isArray(m.card_id) ? m.card_id[0]?.id : m.card_id?.id,
+  }));
 });
 
-// Admin Update Member Status
+// Admin Update Member Status — Supabase only
 export const updateMemberStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED" }) =>
     z.object({
@@ -415,195 +180,84 @@ export const updateMemberStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    const member = store.members.get(data.id);
-    if (!member) throw new Error("Member not found");
-    member.status = data.status;
-    member.updated_at = new Date().toISOString();
-
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: `Updated Member Status to ${data.status}`,
-        target_type: "member",
-        target_id: member.id,
-        metadata: { member: member.full_name, status: data.status },
-        created_at: member.updated_at,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
-
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    const { error } = await sb.from("memberships").update({ status: data.status }).eq("id", data.id);
+    if (error) throw new Error(`Failed to update member status: ${error.message}`);
     return { ok: true };
   });
 
-// Admin Delete Member
+// Admin Delete Member — Supabase only
 export const deleteMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    if (!store.members) store.members = new Map();
-    if (!store.cards) store.cards = new Map();
-    if (!store.deletedMemberIds) store.deletedMemberIds = [];
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
 
-    // Find member by ID or membership_number in store.members
-    let member = store.members.get(data.id);
-    let memberKey = data.id;
-    if (!member) {
-      for (const [k, m] of store.members.entries()) {
-        if (m.id === data.id || m.membership_number === data.id) {
-          member = m;
-          memberKey = k;
-          break;
-        }
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
+
+    if (isUuid) {
+      // Use the authoritative RPC that cascades cleanly
+      const { error } = await sb.rpc("admin_delete_member", { p_member_id: data.id });
+      if (error) {
+        // Fallback: direct delete
+        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", data.id);
+        const { error: delErr } = await sb.from("memberships").delete().eq("id", data.id);
+        if (delErr) throw new Error(`Failed to delete member: ${delErr.message}`);
+      }
+    } else {
+      // data.id might be a membership_number — look up the UUID first
+      const { data: dbM, error: lookupErr } = await sb
+        .from("memberships")
+        .select("id")
+        .eq("membership_number", data.id)
+        .maybeSingle();
+      if (lookupErr) throw new Error(`Failed to look up member: ${lookupErr.message}`);
+      if (!dbM?.id) throw new Error("Member not found");
+      const { error } = await sb.rpc("admin_delete_member", { p_member_id: dbM.id });
+      if (error) {
+        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", dbM.id);
+        const { error: delErr } = await sb.from("memberships").delete().eq("id", dbM.id);
+        if (delErr) throw new Error(`Failed to delete member: ${delErr.message}`);
       }
     }
 
-    const memberName = member?.full_name || "Member";
-    const memberNumber = member?.membership_number || (/^PEN-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(data.id) ? data.id : "");
-    const memberEmail = member?.email?.toLowerCase() || "";
-    const memberId = member?.id || data.id;
-
-    // 1. Add all identifiers to deleted tracking list
-    const toTrack = [data.id, memberKey, memberId, memberNumber, memberEmail].filter(Boolean);
-    for (const item of toTrack) {
-      if (!store.deletedMemberIds.includes(item)) {
-        store.deletedMemberIds.push(item);
-      }
-    }
-
-    // 2. Release assigned card back to AVAILABLE status if linked
-    if (member?.card_id && store.cards.has(member.card_id)) {
-      const card = store.cards.get(member.card_id)!;
-      card.membership_id = null;
-      card.status = "AVAILABLE";
-      card.updated_at = new Date().toISOString();
-    }
-    for (const card of store.cards.values()) {
-      if (
-        card.membership_id === data.id ||
-        card.membership_id === memberKey ||
-        card.membership_id === memberId ||
-        (memberNumber && card.membership_id === memberNumber)
-      ) {
-        card.membership_id = null;
-        card.status = "AVAILABLE";
-        card.updated_at = new Date().toISOString();
-      }
-    }
-
-    // 3. Remove member from store
-    store.members.delete(data.id);
-    if (memberKey) store.members.delete(memberKey);
-    if (memberId) store.members.delete(memberId);
-
-    // 4. Remove any active verification sessions for this member
-    if (store.sessions) {
-      for (const [sId, sess] of store.sessions.entries()) {
-        if (
-          sess.membership_id === data.id ||
-          sess.membership_id === memberKey ||
-          sess.membership_id === memberId ||
-          (memberNumber && sess.membership_number === memberNumber)
-        ) {
-          store.sessions.delete(sId);
-        }
-      }
-    }
-
-    // 5. Authoritatively synchronize deletion with Supabase using server client
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
-
-      if (isUuid) {
-        await sb.rpc("admin_delete_member", { p_member_id: memberId });
-      }
-
-      if (memberNumber) {
-        const { data: dbM } = await sb
-          .from("memberships")
-          .select("id")
-          .eq("membership_number", memberNumber)
-          .maybeSingle();
-
-        if (dbM?.id) {
-          if (!store.deletedMemberIds.includes(dbM.id)) {
-            store.deletedMemberIds.push(dbM.id);
-          }
-          await sb.rpc("admin_delete_member", { p_member_id: dbM.id });
-        }
-      }
-
-      // Direct fallback cleanup on DB tables
-      if (isUuid) {
-        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("membership_id", memberId);
-        await sb.from("memberships").delete().eq("id", memberId);
-      }
-      if (memberNumber) {
-        await sb.from("physical_cards").update({ membership_id: null, status: "AVAILABLE" }).eq("card_number", memberNumber);
-        await sb.from("memberships").delete().eq("membership_number", memberNumber);
-      }
-    } catch (sbErr) {
-      console.warn("[PennyGrade] Supabase member delete sync:", sbErr);
-    }
-
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: `Deleted Member: ${memberName} (${memberNumber || data.id})`,
-        target_type: "member",
-        target_id: data.id,
-        metadata: { name: memberName, membership_number: memberNumber },
-        created_at: new Date().toISOString(),
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
     return { ok: true };
   });
 
-// Admin Renew Membership
+// Admin Renew Membership — Supabase only
 export const renewMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; durationDays?: number }) =>
     z.object({ id: z.string(), durationDays: z.number().optional() }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    const member = store.members.get(data.id);
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+
+    // Fetch current member from DB
+    const { data: member, error: fetchErr } = await sb
+      .from("memberships")
+      .select("id,expiry_date,status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fetchErr) throw new Error(`Failed to fetch member: ${fetchErr.message}`);
     if (!member) throw new Error("Member not found");
 
     const days = data.durationDays ?? 180;
     const currentExpiry = new Date(Math.max(Date.now(), new Date(member.expiry_date).getTime()));
     currentExpiry.setDate(currentExpiry.getDate() + days);
-    member.expiry_date = currentExpiry.toISOString().slice(0, 10);
-    member.status = "ACTIVE";
-    member.updated_at = new Date().toISOString();
+    const newExpiry = currentExpiry.toISOString().slice(0, 10);
 
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: "Renewed Membership",
-        target_type: "member",
-        target_id: member.id,
-        metadata: { member: member.full_name, new_expiry: member.expiry_date },
-        created_at: member.updated_at,
-        who: admin.full_name || admin.email,
-      });
-    }
+    const { error } = await sb.from("memberships").update({ expiry_date: newExpiry, status: "ACTIVE" }).eq("id", data.id);
+    if (error) throw new Error(`Failed to renew member: ${error.message}`);
 
-    saveStoreToDisk();
-
-    return { ok: true, new_expiry: member.expiry_date };
+    return { ok: true, new_expiry: newExpiry };
   });
 
-// Admin Assign / Replace Card
+// Admin Assign / Replace Card — Supabase only
 export const assignCardToMember = createServerFn({ method: "POST" })
   .inputValidator((d: { memberId: string; cardId: string; oldCardStatus?: "LOST" | "CANCELLED" }) =>
     z.object({
@@ -613,67 +267,17 @@ export const assignCardToMember = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-
-    let dbAssignedCardNumber: string | undefined;
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      const { data: res, error } = await sb.rpc("admin_assign_card", {
-        p_member_id: data.memberId,
-        p_card_id: data.cardId,
-        p_old_card_status: data.oldCardStatus || "LOST",
-      });
-      if (!error && res?.ok) {
-        dbAssignedCardNumber = res.card_number;
-      }
-    } catch (err) {
-      console.warn("[PennyGrade] Database card assignment fallback:", err);
-    }
-
-    const member = store.members.get(data.memberId);
-    if (!member && !dbAssignedCardNumber) throw new Error("Member not found");
-
-    const newCard = store.cards.get(data.cardId);
-    const now = new Date().toISOString();
-
-    if (member && newCard) {
-      // If member already had a card, update its status
-      if (member.card_id && store.cards.has(member.card_id)) {
-        const oldCard = store.cards.get(member.card_id)!;
-        oldCard.status = data.oldCardStatus ?? "LOST";
-        oldCard.updated_at = now;
-      }
-
-      // Assign new card
-      newCard.membership_id = member.id;
-      newCard.status = "ACTIVE";
-      newCard.issued_at = now;
-      newCard.updated_at = now;
-
-      member.card_id = newCard.id;
-      member.card_number = newCard.card_number;
-      member.updated_at = now;
-    }
-
-    const assignedNumber = dbAssignedCardNumber || newCard?.card_number || "";
-
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: "Assigned Physical Card",
-        target_type: "card",
-        target_id: data.cardId,
-        metadata: { card_number: assignedNumber, member: member?.full_name },
-        created_at: now,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
-
-    return { ok: true, card_number: assignedNumber };
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    const { data: res, error } = await sb.rpc("admin_assign_card", {
+      p_member_id: data.memberId,
+      p_card_id: data.cardId,
+      p_old_card_status: data.oldCardStatus || "LOST",
+    });
+    if (error) throw new Error(`Failed to assign card: ${error.message}`);
+    if (!res?.ok) throw new Error("Card assignment returned not-ok");
+    return { ok: true, card_number: res.card_number as string };
   });
 
 // Admin Get Admin Users (Server Function)
@@ -1419,102 +1023,42 @@ export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
     return { ok: true, status: app.status };
   });
 
-// ---------------- PARTNERS MANAGEMENT ----------------
-
-// Permanent name-based blacklist: partners that have been deleted but may still exist in Supabase
-// because anonymous-key deletes are silently blocked by RLS. This is the last line of defense.
-const PERMANENTLY_DELETED_PARTNER_NAMES = new Set([
-  "the grand stay",
-  "fitzone",
-  "fit zone",
-]);
-const PERMANENTLY_DELETED_PARTNER_SLUGS = new Set([
-  "the-grand-stay",
-  "grand-stay",
-  "fitzone",
-  "fit-zone",
-]);
-
-function isPartnerPermanentlyDeleted(id: string, slug: string | null | undefined, name: string): boolean {
-  return (
-    PERMANENTLY_DELETED_PARTNER_SLUGS.has((slug || "").toLowerCase().trim()) ||
-    PERMANENTLY_DELETED_PARTNER_NAMES.has(name.toLowerCase().trim())
-  );
-}
+// ---------------- PARTNERS MANAGEMENT (Supabase only) ----------------
 
 export const getAdminPartners = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  if (!store.partners) store.partners = new Map();
-  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
+  const { getServerSupabase } = await import("./supabase-admin.server");
+  const sb = getServerSupabase();
 
-  const delSet = new Set(store.deletedPartnerIds);
+  const { data: dbPartners, error } = await sb
+    .from("partners")
+    .select("*, category:categories(id, name, slug)")
+    .order("business_name", { ascending: true });
 
-  // Only seed default initial partners if store was never seeded before and is empty
-  if (!store.seededPartners && store.partners.size === 0) {
-    const seeded = seedPartners();
-    for (const [k, v] of seeded.entries()) {
-      if (!delSet.has(k) && !delSet.has(v.slug) && !isPartnerPermanentlyDeleted(k, v.slug, v.business_name)) {
-        store.partners.set(k, v);
-      }
-    }
-    store.seededPartners = true;
-  }
+  if (error) throw new Error(`Failed to load partners: ${error.message}`);
 
-  try {
-    const { pub } = await import("./public.functions");
-    const { data: dbPartners } = await pub()
-      .from("partners")
-      .select("*, category:categories(id, name, slug)");
-    if (dbPartners && dbPartners.length > 0) {
-      for (const p of dbPartners) {
-        // Skip permanently deleted partners (even if still in Supabase DB due to RLS-blocked deletes)
-        if (isPartnerPermanentlyDeleted(p.id, p.slug, p.business_name)) {
-          // Ensure their IDs are tracked in the deleted set so they're permanently blocked
-          if (!store.deletedPartnerIds.includes(p.id)) store.deletedPartnerIds.push(p.id);
-          if (p.slug && !store.deletedPartnerIds.includes(p.slug)) store.deletedPartnerIds.push(p.slug);
-          continue;
-        }
-
-        if (delSet.has(p.id) || (p.slug && delSet.has(p.slug))) {
-          continue;
-        }
-
-        store.partners.set(p.id, {
-          id: p.id,
-          business_name: p.business_name,
-          slug: p.slug,
-          category_id: p.category_id || "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
-          category_name: (p as any).category?.name || "General",
-          description: p.description || "",
-          logo_url: p.logo_url || "",
-          cover_image_url: p.cover_image_url || "",
-          phone: p.phone || "",
-          email: p.email || "",
-          website: p.website || "",
-          address: p.address || "",
-          city: p.city || "Daltonganj",
-          latitude: p.latitude ?? null,
-          longitude: p.longitude ?? null,
-          business_hours: p.business_hours || "",
-          status: p.status as "ACTIVE" | "INACTIVE" | "SUSPENDED",
-          featured: Boolean(p.featured),
-          created_at: p.created_at || new Date().toISOString(),
-          updated_at: p.updated_at || new Date().toISOString(),
-        });
-      }
-    }
-  } catch {
-    // Non-fatal
-  }
-
-  saveStoreToDisk();
-  return Array.from(store.partners.values())
-    .filter((p) =>
-      !delSet.has(p.id) &&
-      !delSet.has(p.slug) &&
-      !isPartnerPermanentlyDeleted(p.id, p.slug, p.business_name)
-    )
-    .sort((a, b) => a.business_name.localeCompare(b.business_name));
+  return (dbPartners ?? []).map((p: any) => ({
+    id: p.id,
+    business_name: p.business_name,
+    slug: p.slug,
+    category_id: p.category_id,
+    category_name: p.category?.name || "General",
+    description: p.description || "",
+    logo_url: p.logo_url || "",
+    cover_image_url: p.cover_image_url || "",
+    phone: p.phone || "",
+    email: p.email || "",
+    website: p.website || "",
+    address: p.address || "",
+    city: p.city || "Daltonganj",
+    latitude: p.latitude ?? null,
+    longitude: p.longitude ?? null,
+    business_hours: p.business_hours || "",
+    status: p.status,
+    featured: Boolean(p.featured),
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+  }));
 });
 
 const savePartnerSchema = z.object({
@@ -1541,97 +1085,43 @@ const savePartnerSchema = z.object({
 export const savePartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePartnerSchema.parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    const now = new Date().toISOString();
-    if (!store.partners || store.partners.size === 0) {
-      store.partners = seedPartners();
-    }
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
 
+    const isExisting = !!data.id;
     const partnerId = data.id || safeRandomUUID();
-    const existing = store.partners.get(partnerId);
 
-    // Validate slug uniqueness on server
-    const targetSlug = data.slug.trim().toLowerCase();
-    for (const [id, p] of store.partners.entries()) {
-      if (id !== partnerId && p.slug.trim().toLowerCase() === targetSlug) {
-        throw new Error(`A partner with slug "${data.slug}" already exists. Please choose a unique slug.`);
-      }
-    }
-
-    const partner: V1Partner = {
+    const sbPayload: any = {
       id: partnerId,
       business_name: data.business_name,
-      slug: data.slug,
+      slug: data.slug.trim().toLowerCase(),
       category_id: data.category_id,
-      category_name: data.category_name || existing?.category_name || "General",
-      description: data.description,
-      logo_url: data.logo_url,
-      cover_image_url:
-        data.cover_image_url ||
-        existing?.cover_image_url ||
+      description: data.description || null,
+      logo_url: data.logo_url || null,
+      cover_image_url: data.cover_image_url ||
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
-      phone: data.phone,
-      email: data.email,
-      website: data.website,
-      address: data.address,
+      phone: data.phone || null,
+      email: data.email || null,
+      website: data.website || null,
+      address: data.address || null,
       city: data.city || "Daltonganj",
       latitude: data.latitude ?? null,
       longitude: data.longitude ?? null,
-      business_hours: data.business_hours,
+      business_hours: data.business_hours || null,
       status: data.status,
       featured: data.featured,
-      created_at: existing ? existing.created_at : now,
-      updated_at: now,
     };
 
-    store.partners.set(partnerId, partner);
-
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      const sbPayload: any = {
-        id: partnerId,
-        business_name: partner.business_name,
-        slug: partner.slug,
-        category_id: partner.category_id,
-        description: partner.description || "",
-        logo_url: partner.logo_url || null,
-        cover_image_url: partner.cover_image_url || null,
-        phone: partner.phone || null,
-        email: partner.email || null,
-        website: partner.website || null,
-        address: partner.address || null,
-        city: partner.city || "Daltonganj",
-        latitude: partner.latitude,
-        longitude: partner.longitude,
-        business_hours: partner.business_hours || null,
-        status: partner.status,
-        featured: partner.featured,
-      };
-      if (existing) {
-        await sb.from("partners").update(sbPayload).eq("id", partnerId);
-      } else {
-        await sb.from("partners").insert(sbPayload);
-      }
-    } catch {
-      // Non-fatal
+    if (isExisting) {
+      const { error } = await sb.from("partners").update(sbPayload).eq("id", partnerId);
+      if (error) throw new Error(`Failed to update partner: ${error.message}`);
+    } else {
+      const { error } = await sb.from("partners").insert(sbPayload);
+      if (error) throw new Error(`Failed to create partner: ${error.message}`);
     }
 
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: existing ? `Updated Partner: ${partner.business_name}` : `Created Partner: ${partner.business_name}`,
-        target_type: "partner",
-        target_id: partnerId,
-        metadata: { name: partner.business_name, slug: partner.slug, status: partner.status },
-        created_at: now,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
-    return { ok: true, partner };
+    return { ok: true, partner: { ...sbPayload, category_name: data.category_name || "General" } };
   });
 
 export const updatePartnerStatus = createServerFn({ method: "POST" })
@@ -1643,143 +1133,62 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     }).parse(d)
   )
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    if (!store.partners || store.partners.size === 0) {
-      store.partners = seedPartners();
-    }
-    const partner = store.partners.get(data.id);
-    if (!partner) throw new Error("Partner not found");
-
-    if (data.status !== undefined) partner.status = data.status;
-    if (data.featured !== undefined) partner.featured = data.featured;
-    partner.updated_at = new Date().toISOString();
-
-    try {
-      const { getServerSupabase } = await import("./supabase-admin.server");
-      const sb = getServerSupabase();
-      const patch: any = {};
-      if (data.status !== undefined) patch.status = data.status;
-      if (data.featured !== undefined) patch.featured = data.featured;
-      await sb.from("partners").update(patch).eq("id", data.id);
-    } catch {
-      // Non-fatal
-    }
-
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: `Updated Partner ${partner.business_name} (Status: ${partner.status}, Featured: ${partner.featured})`,
-        target_type: "partner",
-        target_id: partner.id,
-        metadata: { name: partner.business_name, status: partner.status, featured: partner.featured },
-        created_at: partner.updated_at,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
-    return { ok: true, partner };
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    const patch: any = {};
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.featured !== undefined) patch.featured = data.featured;
+    const { error } = await sb.from("partners").update(patch).eq("id", data.id);
+    if (error) throw new Error(`Failed to update partner status: ${error.message}`);
+    return { ok: true };
   });
 
 export const deletePartner = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    return await deletePartnerCascadeLogic(data.id, admin.full_name || admin.email);
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    // Cascade: delete offers first, then partner
+    await sb.from("offers").delete().eq("partner_id", data.id);
+    const { error } = await sb.from("partners").delete().eq("id", data.id);
+    if (error) throw new Error(`Failed to delete partner: ${error.message}`);
+    return { ok: true };
   });
 
-// Admin Get Offers
+// Admin Get Offers — Supabase only
 export const getAdminOffers = createServerFn({ method: "GET" }).handler(async () => {
   requireAdminAuth();
-  if (!store.offers) store.offers = new Map();
-  if (!store.deletedOfferIds) store.deletedOfferIds = [];
-  if (!store.deletedPartnerIds) store.deletedPartnerIds = [];
+  const { getServerSupabase } = await import("./supabase-admin.server");
+  const sb = getServerSupabase();
 
-  const delOfferSet = new Set(store.deletedOfferIds);
-  const delPartnerSet = new Set(store.deletedPartnerIds);
+  const { data: dbOffers, error } = await sb
+    .from("offers")
+    .select("*, partner:partners(id, business_name, slug)")
+    .order("created_at", { ascending: false });
 
-  // Sync / pull from Supabase if available
-  try {
-    const { pub } = await import("./public.functions");
-    const { data: dbOffers } = await pub()
-      .from("offers")
-      .select("*, partner:partners(id, business_name, slug)")
-      .order("created_at", { ascending: false });
+  if (error) throw new Error(`Failed to load offers: ${error.message}`);
 
-    if (dbOffers) {
-      for (const o of dbOffers) {
-        const pSlug = (o.partner as any)?.slug;
-        const pName = (o.partner as any)?.business_name || "";
-        // Block permanently deleted partners (including those still in Supabase due to RLS-blocked anonymous deletes)
-        const isPermDeletedPartner = isPartnerPermanentlyDeleted(o.partner_id, pSlug, pName);
-        const isDeleted =
-          delOfferSet.has(o.id) ||
-          delPartnerSet.has(o.partner_id) ||
-          (pSlug && delPartnerSet.has(pSlug)) ||
-          isPermDeletedPartner;
-
-        if (isPermDeletedPartner) {
-          // Auto-register in deleted tracking so future calls skip faster
-          if (!store.deletedOfferIds.includes(o.id)) store.deletedOfferIds.push(o.id);
-          if (o.partner_id && !store.deletedPartnerIds.includes(o.partner_id)) store.deletedPartnerIds.push(o.partner_id);
-          if (pSlug && !store.deletedPartnerIds.includes(pSlug)) store.deletedPartnerIds.push(pSlug);
-        }
-
-        if (!isDeleted) {
-          if (!store.offers.has(o.id)) {
-            store.offers.set(o.id, {
-              id: o.id,
-              partner_id: o.partner_id,
-              title: o.title,
-              description: o.description,
-              discount_type: o.discount_type as any,
-              discount_value: Number(o.discount_value),
-              max_discount: o.max_discount ? Number(o.max_discount) : null,
-              minimum_bill: Number(o.minimum_bill),
-              valid_from: o.valid_from,
-              valid_until: o.valid_until,
-              valid_days: o.valid_days || [0, 1, 2, 3, 4, 5, 6],
-              terms_conditions: o.terms_conditions,
-              usage_limit_type: o.usage_limit_type as any,
-              status: o.status as any,
-              created_at: o.created_at,
-              updated_at: o.updated_at,
-              partner: o.partner ? { id: o.partner.id, business_name: o.partner.business_name, slug: o.partner.slug } : undefined,
-            });
-          }
-        }
-      }
-    }
-  } catch {
-    // ignore
-  }
-
-  // Refresh sets after auto-registration above
-  const finalDelOfferSet = new Set(store.deletedOfferIds);
-  const finalDelPartnerSet = new Set(store.deletedPartnerIds);
-
-  // Build filtered response
-  const result: V1Offer[] = [];
-  for (const offer of store.offers.values()) {
-    const partner = store.partners?.get(offer.partner_id);
-    const pSlug = offer.partner?.slug || partner?.slug;
-    const pName = offer.partner?.business_name || partner?.business_name || "";
-    if (
-      finalDelOfferSet.has(offer.id) ||
-      finalDelPartnerSet.has(offer.partner_id) ||
-      (pSlug && finalDelPartnerSet.has(pSlug)) ||
-      isPartnerPermanentlyDeleted(offer.partner_id, pSlug, pName)
-    ) {
-      continue;
-    }
-    result.push({
-      ...offer,
-      partner: offer.partner || (partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined),
-    });
-  }
-
-  return result.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return (dbOffers ?? []).map((o: any) => ({
+    id: o.id,
+    partner_id: o.partner_id,
+    title: o.title,
+    description: o.description || "",
+    discount_type: o.discount_type,
+    discount_value: Number(o.discount_value),
+    max_discount: o.max_discount ? Number(o.max_discount) : null,
+    minimum_bill: Number(o.minimum_bill),
+    valid_from: o.valid_from,
+    valid_until: o.valid_until,
+    valid_days: o.valid_days || [0, 1, 2, 3, 4, 5, 6],
+    terms_conditions: o.terms_conditions || "",
+    usage_limit_type: o.usage_limit_type,
+    status: o.status,
+    created_at: o.created_at,
+    updated_at: o.updated_at,
+    partner: o.partner ? { id: o.partner.id, business_name: o.partner.business_name, slug: o.partner.slug } : undefined,
+  }));
 });
 
 const saveOfferSchema = z.object({
@@ -1799,90 +1208,53 @@ const saveOfferSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 });
 
-// Admin Save (Create / Update) Offer
+// Admin Save (Create / Update) Offer — Supabase only
 export const saveOffer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saveOfferSchema.parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    if (!store.offers) store.offers = new Map();
-    if (!store.deletedOfferIds) store.deletedOfferIds = [];
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
 
+    const isExisting = !!data.id;
     const offerId = data.id || safeRandomUUID();
-    const now = new Date().toISOString();
-    const existing = store.offers.get(offerId);
 
-    const partner = store.partners?.get(data.partner_id);
-
-    const offer: V1Offer = {
+    const payload = {
       id: offerId,
       partner_id: data.partner_id,
       title: data.title,
-      description: data.description || "",
+      description: data.description || null,
       discount_type: data.discount_type,
       discount_value: data.discount_value,
       max_discount: data.max_discount ?? null,
       minimum_bill: data.minimum_bill,
-      valid_from: data.valid_from ?? null,
-      valid_until: data.valid_until ?? null,
+      valid_from: data.valid_from || null,
+      valid_until: data.valid_until || null,
       valid_days: data.valid_days,
-      terms_conditions: data.terms_conditions || "",
-      usage_limit_type: "UNLIMITED",
+      terms_conditions: data.terms_conditions || null,
+      usage_limit_type: "UNLIMITED" as const,
       status: data.status,
-      created_at: existing ? existing.created_at : now,
-      updated_at: now,
-      partner: partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined,
     };
 
-    store.offers.set(offerId, offer);
-
-    // Sync to Supabase
-    try {
-      const { pub } = await import("./public.functions");
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offerId);
-      if (isUuid) {
-        const payload = {
-          id: offerId,
-          partner_id: data.partner_id,
-          title: data.title,
-          description: data.description || null,
-          discount_type: data.discount_type,
-          discount_value: data.discount_value,
-          max_discount: data.max_discount ?? null,
-          minimum_bill: data.minimum_bill,
-          valid_from: data.valid_from || null,
-          valid_until: data.valid_until || null,
-          valid_days: data.valid_days,
-          terms_conditions: data.terms_conditions || null,
-          usage_limit_type: "UNLIMITED" as const,
-          status: data.status,
-        };
-        await pub().from("offers").upsert(payload);
-      }
-    } catch {
-      // ignore
+    if (isExisting) {
+      const { error } = await sb.from("offers").update(payload).eq("id", offerId);
+      if (error) throw new Error(`Failed to update offer: ${error.message}`);
+    } else {
+      const { error } = await sb.from("offers").insert(payload);
+      if (error) throw new Error(`Failed to create offer: ${error.message}`);
     }
 
-    if (store.auditLogs) {
-      store.auditLogs.unshift({
-        id: safeRandomUUID(),
-        admin_user_id: admin.id,
-        action: existing ? `Updated Offer: ${offer.title}` : `Created Offer: ${offer.title}`,
-        target_type: "offer",
-        target_id: offerId,
-        metadata: { title: offer.title, partner_id: offer.partner_id },
-        created_at: now,
-        who: admin.full_name || admin.email,
-      });
-    }
-
-    saveStoreToDisk();
-    return { ok: true, offer };
+    return { ok: true, offer: payload };
   });
 
-// Admin Delete Offer
+// Admin Delete Offer — Supabase only
 export const deleteOffer = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
-    const admin = requireAdminAuth();
-    return await deleteOfferCascadeLogic(data.id, admin.full_name || admin.email);
+    requireAdminAuth();
+    const { getServerSupabase } = await import("./supabase-admin.server");
+    const sb = getServerSupabase();
+    const { error } = await sb.from("offers").delete().eq("id", data.id);
+    if (error) throw new Error(`Failed to delete offer: ${error.message}`);
+    return { ok: true };
   });
