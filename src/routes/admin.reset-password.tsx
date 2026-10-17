@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAdminSession } from "@/lib/admin-session";
 
 export const Route = createFileRoute("/admin/reset-password")({
   head: () => ({
@@ -210,9 +211,7 @@ function AdminResetPasswordPage() {
       // Clear the temporary recovery session cleanly.
       try {
         await supabase.auth.signOut();
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("pennygrade_admin_session");
-        }
+        clearAdminSession();
       } catch {
         // ignore signout errors
       }

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate, useLocation } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   LayoutDashboard,
   Users,
@@ -22,10 +23,36 @@ import {
 import { Wordmark } from "@/components/brand";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import {
+  getAdminSession,
+  saveAdminSessionClient,
+  clearAdminSession,
+  triggerAdminAutoLogout,
+  checkAdminSessionStatus,
+} from "@/lib/admin-session";
+import { refreshAdminSession } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
   beforeLoad: async ({ context }) => {
+    // 0. Check if explicit sign out is in progress
+    const logoutInProgress = typeof window !== "undefined" ? sessionStorage.getItem("admin_logout_in_progress") : null;
+    if (logoutInProgress) {
+      sessionStorage.removeItem("admin_logout_in_progress");
+      throw redirect({ to: "/admin/login", search: { reason: "signed_out" } });
+    }
+
+    const status = checkAdminSessionStatus();
+
+    // 1. Authoritative check: validate persistent admin session & token expiration
+    if (status === "valid") {
+      const adminSession = getAdminSession();
+      if (adminSession && adminSession.role) {
+        return { roles: [adminSession.role] };
+      }
+    }
+
+    // 2. Supabase Auth fallback
     const user = (context as { user?: { id: string } })?.user;
     if (user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
       try {
@@ -38,18 +65,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
       }
     }
 
-    if (typeof window !== "undefined") {
-      const raw = localStorage.getItem("pennygrade_admin_session");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed?.id && parsed?.email && parsed?.role) return { roles: [parsed.role] };
-        } catch {
-          // Invalid client-side session state must not grant frontend admin access.
-        }
-      }
+    clearAdminSession();
+    if (status === "expired") {
+      throw redirect({ to: "/admin/login", search: { reason: "session_expired" } });
     }
-
     throw redirect({ to: "/admin/login" });
   },
   head: () => ({ meta: [{ title: "Admin | PennyGrade" }, { name: "robots", content: "noindex, nofollow" }] }),
@@ -65,8 +84,20 @@ const NAVBAR_PRIMARY_NAV = [
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
 ] as const;
 
+type SidebarItem = {
+  to: string;
+  label: string;
+  icon: any;
+  superOnly?: boolean;
+};
+
+type SidebarSection = {
+  title: string;
+  items: SidebarItem[];
+};
+
 /** Management, catalog, configuration & governance tools displayed in the left sidebar */
-const SIDEBAR_SECTIONS = [
+const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     title: "Catalog & Cards",
     items: [
@@ -80,33 +111,101 @@ const SIDEBAR_SECTIONS = [
   {
     title: "Governance & System",
     items: [
-      { to: "/admin/admins", label: "Admins & Roles", icon: ShieldCheck },
+      { to: "/admin/admins", label: "Admins & Roles", icon: ShieldCheck, superOnly: true },
       { to: "/admin/audit", label: "Audit Logs", icon: ScrollText },
       { to: "/admin/settings", label: "Settings", icon: Settings },
     ],
   },
-] as const;
+];
 
 function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { roles } = Route.useRouteContext();
+  const refreshSessionFn = useServerFn(refreshAdminSession);
+
+  // Enterprise session lifecycle: periodic expiration verification + sliding renewal
+  useEffect(() => {
+    let isCancelled = false;
+
+    const evaluateSessionLifecycle = async () => {
+      const logoutInProgress = typeof window !== "undefined" ? sessionStorage.getItem("admin_logout_in_progress") : null;
+      if (logoutInProgress) return;
+
+      const status = checkAdminSessionStatus();
+      if (status === "expired") {
+        triggerAdminAutoLogout("session_expired");
+        return;
+      }
+      if (status === "none") {
+        return;
+      }
+
+      const session = getAdminSession();
+      if (!session) return;
+
+      // Sliding session renewal ("Big Company Flow"):
+      // If session is active and has consumed at least 24 hours of its 30-day TTL,
+      // silently renew the signed token and slide the 30-day expiration window forward.
+      const now = Date.now();
+      const remainingMs = session.exp - now;
+      const twentyNineDaysMs = 29 * 24 * 60 * 60 * 1000;
+
+      if (remainingMs < twentyNineDaysMs && remainingMs > 0) {
+        try {
+          const res = await refreshSessionFn();
+          if (res?.session_token && !isCancelled) {
+            saveAdminSessionClient(
+              {
+                id: session.id,
+                email: session.email,
+                role: session.role,
+                full_name: session.full_name,
+                exp: res.expires_at,
+              },
+              res.session_token
+            );
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (/unauthorized/i.test(msg) || /expired/i.test(msg)) {
+            triggerAdminAutoLogout("session_expired");
+          }
+        }
+      }
+    };
+
+    evaluateSessionLifecycle();
+
+    const interval = setInterval(evaluateSessionLifecycle, 60_000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        evaluateSessionLifecycle();
+      }
+    };
+    const handleFocus = () => {
+      evaluateSessionLifecycle();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
 
   const signOut = async () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("pennygrade_admin_session");
-      document.cookie = "pennygrade_admin_session=; path=/; max-age=0";
-    }
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // ignore
-    }
-    navigate({ to: "/admin/login", replace: true });
+    triggerAdminAutoLogout("signed_out");
   };
 
   const primaryRoleLabel = roles?.[0] ? roles[0].replace(/_/g, " ") : "Admin";
+  const isSuperAdmin = Boolean(roles?.includes("super_admin"));
 
   const sidebarContent = (
     <aside className="flex h-full w-64 flex-col bg-navy-deep text-sidebar-foreground border-r border-white/10 selection:bg-amber-500/30">
@@ -141,25 +240,29 @@ function AdminLayout() {
         </div>
 
         {/* Sidebar Sections */}
-        {SIDEBAR_SECTIONS.map((sec) => (
-          <div key={sec.title} className="space-y-1">
-            <p className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-navy-muted">
-              {sec.title}
-            </p>
-            {sec.items.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 rounded-[8px] px-3.5 py-2.5 text-xs font-bold text-navy-muted hover:bg-white/5 hover:text-white transition-colors"
-                activeProps={{ className: "!bg-gold !text-accent-foreground font-extrabold shadow-sm" }}
-              >
-                <n.icon className="h-4 w-4 shrink-0" />
-                <span>{n.label}</span>
-              </Link>
-            ))}
-          </div>
-        ))}
+        {SIDEBAR_SECTIONS.map((sec) => {
+          const visibleItems = sec.items.filter((item) => !item.superOnly || isSuperAdmin);
+          if (visibleItems.length === 0) return null;
+          return (
+            <div key={sec.title} className="space-y-1">
+              <p className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-navy-muted">
+                {sec.title}
+              </p>
+              {visibleItems.map((n) => (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-[8px] px-3.5 py-2.5 text-xs font-bold text-navy-muted hover:bg-white/5 hover:text-white transition-colors"
+                  activeProps={{ className: "!bg-gold !text-accent-foreground font-extrabold shadow-sm" }}
+                >
+                  <n.icon className="h-4 w-4 shrink-0" />
+                  <span>{n.label}</span>
+                </Link>
+              ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Sidebar Footer */}

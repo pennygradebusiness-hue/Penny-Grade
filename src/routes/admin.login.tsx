@@ -15,6 +15,11 @@ import {
   createSupabaseAdminSession,
   firstTimeSetPassword,
 } from "@/lib/admin.functions";
+import {
+  getAdminSession,
+  saveAdminSessionClient,
+  clearAdminSession,
+} from "@/lib/admin-session";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
@@ -54,6 +59,20 @@ function AdminLogin() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
+      const reason = searchParams.get("reason");
+
+      if (reason === "signed_out" || reason === "manual") {
+        clearAdminSession();
+        toast.success("You have been signed out successfully.", {
+          id: "admin-signed-out-notice",
+        });
+      } else if (reason === "session_expired") {
+        clearAdminSession();
+        toast.error("Your administrative session has expired. Please sign in again.", {
+          id: "admin-session-expired-notice",
+        });
+      }
+
       if (searchParams.get("action") === "forgot" || searchParams.get("forgot") === "true") {
         setForgotModal(true);
       }
@@ -62,15 +81,16 @@ function AdminLogin() {
         return;
       }
 
-      const existing = localStorage.getItem("pennygrade_admin_session");
-      if (existing) {
-        try {
-          const parsed = JSON.parse(existing);
-          if (parsed && (parsed.role === "super_admin" || parsed.email)) {
-            navigate({ to: "/admin", replace: true });
-          }
-        } catch {
-          // ignore
+      // Do not auto-redirect if user arrived after an expiration/unauthorized/logout event
+      if (
+        reason !== "session_expired" &&
+        reason !== "unauthorized" &&
+        reason !== "signed_out" &&
+        reason !== "manual"
+      ) {
+        const existing = getAdminSession();
+        if (existing && (existing.role === "super_admin" || existing.email)) {
+          navigate({ to: "/admin", replace: true });
         }
       }
     }
@@ -113,12 +133,8 @@ function AdminLogin() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const saveAdminSession = (payload: { id: string; email: string; role: string }, signedToken: string) => {
-    const raw = JSON.stringify(payload);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("pennygrade_admin_session", raw);
-      document.cookie = `pennygrade_admin_session=${signedToken}; path=/; max-age=43200; SameSite=Lax`;
-    }
+  const saveAdminSession = (payload: { id: string; email: string; role: string; full_name?: string }, signedToken: string) => {
+    saveAdminSessionClient(payload, signedToken);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -150,8 +166,14 @@ function AdminLogin() {
 
           if (isAdmin) {
             const signed = await createSupabaseSessionFn({ data: { access_token: data.session.access_token } });
-            saveAdminSession({ id: data.user.id, email: cleanEmail, role: "super_admin" }, signed.session_token);
-            toast.success("Welcome back, Super Admin!");
+            const resolvedRole = (signed as { role?: string }).role || "super_admin";
+            const resolvedName = (signed as { full_name?: string }).full_name || "Administrator";
+            saveAdminSession(
+              { id: data.user.id, email: cleanEmail, role: resolvedRole, full_name: resolvedName },
+              signed.session_token
+            );
+            const roleLabel = resolvedRole === "super_admin" ? "Super Admin" : resolvedRole.replace(/_/g, " ");
+            toast.success(`Welcome back, ${resolvedName || roleLabel}!`);
             setBusy(false);
             navigate({ to: "/admin", replace: true });
             return;

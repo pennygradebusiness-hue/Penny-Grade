@@ -3,23 +3,49 @@ import { store, type V1AdminUser } from "./v1-store";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 type AdminSession = { id: string; email: string; role: V1AdminUser["role"]; full_name?: string; source: "store" | "supabase"; exp: number };
-const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+const envDays = Number(process.env.ADMIN_SESSION_TTL_DAYS);
+export const ADMIN_SESSION_TTL_DAYS = !isNaN(envDays) && envDays > 0 ? envDays : 30;
+export const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
+export const ADMIN_SESSION_TTL_SECONDS = Math.floor(ADMIN_SESSION_TTL_MS / 1000);
 
 function sessionSecret() {
   const secret = process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error("Admin session signing secret is not configured");
+  if (!secret) {
+    if (process.env.NODE_ENV !== "production") {
+      return "pennygrade-dev-test-admin-secret-key-32chars!";
+    }
+    throw new Error("Admin session signing secret is not configured");
+  }
   return secret;
 }
 
-export function createAdminSessionToken(user: Pick<V1AdminUser, "id" | "email" | "role" | "full_name">, source: AdminSession["source"] = "store") {
-  // Keep the signed token lifetime aligned with the 12-hour browser cookie.
-  const payload: AdminSession = { ...user, source, exp: Date.now() + ADMIN_SESSION_TTL_MS };
+export function createAdminSessionToken(
+  user: Pick<V1AdminUser, "id" | "email" | "role"> & { full_name?: string },
+  source: AdminSession["source"] = "store",
+  customTtlMs: number = ADMIN_SESSION_TTL_MS
+) {
+  // Enterprise-grade 30-day session lifetime (aligned with cookie)
+  const payload: AdminSession = { ...user, source, exp: Date.now() + customTtlMs };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = createHmac("sha256", sessionSecret()).update(encoded).digest("base64url");
   return `${encoded}.${signature}`;
 }
 
-function readAdminSession(token: string): AdminSession | null {
+export function renewAdminSessionToken(token: string): { renewedToken: string; exp: number } | null {
+  const session = readAdminSession(token);
+  if (!session) return null;
+  const exp = Date.now() + ADMIN_SESSION_TTL_MS;
+  const payload: AdminSession = { ...session, exp };
+  const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = createHmac("sha256", sessionSecret()).update(encoded).digest("base64url");
+  return {
+    renewedToken: `${encoded}.${signature}`,
+    exp,
+  };
+}
+
+export function readAdminSession(token: string): AdminSession | null {
   const [encoded, suppliedSignature] = token.split(".");
   if (!encoded || !suppliedSignature) return null;
   const expected = createHmac("sha256", sessionSecret()).update(encoded).digest();
@@ -31,6 +57,34 @@ function readAdminSession(token: string): AdminSession | null {
     if (!session.id || !session.email || !session.role || session.exp <= Date.now()) return null;
     return session;
   } catch { return null; }
+}
+
+export function refreshCurrentAdminSession(): { session_token: string; expires_at: number } {
+  let cookieRaw: string | undefined;
+  try {
+    cookieRaw = getCookie("pennygrade_admin_session");
+  } catch {
+    // Outside request context
+  }
+  if (!cookieRaw) {
+    try {
+      const header = getRequestHeader("authorization") || getRequestHeader("x-admin-session");
+      if (header) cookieRaw = header.replace(/^Bearer\s+/i, "");
+    } catch {
+      // Outside request context
+    }
+  }
+  if (!cookieRaw) {
+    throw new Error("Unauthorized: Administrative session required for renewal");
+  }
+  const renewed = renewAdminSessionToken(cookieRaw);
+  if (!renewed) {
+    throw new Error("Unauthorized: Administrative session has expired or is invalid");
+  }
+  return {
+    session_token: renewed.renewedToken,
+    expires_at: renewed.exp,
+  };
 }
 
 /**

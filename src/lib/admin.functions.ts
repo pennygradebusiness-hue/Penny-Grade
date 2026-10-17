@@ -30,7 +30,7 @@ import {
   getFilteredOffersLogic,
   syncAdminPasswordAfterSupabaseResetLogic,
 } from "./v1-logic";
-import { createAdminSessionToken, requireAdminAuth } from "./admin-auth.server";
+import { createAdminSessionToken, requireAdminAuth, refreshCurrentAdminSession } from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
 import { getServiceRoleClient as getRawServiceRoleClient } from "./supabase-admin.server";
 
@@ -260,7 +260,7 @@ export const generateCardBatch = createServerFn({ method: "POST" })
 
 // Admin Get Cards
 export const getAdminCards = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth(["super_admin", "membership_manager"]);
+  requireAdminAuth(["super_admin", "manager", "membership_manager"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data, error } = await db.rpc("get_all_physical_cards");
@@ -291,7 +291,7 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
 
 // Admin Get Members
 export const getAdminMembers = createServerFn({ method: "GET" }).handler(async () => {
-  requireAdminAuth(["super_admin", "membership_manager"]);
+  requireAdminAuth(["super_admin", "manager", "membership_manager"]);
   const db = getServiceRoleClient();
   if (db) {
     const { data, error } = await db.rpc("get_all_memberships");
@@ -828,14 +828,24 @@ export const createSupabaseAdminSession = createServerFn({ method: "POST" })
     if (!role) {
       throw new Error("Forbidden: Administrator role required");
     }
+    const userRole = role as V1AdminUser["role"];
+    const fullName = profile?.full_name || authData.user.user_metadata?.full_name || authData.user.email || "Administrator";
     return {
       session_token: createAdminSessionToken({
         id: authData.user.id,
         email: authData.user.email || profile?.email || "",
-        role: role as V1AdminUser["role"],
-        full_name: profile?.full_name || authData.user.email || "Administrator",
+        role: userRole,
+        full_name: fullName,
       }, "supabase"),
+      role: userRole,
+      full_name: fullName,
     };
+  });
+
+// Enterprise Sliding Session Renewal
+export const refreshAdminSession = createServerFn({ method: "POST" })
+  .handler(async () => {
+    return refreshCurrentAdminSession();
   });
 
 // First-Time Setup / Self-Service Password Set

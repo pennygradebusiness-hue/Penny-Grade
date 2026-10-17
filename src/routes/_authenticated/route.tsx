@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { getAdminSession, clearAdminSession, checkAdminSessionStatus } from "@/lib/admin-session";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -7,6 +8,33 @@ export const Route = createFileRoute("/_authenticated")({
     meta: [{ name: "robots", content: "noindex, nofollow" }],
   }),
   beforeLoad: async ({ location }) => {
+    // 1. For admin routes, strictly validate admin session and token expiration
+    if (location.pathname.startsWith("/admin")) {
+      const logoutInProgress = typeof window !== "undefined" ? sessionStorage.getItem("admin_logout_in_progress") : null;
+      if (logoutInProgress) {
+        sessionStorage.removeItem("admin_logout_in_progress");
+        throw redirect({ to: "/admin/login", search: { reason: "signed_out" } });
+      }
+
+      const status = checkAdminSessionStatus();
+      if (status === "valid") {
+        const adminSession = getAdminSession();
+        if (adminSession && adminSession.id && adminSession.email) {
+          return { user: { id: adminSession.id, email: adminSession.email } };
+        }
+      }
+
+      clearAdminSession();
+      if (status === "expired") {
+        throw redirect({
+          to: "/admin/login",
+          search: { reason: "session_expired" },
+        });
+      }
+      throw redirect({ to: "/admin/login" });
+    }
+
+    // 2. Standard user session check (for account history, profile, etc.)
     try {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
@@ -16,28 +44,6 @@ export const Route = createFileRoute("/_authenticated")({
       // ignore
     }
 
-    // Check local admin session for admin routes
-    if (typeof window !== "undefined") {
-      let raw = localStorage.getItem("pennygrade_admin_session");
-      if (!raw && typeof document !== "undefined") {
-        const match = document.cookie.match(/(?:^|;\s*)pennygrade_admin_session=([^;]+)/);
-        if (match) raw = decodeURIComponent(match[1]);
-      }
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.id && parsed.email) {
-            return { user: { id: parsed.id, email: parsed.email } };
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-
-    if (location.pathname.startsWith("/admin")) {
-      throw redirect({ to: "/admin/login" });
-    }
     throw redirect({ to: "/history" });
   },
   component: () => <Outlet />,

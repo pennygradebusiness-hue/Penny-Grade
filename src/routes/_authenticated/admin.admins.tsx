@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -26,7 +26,15 @@ import {
   Share2,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/admins")({ component: Admins });
+export const Route = createFileRoute("/_authenticated/admin/admins")({
+  beforeLoad: ({ context }) => {
+    const roles = (context as { roles?: string[] })?.roles || [];
+    if (!roles.includes("super_admin")) {
+      throw redirect({ to: "/admin" });
+    }
+  },
+  component: Admins,
+});
 
 const ROLES = ["super_admin", "manager", "membership_manager", "support"] as const;
 

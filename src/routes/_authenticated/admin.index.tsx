@@ -53,23 +53,38 @@ function Dashboard() {
         const errors: string[] = [];
         if (msRes.status === "rejected") {
           console.error("fetchMembersFn failed:", msRes.reason);
-          errors.push(`Members: ${errorMessage(msRes.reason)}`);
+          const msg = errorMessage(msRes.reason);
+          if (!/forbidden|insufficient privileges/i.test(msg)) {
+            errors.push(`Members: ${msg}`);
+          }
         }
         if (cardsRes.status === "rejected") {
           console.error("fetchCardsFn failed:", cardsRes.reason);
-          errors.push(`Cards: ${errorMessage(cardsRes.reason)}`);
+          const msg = errorMessage(cardsRes.reason);
+          if (!/forbidden|insufficient privileges/i.test(msg)) {
+            errors.push(`Cards: ${msg}`);
+          }
         }
         if (partnersRes.status === "rejected") {
           console.error("fetchPartnersFn failed:", partnersRes.reason);
-          errors.push(`Partners: ${errorMessage(partnersRes.reason)}`);
+          const msg = errorMessage(partnersRes.reason);
+          if (!/forbidden|insufficient privileges/i.test(msg)) {
+            errors.push(`Partners: ${msg}`);
+          }
         }
         if (offersRes.status === "rejected") {
           console.error("fetchOffersFn failed:", offersRes.reason);
-          errors.push(`Offers: ${errorMessage(offersRes.reason)}`);
+          const msg = errorMessage(offersRes.reason);
+          if (!/forbidden|insufficient privileges/i.test(msg)) {
+            errors.push(`Offers: ${msg}`);
+          }
         }
         if (logsRes.status === "rejected") {
           console.error("fetchLogs failed:", logsRes.reason);
-          errors.push(`Verification logs: ${errorMessage(logsRes.reason)}`);
+          const msg = errorMessage(logsRes.reason);
+          if (!/forbidden|insufficient privileges/i.test(msg)) {
+            errors.push(`Verification logs: ${msg}`);
+          }
         }
 
         const ms = msRes.status === "fulfilled" ? (msRes.value ?? []) : [];
