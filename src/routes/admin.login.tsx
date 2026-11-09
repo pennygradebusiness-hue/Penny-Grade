@@ -13,6 +13,7 @@ import { getSiteUrl } from "@/lib/seo";
 import {
   verifyAdminLoginCredentials,
   createSupabaseAdminSession,
+  logoutAdminSession,
   firstTimeSetPassword,
 } from "@/lib/admin.functions";
 import {
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/admin/login")({
 
 function AdminLogin() {
   const createSupabaseSessionFn = useServerFn(createSupabaseAdminSession);
+  const logoutAdminSessionFn = useServerFn(logoutAdminSession);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,11 +65,13 @@ function AdminLogin() {
 
       if (reason === "signed_out" || reason === "manual") {
         clearAdminSession();
+        void logoutAdminSessionFn().catch(() => {});
         toast.success("You have been signed out successfully.", {
           id: "admin-signed-out-notice",
         });
       } else if (reason === "session_expired") {
         clearAdminSession();
+        void logoutAdminSessionFn().catch(() => {});
         toast.error("Your administrative session has expired. Please sign in again.", {
           id: "admin-session-expired-notice",
         });
@@ -133,8 +137,8 @@ function AdminLogin() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const saveAdminSession = (payload: { id: string; email: string; role: string; full_name?: string }, signedToken: string) => {
-    saveAdminSessionClient(payload, signedToken);
+  const saveAdminSession = (payload: { id: string; email: string; role: string; full_name?: string }) => {
+    saveAdminSessionClient(payload);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -170,7 +174,6 @@ function AdminLogin() {
             const resolvedName = (signed as { full_name?: string }).full_name || "Administrator";
             saveAdminSession(
               { id: data.user.id, email: cleanEmail, role: resolvedRole, full_name: resolvedName },
-              signed.session_token
             );
             const roleLabel = resolvedRole === "super_admin" ? "Super Admin" : resolvedRole.replace(/_/g, " ");
             toast.success(`Welcome back, ${resolvedName || roleLabel}!`);
@@ -191,12 +194,13 @@ function AdminLogin() {
         },
       });
 
-      if (res.ok && res.user && "session_token" in res && typeof res.session_token === "string") {
+      if (res.ok && res.user) {
         saveAdminSession({
           id: res.user.id,
           email: res.user.email,
           role: res.user.role,
-        }, res.session_token);
+          full_name: res.user.full_name,
+        });
 
         toast.success(`Welcome back, ${res.user.full_name || "Administrator"}!`);
         setBusy(false);

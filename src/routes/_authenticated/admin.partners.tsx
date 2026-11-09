@@ -13,6 +13,7 @@ import {
   MapPin,
   Sparkles,
   Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import { PageHeader, DataTable, td, TableSkeleton, Select } from "@/components/admin-ui";
 import { StatusBadge } from "@/components/brand";
@@ -68,6 +69,11 @@ const EMPTY = {
   latitude: "",
   longitude: "",
   business_hours: "Mon–Sun · 9:00 AM – 10:00 PM",
+  representative_name: "",
+  business_verified_at: "",
+  agreement_reference: "",
+  agreement_signed_at: "",
+  benefit_dispute_contact: "",
   status: "ACTIVE",
   featured: false,
   create_offer: false,
@@ -188,6 +194,14 @@ function Partners() {
       }
     }
 
+    if (edit.status === "ACTIVE") {
+      if (!edit.representative_name.trim()) errs.representative_name = "Record the authorised representative before publishing.";
+      if (!edit.benefit_dispute_contact.trim()) errs.benefit_dispute_contact = "Add a member issue contact before publishing.";
+      if (!edit.business_verified_at) errs.business_verified_at = "Verify the business before publishing.";
+      if (!edit.agreement_reference.trim()) errs.agreement_reference = "Record the secure signed-agreement reference before publishing.";
+      if (!edit.agreement_signed_at) errs.agreement_signed_at = "Record the agreement signing date before publishing.";
+    }
+
     if (!edit.id && edit.create_offer) {
       if (!edit.offer_title?.trim()) {
         errs.offer_title = "Offer title is required.";
@@ -296,6 +310,11 @@ function Partners() {
           latitude: num(f.latitude),
           longitude: num(f.longitude),
           business_hours: f.business_hours?.trim() || "",
+          representative_name: f.representative_name.trim(),
+          business_verified_at: f.business_verified_at || "",
+          agreement_reference: f.agreement_reference.trim(),
+          agreement_signed_at: f.agreement_signed_at || "",
+          benefit_dispute_contact: f.benefit_dispute_contact.trim(),
           status: (f.status || "ACTIVE") as "ACTIVE" | "INACTIVE" | "SUSPENDED",
           featured: Boolean(f.featured),
         },
@@ -378,7 +397,7 @@ function Partners() {
     <>
       <PageHeader
         title="Partners & Inquiries"
-        desc={`${q.data?.length ?? 0} active partners · ${partnerAppsQ.data?.length ?? 0} onboarding inquiries`}
+        desc={`${q.data?.length ?? 0} partner records · ${partnerAppsQ.data?.length ?? 0} onboarding inquiries`}
         actions={
           <Button
             size="sm"
@@ -405,7 +424,7 @@ function Partners() {
               : "text-slate-600 hover:bg-slate-100"
           }`}
         >
-          Active Partners ({list.length})
+          Partner Records ({list.length})
         </button>
         <button
           type="button"
@@ -787,6 +806,32 @@ function Partners() {
               </div>
 
               {/* SECTION C: Location & Visibility */}
+              <div>
+                <div className="mb-3.5 flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100 text-emerald-800"><ShieldCheck className="h-3.5 w-3.5" /></div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">C. Due Diligence & Signed Agreement</h4>
+                </div>
+                <div className="grid gap-3.5 sm:grid-cols-2">
+                  <FormField label="Owner / authorised representative" required error={errors.representative_name}>
+                    <Input value={edit.representative_name} onChange={setField("representative_name")} placeholder="Name of the authorised signatory" />
+                  </FormField>
+                  <FormField label="Member issue contact" required error={errors.benefit_dispute_contact}>
+                    <Input value={edit.benefit_dispute_contact} onChange={setField("benefit_dispute_contact")} placeholder="Phone or email members can use" />
+                  </FormField>
+                  <FormField label="Business verified on" required error={errors.business_verified_at}>
+                    <Input type="date" value={edit.business_verified_at} onChange={setField("business_verified_at")} />
+                  </FormField>
+                  <FormField label="Agreement reference / secure document ID" required error={errors.agreement_reference}>
+                    <Input value={edit.agreement_reference} onChange={setField("agreement_reference")} placeholder="Internal document reference (do not use a public URL)" />
+                  </FormField>
+                  <FormField label="Agreement signed on" required error={errors.agreement_signed_at}>
+                    <Input type="date" value={edit.agreement_signed_at} onChange={setField("agreement_signed_at")} />
+                  </FormField>
+                  <p className="self-end text-xs text-muted-foreground">Only record these details after the business is checked and both parties have actually signed. The signed document must be stored securely outside this public listing.</p>
+                </div>
+              </div>
+
+              {/* SECTION D: Location & Visibility */}
               <div>
                 <div className="flex items-center gap-2 mb-3.5 pb-2 border-b border-slate-100">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-800">

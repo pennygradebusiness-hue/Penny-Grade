@@ -35,9 +35,9 @@ import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 export const Route = createFileRoute("/how-it-works")({
   head: () =>
     buildPageHead({
-      title: "How It Works | PennyGrade Physical Card Discounts",
+      title: "How It Works | PennyGrade Membership Network",
       description:
-        "Learn how PennyGrade works: obtain your physical card, scan the venue counter QR code, and enjoy instant verified discounts on your billing amount.",
+        "Learn how to purchase a PennyGrade membership, explore participating local businesses, and verify listed member benefits.",
       path: "/how-it-works",
       jsonLd: buildBreadcrumbSchema([
         { name: "Home", path: "/" },
@@ -56,49 +56,49 @@ const ECOSYSTEM_CATEGORIES = [
     name: "Restaurants",
     icon: Utensils,
     tagline: "Fine Dining & Bistros",
-    savings: "Up to 25% OFF",
+    savings: "See partner listing",
   },
   {
     name: "Cafés",
     icon: Coffee,
     tagline: "Artisan Coffee & Bakeries",
-    savings: "Flat 15-20% OFF",
+    savings: "See partner listing",
   },
   {
     name: "Hotels",
     icon: Building2,
     tagline: "Boutique Stays & Resorts",
-    savings: "Exclusive Member Rates",
+    savings: "See partner listing",
   },
   {
     name: "Shopping",
     icon: ShoppingBag,
     tagline: "Apparel & Lifestyle",
-    savings: "Up to 20% OFF",
+    savings: "See partner listing",
   },
   {
     name: "Fitness",
     icon: Dumbbell,
     tagline: "Gyms & Yoga Studios",
-    savings: "Up to 30% Packages",
+    savings: "See partner listing",
   },
   {
     name: "Travel",
     icon: Plane,
     tagline: "Car Rentals & Tours",
-    savings: "Verified Concessions",
+    savings: "See partner listing",
   },
   {
     name: "Entertainment",
     icon: Film,
     tagline: "Cinemas, Bowling & Games",
-    savings: "Special Group Deals",
+    savings: "See partner listing",
   },
   {
     name: "Healthcare",
     icon: HeartPulse,
     tagline: "Clinics, Labs & Diagnostics",
-    savings: "10-20% on Tests & Care",
+    savings: "See partner listing",
   },
 ];
 
@@ -269,6 +269,10 @@ function HowItWorks() {
             <p className="mt-4 text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
               Discover exclusive offers, verify your membership, and enjoy benefits at participating
               businesses with PennyGrade.
+            </p>
+            <p className="mt-2 text-xs font-medium text-slate-500">
+              The sample screens below are illustrative. Current partner offers and conditions are
+              shown on each live business listing.
             </p>
           </div>
         </div>
@@ -458,7 +462,7 @@ function HowItWorks() {
                           <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-2 shadow-2xs">
                             <img
                               src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=200&q=80"
-                              alt="Café Bliss"
+                              alt="Illustrative partner"
                               width={48}
                               height={48}
                               loading="lazy"
@@ -468,15 +472,15 @@ function HowItWorks() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-slate-900 truncate">
-                                  Café Bliss
+                                  Local Café
                                 </h4>
                                 <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
-                                  20% OFF
+                                  View offer
                                 </span>
                               </div>
-                              <p className="text-[10px] text-slate-500">Main Road • 0.4 km</p>
+                              <p className="text-[10px] text-slate-500">Daltonganj</p>
                               <span className="text-[9px] font-bold text-amber-600">
-                                ★ 4.8 (124 reviews)
+                                Check the current listing
                               </span>
                             </div>
                           </div>
@@ -495,15 +499,15 @@ function HowItWorks() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-slate-900 truncate">
-                                  The Grand Hotel
+                                  Dining Partner
                                 </h4>
                                 <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
-                                  15% OFF
+                                  View offer
                                 </span>
                               </div>
-                              <p className="text-[10px] text-slate-500">Station Road • 1.2 km</p>
+                              <p className="text-[10px] text-slate-500">Daltonganj</p>
                               <span className="text-[9px] font-bold text-amber-600">
-                                ★ 4.9 (88 reviews)
+                                Check the current listing
                               </span>
                             </div>
                           </div>
@@ -522,15 +526,15 @@ function HowItWorks() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-slate-900 truncate">
-                                  FitZone Gym
+                                  Wellness Partner
                                 </h4>
                                 <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
-                                  25% OFF
+                                  View offer
                                 </span>
                               </div>
-                              <p className="text-[10px] text-slate-500">Bypass Road • 2.0 km</p>
+                              <p className="text-[10px] text-slate-500">Daltonganj</p>
                               <span className="text-[9px] font-bold text-amber-600">
-                                ★ 4.7 (52 reviews)
+                                Check the current listing
                               </span>
                             </div>
                           </div>
@@ -576,7 +580,7 @@ function HowItWorks() {
                             </div>
                             <div className="min-w-0">
                               <h3 className="text-xs font-bold truncate leading-none">
-                                Café Bliss
+                                Sample Partner
                               </h3>
                               <span className="text-[9px] text-amber-300">
                                 Verified Partner Outlet
@@ -601,7 +605,7 @@ function HowItWorks() {
                               </span>
                               <div className="mt-0.5 flex items-baseline gap-2">
                                 <strong className="text-sm font-black text-slate-900">
-                                  Flat 20% OFF
+                                  Partner-set offer
                                 </strong>
                                 <span className="text-[9px] text-slate-600">On total bill</span>
                               </div>
@@ -616,23 +620,22 @@ function HowItWorks() {
                                 <input
                                   type="text"
                                   readOnly
-                                  value="PEN-7X4P-92LM"
+                                  value="SAMPLE ONLY"
                                   className="w-full rounded-lg border-2 border-amber-400 bg-white px-2.5 py-1.5 font-mono text-[11px] font-bold tracking-wider text-slate-900 shadow-2xs"
                                 />
                                 <BadgeCheck className="absolute right-2.5 top-2 h-3.5 w-3.5 text-emerald-600" />
                               </div>
                               <span className="mt-0.5 block text-[9px] font-medium text-emerald-700">
-                                ✓ Card Active & Verified for 2026
+                                Illustration only - not a live member record
                               </span>
                             </div>
 
                             {/* Card Graphic */}
                             <div className="overflow-hidden rounded-xl border border-amber-300/40 shadow-sm">
-                              <img
-                                src={CARD_URL}
-                                alt="Card Preview"
-                                className="h-20 w-full object-cover"
-                              />
+                              <div className="relative">
+                                <img src={CARD_URL} alt="Illustrative membership card specimen" className="h-20 w-full object-cover" />
+                                <span className="absolute bottom-1 left-1 rounded bg-slate-950/90 px-2 py-1 text-[8px] font-bold text-white">SPECIMEN - ID REDACTED</span>
+                              </div>
                             </div>
                           </div>
 
@@ -752,13 +755,13 @@ function HowItWorks() {
                           <div className="space-y-2.5">
                             <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center backdrop-blur-2xs">
                               <span className="text-[8px] uppercase tracking-wider text-slate-400">
-                                Show to Café Bliss Staff
+                                Example only - sample values
                               </span>
                               <div className="mt-0.5 font-display text-xl font-black text-amber-400">
                                 ₹300.00 OFF
                               </div>
                               <span className="text-[9px] font-bold text-slate-300">
-                                Deduct from Final POS Bill
+                                Subject to listed terms
                               </span>
                             </div>
 
@@ -766,7 +769,7 @@ function HowItWorks() {
                               <div className="flex justify-between text-slate-400">
                                 <span>Member ID</span>
                                 <span className="font-mono font-bold text-white">
-                                  PEN-7X4P-92LM
+                                  SAMPLE - NOT A MEMBER ID
                                 </span>
                               </div>
                               <div className="flex justify-between text-slate-400">
@@ -776,9 +779,9 @@ function HowItWorks() {
                                 </span>
                               </div>
                               <div className="flex justify-between text-slate-400">
-                                <span>Token Hash</span>
+                                <span>Session window</span>
                                 <span className="font-mono text-[8px] text-slate-400">
-                                  SEC-992B-04E1
+                                  5 minutes
                                 </span>
                               </div>
                             </div>
@@ -931,7 +934,7 @@ function HowItWorks() {
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 aspect-[4/5] shadow-md"
             >
               <img
-                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80"
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=75"
                 alt="Fine Dining"
                 width={300}
                 height={375}
@@ -956,7 +959,7 @@ function HowItWorks() {
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 aspect-[4/5] shadow-md lg:mt-5"
             >
               <img
-                src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80"
+                src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=75"
                 alt="Artisan Café"
                 width={300}
                 height={375}
@@ -981,7 +984,7 @@ function HowItWorks() {
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 aspect-[4/5] shadow-md"
             >
               <img
-                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80"
+                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=75"
                 alt="Luxury Hotel"
                 width={300}
                 height={375}
@@ -1006,7 +1009,7 @@ function HowItWorks() {
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 aspect-[4/5] shadow-md lg:mt-5"
             >
               <img
-                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80"
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=75"
                 alt="Boutique Shopping"
                 width={300}
                 height={375}
@@ -1031,7 +1034,7 @@ function HowItWorks() {
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 aspect-[4/5] shadow-md"
             >
               <img
-                src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80"
+                src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=75"
                 alt="Fitness Gym"
                 width={300}
                 height={375}
@@ -1056,7 +1059,7 @@ function HowItWorks() {
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 aspect-[4/5] shadow-md lg:mt-5"
             >
               <img
-                src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80"
+                src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=400&q=75"
                 alt="Travel"
                 width={300}
                 height={375}
@@ -1083,22 +1086,22 @@ function HowItWorks() {
             <div className="flex items-center justify-center gap-3 border-r border-white/10 p-4 text-center">
               <ShieldCheck className="h-6 w-6 text-amber-400 shrink-0" />
               <div className="text-left">
-                <strong className="block text-xs font-extrabold text-white">Trusted</strong>
-                <span className="text-[11px] text-slate-400">Partners</span>
+                <strong className="block text-xs font-extrabold text-white">Verified</strong>
+                <span className="text-[11px] text-slate-400">Partner records</span>
               </div>
             </div>
             <div className="flex items-center justify-center gap-3 border-r border-white/10 p-4 text-center">
               <Percent className="h-6 w-6 text-amber-400 shrink-0" />
               <div className="text-left">
-                <strong className="block text-xs font-extrabold text-white">Guaranteed</strong>
-                <span className="text-[11px] text-slate-400">Discounts</span>
+                <strong className="block text-xs font-extrabold text-white">Listed</strong>
+                <span className="text-[11px] text-slate-400">Partner benefits</span>
               </div>
             </div>
             <div className="flex items-center justify-center gap-3 border-r border-white/10 p-4 text-center">
               <QrCode className="h-6 w-6 text-amber-400 shrink-0" />
               <div className="text-left">
-                <strong className="block text-xs font-extrabold text-white">100% Secure</strong>
-                <span className="text-[11px] text-slate-400">Cryptographic</span>
+                <strong className="block text-xs font-extrabold text-white">Server-side</strong>
+                <span className="text-[11px] text-slate-400">Offer verification</span>
               </div>
             </div>
             <div className="flex items-center justify-center gap-3 p-4 text-center">

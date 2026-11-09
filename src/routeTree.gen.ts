@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as BecomeAMemberRouteImport } from './routes/become-a-member'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -20,14 +23,20 @@ import { Route as MembershipTermsRouteImport } from './routes/membership-terms'
 import { Route as MerchantAgreementRouteImport } from './routes/merchant-agreement'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as PartnerWithUsRouteImport } from './routes/partner-with-us'
+import { Route as PrebookRouteImport } from './routes/prebook'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as ShippingPolicyRouteImport } from './routes/shipping-policy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TrackOrderRouteImport } from './routes/track-order'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminResetPasswordRouteImport } from './routes/admin.reset-password'
+import { Route as OrderConfirmationOrderNumberRouteImport } from './routes/order-confirmation.$orderNumber'
 import { Route as PPartnerSlugRouteImport } from './routes/p.$partnerSlug'
 import { Route as PartnersIndexRouteImport } from './routes/partners.index'
 import { Route as PartnersSlugRouteImport } from './routes/partners.$slug'
@@ -43,12 +52,15 @@ import { Route as AuthenticatedAdminCardsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin.members'
 import { Route as AuthenticatedAdminOffersRouteImport } from './routes/_authenticated/admin.offers'
+import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin.orders'
 import { Route as AuthenticatedAdminPartnersRouteImport } from './routes/_authenticated/admin.partners'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin.plans'
+import { Route as AuthenticatedAdminPrebookingRouteImport } from './routes/_authenticated/admin.prebooking'
 import { Route as AuthenticatedAdminQrCodesRouteImport } from './routes/_authenticated/admin.qr-codes'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
+import { Route as ApiWebhooksRazorpayRouteImport } from './routes/api.webhooks.razorpay'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -59,9 +71,24 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BecomeAMemberRoute = BecomeAMemberRouteImport.update({
   id: '/become-a-member',
   path: '/become-a-member',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisclaimerRoute = DisclaimerRouteImport.update({
@@ -104,9 +131,19 @@ const PartnerWithUsRoute = PartnerWithUsRouteImport.update({
   path: '/partner-with-us',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrebookRoute = PrebookRouteImport.update({
+  id: '/prebook',
+  path: '/prebook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({
+  id: '/refund-policy',
+  path: '/refund-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -119,6 +156,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShippingPolicyRoute = ShippingPolicyRouteImport.update({
+  id: '/shipping-policy',
+  path: '/shipping-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -127,6 +169,16 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackOrderRoute = TrackOrderRouteImport.update({
+  id: '/track-order',
+  path: '/track-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -144,6 +196,12 @@ const AdminResetPasswordRoute = AdminResetPasswordRouteImport.update({
   path: '/admin/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderConfirmationOrderNumberRoute =
+  OrderConfirmationOrderNumberRouteImport.update({
+    id: '/order-confirmation/$orderNumber',
+    path: '/order-confirmation/$orderNumber',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PPartnerSlugRoute = PPartnerSlugRouteImport.update({
   id: '/p/$partnerSlug',
   path: '/p/$partnerSlug',
@@ -227,6 +285,12 @@ const AuthenticatedAdminOffersRoute =
     path: '/offers',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminOrdersRoute =
+  AuthenticatedAdminOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPartnersRoute =
   AuthenticatedAdminPartnersRouteImport.update({
     id: '/partners',
@@ -238,6 +302,12 @@ const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
   path: '/plans',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPrebookingRoute =
+  AuthenticatedAdminPrebookingRouteImport.update({
+    id: '/prebooking',
+    path: '/prebooking',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminQrCodesRoute =
   AuthenticatedAdminQrCodesRouteImport.update({
     id: '/qr-codes',
@@ -262,10 +332,18 @@ const AuthenticatedAdminVerificationsRoute =
     path: '/verifications',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiWebhooksRazorpayRoute = ApiWebhooksRazorpayRouteImport.update({
+  id: '/api/webhooks/razorpay',
+  path: '/api/webhooks/razorpay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/checkout': typeof CheckoutRoute
+  '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -274,14 +352,20 @@ export interface FileRoutesByFullPath {
   '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
   '/partner-with-us': typeof PartnerWithUsRoute
+  '/prebook': typeof PrebookRoute
   '/privacy': typeof PrivacyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/register': typeof RegisterRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
+  '/verify': typeof VerifyRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/reset-password': typeof AdminResetPasswordRoute
+  '/order-confirmation/$orderNumber': typeof OrderConfirmationOrderNumberRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/verification/$sessionId': typeof VerificationSessionIdRoute
@@ -295,18 +379,24 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/offers': typeof AuthenticatedAdminOffersRoute
+  '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/partners': typeof AuthenticatedAdminPartnersRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/prebooking': typeof AuthenticatedAdminPrebookingRoute
   '/admin/qr-codes': typeof AuthenticatedAdminQrCodesRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/api/webhooks/razorpay': typeof ApiWebhooksRazorpayRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/checkout': typeof CheckoutRoute
+  '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -315,13 +405,19 @@ export interface FileRoutesByTo {
   '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
   '/partner-with-us': typeof PartnerWithUsRoute
+  '/prebook': typeof PrebookRoute
   '/privacy': typeof PrivacyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/register': typeof RegisterRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
+  '/verify': typeof VerifyRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/reset-password': typeof AdminResetPasswordRoute
+  '/order-confirmation/$orderNumber': typeof OrderConfirmationOrderNumberRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/verification/$sessionId': typeof VerificationSessionIdRoute
@@ -335,12 +431,15 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/offers': typeof AuthenticatedAdminOffersRoute
+  '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/partners': typeof AuthenticatedAdminPartnersRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/prebooking': typeof AuthenticatedAdminPrebookingRoute
   '/admin/qr-codes': typeof AuthenticatedAdminQrCodesRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/api/webhooks/razorpay': typeof ApiWebhooksRazorpayRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -348,7 +447,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/checkout': typeof CheckoutRoute
+  '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -357,14 +459,20 @@ export interface FileRoutesById {
   '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
   '/partner-with-us': typeof PartnerWithUsRoute
+  '/prebook': typeof PrebookRoute
   '/privacy': typeof PrivacyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/register': typeof RegisterRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
+  '/verify': typeof VerifyRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/reset-password': typeof AdminResetPasswordRoute
+  '/order-confirmation/$orderNumber': typeof OrderConfirmationOrderNumberRoute
   '/p/$partnerSlug': typeof PPartnerSlugRoute
   '/partners/$slug': typeof PartnersSlugRoute
   '/verification/$sessionId': typeof VerificationSessionIdRoute
@@ -378,12 +486,15 @@ export interface FileRoutesById {
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/offers': typeof AuthenticatedAdminOffersRoute
+  '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/partners': typeof AuthenticatedAdminPartnersRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/_authenticated/admin/prebooking': typeof AuthenticatedAdminPrebookingRoute
   '/_authenticated/admin/qr-codes': typeof AuthenticatedAdminQrCodesRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/api/webhooks/razorpay': typeof ApiWebhooksRazorpayRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -391,7 +502,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/become-a-member'
+    | '/checkout'
+    | '/contact'
     | '/disclaimer'
     | '/history'
     | '/how-it-works'
@@ -400,14 +514,20 @@ export interface FileRouteTypes {
     | '/merchant-agreement'
     | '/offers'
     | '/partner-with-us'
+    | '/prebook'
     | '/privacy'
+    | '/refund-policy'
     | '/register'
     | '/robots.txt'
+    | '/shipping-policy'
     | '/sitemap.xml'
     | '/terms'
+    | '/track-order'
+    | '/verify'
     | '/admin'
     | '/admin/login'
     | '/admin/reset-password'
+    | '/order-confirmation/$orderNumber'
     | '/p/$partnerSlug'
     | '/partners/$slug'
     | '/verification/$sessionId'
@@ -421,18 +541,24 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/members'
     | '/admin/offers'
+    | '/admin/orders'
     | '/admin/partners'
     | '/admin/plans'
+    | '/admin/prebooking'
     | '/admin/qr-codes'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/verifications'
+    | '/api/webhooks/razorpay'
     | '/account/'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/become-a-member'
+    | '/checkout'
+    | '/contact'
     | '/disclaimer'
     | '/history'
     | '/how-it-works'
@@ -441,13 +567,19 @@ export interface FileRouteTypes {
     | '/merchant-agreement'
     | '/offers'
     | '/partner-with-us'
+    | '/prebook'
     | '/privacy'
+    | '/refund-policy'
     | '/register'
     | '/robots.txt'
+    | '/shipping-policy'
     | '/sitemap.xml'
     | '/terms'
+    | '/track-order'
+    | '/verify'
     | '/admin/login'
     | '/admin/reset-password'
+    | '/order-confirmation/$orderNumber'
     | '/p/$partnerSlug'
     | '/partners/$slug'
     | '/verification/$sessionId'
@@ -461,19 +593,25 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/members'
     | '/admin/offers'
+    | '/admin/orders'
     | '/admin/partners'
     | '/admin/plans'
+    | '/admin/prebooking'
     | '/admin/qr-codes'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/verifications'
+    | '/api/webhooks/razorpay'
     | '/account'
     | '/admin'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/become-a-member'
+    | '/checkout'
+    | '/contact'
     | '/disclaimer'
     | '/history'
     | '/how-it-works'
@@ -482,14 +620,20 @@ export interface FileRouteTypes {
     | '/merchant-agreement'
     | '/offers'
     | '/partner-with-us'
+    | '/prebook'
     | '/privacy'
+    | '/refund-policy'
     | '/register'
     | '/robots.txt'
+    | '/shipping-policy'
     | '/sitemap.xml'
     | '/terms'
+    | '/track-order'
+    | '/verify'
     | '/_authenticated/admin'
     | '/admin/login'
     | '/admin/reset-password'
+    | '/order-confirmation/$orderNumber'
     | '/p/$partnerSlug'
     | '/partners/$slug'
     | '/verification/$sessionId'
@@ -503,12 +647,15 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/offers'
+    | '/_authenticated/admin/orders'
     | '/_authenticated/admin/partners'
     | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/prebooking'
     | '/_authenticated/admin/qr-codes'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/verifications'
+    | '/api/webhooks/razorpay'
     | '/_authenticated/account/'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -516,7 +663,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   BecomeAMemberRoute: typeof BecomeAMemberRoute
+  CheckoutRoute: typeof CheckoutRoute
+  ContactRoute: typeof ContactRoute
   DisclaimerRoute: typeof DisclaimerRoute
   HistoryRoute: typeof HistoryRoute
   HowItWorksRoute: typeof HowItWorksRoute
@@ -525,17 +675,24 @@ export interface RootRouteChildren {
   MerchantAgreementRoute: typeof MerchantAgreementRoute
   OffersRoute: typeof OffersRoute
   PartnerWithUsRoute: typeof PartnerWithUsRoute
+  PrebookRoute: typeof PrebookRoute
   PrivacyRoute: typeof PrivacyRoute
+  RefundPolicyRoute: typeof RefundPolicyRoute
   RegisterRoute: typeof RegisterRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
+  ShippingPolicyRoute: typeof ShippingPolicyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  TrackOrderRoute: typeof TrackOrderRoute
+  VerifyRoute: typeof VerifyRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminResetPasswordRoute: typeof AdminResetPasswordRoute
+  OrderConfirmationOrderNumberRoute: typeof OrderConfirmationOrderNumberRoute
   PPartnerSlugRoute: typeof PPartnerSlugRoute
   PartnersSlugRoute: typeof PartnersSlugRoute
   VerificationSessionIdRoute: typeof VerificationSessionIdRoute
   PartnersIndexRoute: typeof PartnersIndexRoute
+  ApiWebhooksRazorpayRoute: typeof ApiWebhooksRazorpayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -554,11 +711,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/become-a-member': {
       id: '/become-a-member'
       path: '/become-a-member'
       fullPath: '/become-a-member'
       preLoaderRoute: typeof BecomeAMemberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disclaimer': {
@@ -617,11 +795,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnerWithUsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prebook': {
+      id: '/prebook'
+      path: '/prebook'
+      fullPath: '/prebook'
+      preLoaderRoute: typeof PrebookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund-policy': {
+      id: '/refund-policy'
+      path: '/refund-policy'
+      fullPath: '/refund-policy'
+      preLoaderRoute: typeof RefundPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -638,6 +830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shipping-policy': {
+      id: '/shipping-policy'
+      path: '/shipping-policy'
+      fullPath: '/shipping-policy'
+      preLoaderRoute: typeof ShippingPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -650,6 +849,20 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track-order': {
+      id: '/track-order'
+      path: '/track-order'
+      fullPath: '/track-order'
+      preLoaderRoute: typeof TrackOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -671,6 +884,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/reset-password'
       fullPath: '/admin/reset-password'
       preLoaderRoute: typeof AdminResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-confirmation/$orderNumber': {
+      id: '/order-confirmation/$orderNumber'
+      path: '/order-confirmation/$orderNumber'
+      fullPath: '/order-confirmation/$orderNumber'
+      preLoaderRoute: typeof OrderConfirmationOrderNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/p/$partnerSlug': {
@@ -778,6 +998,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOffersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/orders': {
+      id: '/_authenticated/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AuthenticatedAdminOrdersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/partners': {
       id: '/_authenticated/admin/partners'
       path: '/partners'
@@ -790,6 +1017,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/admin/plans'
       preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/prebooking': {
+      id: '/_authenticated/admin/prebooking'
+      path: '/prebooking'
+      fullPath: '/admin/prebooking'
+      preLoaderRoute: typeof AuthenticatedAdminPrebookingRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/qr-codes': {
@@ -820,6 +1054,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/webhooks/razorpay': {
+      id: '/api/webhooks/razorpay'
+      path: '/api/webhooks/razorpay'
+      fullPath: '/api/webhooks/razorpay'
+      preLoaderRoute: typeof ApiWebhooksRazorpayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -830,8 +1071,10 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminOffersRoute: typeof AuthenticatedAdminOffersRoute
+  AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
   AuthenticatedAdminPartnersRoute: typeof AuthenticatedAdminPartnersRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
+  AuthenticatedAdminPrebookingRoute: typeof AuthenticatedAdminPrebookingRoute
   AuthenticatedAdminQrCodesRoute: typeof AuthenticatedAdminQrCodesRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
@@ -846,8 +1089,10 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminOffersRoute: AuthenticatedAdminOffersRoute,
+  AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
   AuthenticatedAdminPartnersRoute: AuthenticatedAdminPartnersRoute,
   AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
+  AuthenticatedAdminPrebookingRoute: AuthenticatedAdminPrebookingRoute,
   AuthenticatedAdminQrCodesRoute: AuthenticatedAdminQrCodesRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
@@ -880,7 +1125,10 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   BecomeAMemberRoute: BecomeAMemberRoute,
+  CheckoutRoute: CheckoutRoute,
+  ContactRoute: ContactRoute,
   DisclaimerRoute: DisclaimerRoute,
   HistoryRoute: HistoryRoute,
   HowItWorksRoute: HowItWorksRoute,
@@ -889,17 +1137,24 @@ const rootRouteChildren: RootRouteChildren = {
   MerchantAgreementRoute: MerchantAgreementRoute,
   OffersRoute: OffersRoute,
   PartnerWithUsRoute: PartnerWithUsRoute,
+  PrebookRoute: PrebookRoute,
   PrivacyRoute: PrivacyRoute,
+  RefundPolicyRoute: RefundPolicyRoute,
   RegisterRoute: RegisterRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
+  ShippingPolicyRoute: ShippingPolicyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  TrackOrderRoute: TrackOrderRoute,
+  VerifyRoute: VerifyRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminResetPasswordRoute: AdminResetPasswordRoute,
+  OrderConfirmationOrderNumberRoute: OrderConfirmationOrderNumberRoute,
   PPartnerSlugRoute: PPartnerSlugRoute,
   PartnersSlugRoute: PartnersSlugRoute,
   VerificationSessionIdRoute: VerificationSessionIdRoute,
   PartnersIndexRoute: PartnersIndexRoute,
+  ApiWebhooksRazorpayRoute: ApiWebhooksRazorpayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

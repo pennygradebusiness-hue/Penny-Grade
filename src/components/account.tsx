@@ -31,7 +31,7 @@ export function AccountLayout({ children }: { children: React.ReactNode }) {
 type M = { membership_number: string; expiry_date: string; status: string } | null;
 
 export function MembershipCard({ name, membership, reveal }: { name: string; membership: M; reveal?: boolean }) {
-  const code = membership ? (reveal ? membership.membership_number : maskId(membership.membership_number)) : "PEN-7X4P-92LM";
+  const code = membership ? (reveal ? membership.membership_number : maskId(membership.membership_number)) : "SPECIMEN - NO MEMBER ID";
   return (
     <div className="w-full max-w-md space-y-3">
       <PhysicalCardPreview code={code} className="shadow-2xl" />

@@ -510,7 +510,7 @@ function Partners() {
           </div>
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
               {/* Left Column: Heading, Smart Search, Quick Categories */}
               <div className="lg:col-span-7 xl:col-span-8">
                 <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3.5 py-1 text-xs font-bold text-amber-300 backdrop-blur-sm mb-4">
@@ -533,8 +533,8 @@ function Partners() {
 
                 <p className="mt-4 max-w-xl text-sm sm:text-base font-medium leading-relaxed text-slate-300">
                   Discover local restaurants, cafés, hotels, salons, fashion boutiques and lifestyle
-                  venues across Daltonganj. Unlock exclusive guaranteed benefits with your
-                  PennyGrade membership.
+                  businesses across Daltonganj. Review each listing for current member offers and
+                  the terms that apply.
                 </p>
 
                 {/* Prominent Smart Search Input with Autocomplete */}
@@ -700,15 +700,15 @@ function Partners() {
                   <div className="relative overflow-hidden rounded-2xl border border-amber-400/30 bg-slate-950 p-2 shadow-2xl ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-[1.02]">
                     <img
                       src={CARD_URL}
-                      alt="PennyGrade Premium Membership Card"
+                      alt="Illustrative PennyGrade membership card specimen"
                       width={380}
                       height={238}
                       loading="lazy"
                       decoding="async"
                       className="h-auto w-full rounded-xl object-cover shadow-inner"
                     />
-                    <div className="absolute bottom-4 left-4 rounded-md bg-slate-950/85 px-2.5 py-1 font-mono text-[10px] font-black tracking-widest text-amber-200 border border-amber-400/40 backdrop-blur-xs">
-                      PEN-7X4P-92LM
+                    <div className="absolute bottom-4 left-4 rounded-md bg-slate-950/90 px-2.5 py-1 text-[9px] font-bold text-white border border-amber-400/40 backdrop-blur-xs">
+                      SPECIMEN - ID REDACTED
                     </div>
                   </div>
                 </div>
@@ -728,10 +728,10 @@ function Partners() {
               </div>
               <div className="min-w-0">
                 <strong className="block font-display text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
-                  120+
+                  Current
                 </strong>
                 <span className="text-[11px] sm:text-xs font-semibold text-slate-500 truncate block">
-                  Partner Businesses
+                  Partner listings
                 </span>
               </div>
             </div>

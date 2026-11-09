@@ -4,7 +4,7 @@ import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 const TOC: LegalTocItem[] = [
   { id: "enrollment", title: "1. Membership Enrollment & Card Issuance" },
-  { id: "offline-private", title: "2. Offline & Private Guarantee" },
+  { id: "offline-private", title: "2. Verification & Privacy" },
   { id: "pencode-security", title: "3. Unique PenCode & Card Custody" },
   { id: "non-transferable", title: "4. Personal & Non-Transferable Status" },
   { id: "unlimited-usage", title: "5. Unlimited Visit Frequency" },
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/membership-terms")({
     buildPageHead({
       title: "Membership & Card Terms | PennyGrade Offline Privilege Card",
       description:
-        "Official cardholder terms governing PennyGrade physical cards, unlimited in-person venue visits, zero app downloads, and replacement rules in Daltonganj.",
+        "Membership terms for the PennyGrade six-month physical card, partner-specific benefits, online verification, support and delivery in Daltonganj.",
       path: "/membership-terms",
       jsonLd: buildBreadcrumbSchema([
         { name: "Home", path: "/" },
@@ -36,7 +36,7 @@ function MembershipTermsPage() {
     <LegalDocLayout
       currentPath="/membership-terms"
       title="Membership & Card Terms"
-      subtitle="These rules govern the purchase, possession, offline usage, and validity of your physical PennyGrade membership card across participating partner venues."
+      subtitle="These rules govern the purchase, possession, online verification, and validity of your physical PennyGrade membership card across participating partner venues."
       version="1.0"
       effectiveDate="October 14, 2026"
       lastUpdated="October 14, 2026"
@@ -45,12 +45,10 @@ function MembershipTermsPage() {
       <section id="enrollment" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">1. Membership Enrollment & Card Issuance</h2>
         <p className="mt-2">
-          PennyGrade offers a physical privilege card that grants verified discounts across our curated network of 
-          cafés, dining spots, salons, fitness clubs, and retail outlets in Daltonganj and surrounding regions.
+          PennyGrade offers a six-month physical membership card that provides access to its participating local business network. Each partner's current offer, eligibility, and exclusions are shown on its listing and may vary.
         </p>
         <p className="mt-2">
-          Upon submitting a membership application and paying the applicable pass fee (e.g., standard ₹500 6-Month Pass), 
-          you are issued an embossed physical membership card featuring a unique cryptographic PenCode (e.g., <code>PEN-7X4P-92LM</code>). 
+          The six-month membership is currently ₹500 and includes one physical membership card. The card features a unique PenCode.
           Membership privileges commence on the date of card activation and remain valid for the subscribed duration.
         </p>
       </section>
@@ -86,11 +84,9 @@ function MembershipTermsPage() {
       </section>
 
       <section id="unlimited-usage" className="scroll-mt-36">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">5. Unlimited Visit Frequency</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">5. Partner-Specific Benefit Limits</h2>
         <p className="mt-2">
-          Unlike restrictive voucher books or coupon platforms, PennyGrade does not restrict you to a single visit per partner. 
-          Subject to normal operating hours and seat availability, you may visit participating partner outlets as frequently 
-          as you wish throughout your 6-month validity period (e.g., daily coffee, weekly salon visits, weekend dining).
+          Each listed member benefit has its own validity dates, eligibility conditions, minimum bill, cap, exclusions, and any redemption limits agreed with that partner. Check the current partner listing before ordering. The partner decides and applies the benefit, and you pay that partner directly.
         </p>
       </section>
 
@@ -111,8 +107,7 @@ function MembershipTermsPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">7. Zero Tolerance for Screenshots</h2>
         <p className="mt-2">
           Screenshots, static photo captures, screen recordings, or expired sessions are strictly rejected by partner cashiers. 
-          Attempting to pass off a screenshot as a live verification constitutes fraudulent misuse and will result in 
-          immediate, irreversible revocation of your membership card without refund.
+          A screenshot is not a live verification result. Suspected misuse may lead to a temporary membership review or suspension after reasonable notice and an opportunity to contact support. Any final action and any payment remedy will be assessed under the published policies and applicable law.
         </p>
       </section>
 
@@ -123,28 +118,23 @@ function MembershipTermsPage() {
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1">
           <li>Promptly notify our support desk at <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a> or <a href="tel:+919356897893" className="text-primary underline">+91 93568 97893</a>.</li>
-          <li>We will immediately deactivate your compromised PenCode to prevent unauthorized usage.</li>
-          <li>A replacement card with a newly generated cryptographic PenCode can be issued for a nominal physical printing and logistics fee of ₹150.</li>
+          <li>We will review the report and, where supported by the membership system, disable the compromised card before authorising a replacement.</li>
+          <li>Contact support to confirm replacement availability, any fee, and delivery method before ordering. No fixed replacement fee is promised in these terms.</li>
         </ul>
       </section>
 
       <section id="refund-policy" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">9. Cancellation & Refund Policy</h2>
         <p className="mt-2">
-          Due to the immediate issuance and un-capped nature of offline membership privileges:
+          Refund and cancellation requests are handled under the current <a href="/refund-policy" className="text-primary underline">Refund &amp; Cancellation Policy</a>. Contact support with your order reference; do not assume a cancellation or refund is automatic.
         </p>
-        <ul className="mt-2 list-disc pl-5 space-y-1">
-          <li><strong>Non-Refundable Once Issued:</strong> All membership pass fees are non-refundable once the physical card is printed, delivered, or activated.</li>
-          <li><strong>Defective Card Exchange:</strong> If your card arrives physically defective or unreadable, we will replace it free of charge within 7 days of delivery.</li>
-        </ul>
+        <p className="mt-2">Applicable consumer remedies are not excluded by this page.</p>
       </section>
 
       <section id="partner-directory" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">10. Merchant Catalog Fluctuations</h2>
         <p className="mt-2">
-          While we maintain long-term agreements with our partners, independent venues may occasionally close, undergo renovations, 
-          relocate, or terminate their partnership in accordance with their agreement. The temporary or permanent exit of an individual 
-          partner does not entitle a member to a full or partial membership refund, as the pass provides access to the overall participating network.
+          Partner listings and benefits can change when an agreement or offer ends. Check the live directory before visiting. If a published benefit is unavailable or a material membership issue arises, contact support for review under the current refund policy and applicable consumer rights.
         </p>
       </section>
 
@@ -154,7 +144,7 @@ function MembershipTermsPage() {
           For any assistance with card activation, partner disputes, or renewal inquiries, contact our local team:
         </p>
         <div className="mt-3 rounded-xl border border-border bg-muted/40 p-4 text-xs space-y-1.5">
-          <p><strong>Desk:</strong> PennyGrade Cardholder Member Desk</p>
+          <p><strong>Support:</strong> PennyGrade membership and order enquiries</p>
           <p><strong>Email:</strong> <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a></p>
           <p><strong>Phone:</strong> <a href="tel:+919356897893" className="text-primary underline">+91 93568 97893</a></p>
           <p><strong>Location:</strong> Daltonganj, Palamu, Jharkhand - 822101</p>

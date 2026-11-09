@@ -244,7 +244,7 @@ function QrLanding() {
               <div className="flex items-center gap-1.5 min-w-0">
                 <CreditCard className="h-4 w-4 text-amber-600 shrink-0" />
                 <span className="text-[11px] text-slate-700 truncate">
-                  Have card ready: e.g. <span className="font-mono font-bold text-amber-800">PEN-7X4P-92LM</span>
+                  Have card ready: e.g. <span className="font-mono font-bold text-amber-800">PEN-XXXX-XXXX</span>
                 </span>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 shrink-0">
@@ -273,7 +273,7 @@ function QrLanding() {
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck="false"
-                  placeholder="e.g. PEN-7X4P-92LM"
+                  placeholder="e.g. PEN-XXXX-XXXX"
                   value={membershipNum}
                   onChange={(e) => {
                     setMembershipNum(e.target.value.toUpperCase());

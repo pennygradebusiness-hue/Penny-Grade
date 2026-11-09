@@ -15,13 +15,12 @@ import {
   Crown,
   Heart,
   Share2,
-  Calculator,
   ExternalLink,
   ChevronRight,
   BadgePercent,
   Check,
 } from "lucide-react";
-import { SiteLayout, Breadcrumbs } from "@/components/site";
+import { SiteLayout, Breadcrumbs, optimizeImageUrl } from "@/components/site";
 import { EmptyState, CARD_URL } from "@/components/brand";
 import { partnerQuery } from "@/lib/queries";
 import { inr, formatDays, offerHeadline, offerSub, fmtDate } from "@/lib/format";
@@ -143,10 +142,10 @@ export const Route = createFileRoute("/partners/$slug")({
 function getCategoryCover(categoryName?: string | null) {
   const cat = (categoryName || "").toLowerCase();
   if (cat.includes("caf") || cat.includes("coffee") || cat.includes("bakery")) {
-    return "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80";
+    return "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=960&q=75";
   }
   if (cat.includes("rest") || cat.includes("din") || cat.includes("food")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=960&q=75";
   }
   if (
     cat.includes("hotel") ||
@@ -154,7 +153,7 @@ function getCategoryCover(categoryName?: string | null) {
     cat.includes("resort") ||
     cat.includes("inn")
   ) {
-    return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80";
+    return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=960&q=75";
   }
   if (
     cat.includes("salon") ||
@@ -162,42 +161,26 @@ function getCategoryCover(categoryName?: string | null) {
     cat.includes("beauty") ||
     cat.includes("hair")
   ) {
-    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80";
+    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=960&q=75";
   }
   if (cat.includes("fit") || cat.includes("gym") || cat.includes("yoga")) {
-    return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80";
+    return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=960&q=75";
   }
   if (cat.includes("shop") || cat.includes("retail") || cat.includes("store")) {
-    return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80";
+    return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=960&q=75";
   }
-  return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80";
+  return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=960&q=75";
 }
 
 function PartnerPage() {
   const { slug } = Route.useParams();
   const { data: p } = useSuspenseQuery(partnerQuery(slug));
   const [isFav, setIsFav] = useState(false);
-  const [calcBill, setCalcBill] = useState("1000");
 
   if (!p) return null;
   const offer = p.offers && p.offers.length > 0 ? p.offers[0] : null;
-  const coverUrl = p.cover_image_url || getCategoryCover(p.category?.name);
-
-  // Bill savings calculation
-  const billAmount = Number(calcBill) || 0;
-  let estimatedSavings = 0;
-  if (offer && billAmount > 0) {
-    if (offer.discount_type === "PERCENTAGE") {
-      estimatedSavings = (billAmount * Number(offer.discount_value)) / 100;
-      if (offer.max_discount != null) {
-        estimatedSavings = Math.min(estimatedSavings, Number(offer.max_discount));
-      }
-    } else {
-      estimatedSavings = Math.min(billAmount, Number(offer.discount_value));
-    }
-  }
-  const estimatedPayable = Math.max(0, billAmount - estimatedSavings);
-  const meetsMinBill = !offer || !offer.minimum_bill || billAmount >= Number(offer.minimum_bill);
+  const rawCoverUrl = p.cover_image_url || getCategoryCover(p.category?.name);
+  const coverUrl = optimizeImageUrl(rawCoverUrl, { width: 960, quality: 75 });
 
   return (
     <SiteLayout>
@@ -209,7 +192,11 @@ function PartnerPage() {
           <img
             src={coverUrl}
             alt={p.business_name}
+            fetchPriority="high"
+            loading="eager"
             decoding="async"
+            width={960}
+            height={384}
             className="h-full w-full object-cover object-center brightness-90"
           />
           {/* Subtle Ambient Shadow */}
@@ -402,7 +389,7 @@ function PartnerPage() {
                 </h3>
                 <p className="mt-3 text-xs sm:text-sm font-medium leading-relaxed text-slate-600">
                   {p.description ||
-                    `${p.business_name} is an official verified PennyGrade partner outlet. Members enjoy guaranteed in-person discounts on every eligible visit throughout their 6-month card validity.`}
+                    `${p.business_name} participates in the PennyGrade local business network. Check the offer details on this page for current member benefits and conditions.`}
                 </p>
 
                 {/* Outlet Contact & Hours Grid */}
@@ -489,7 +476,7 @@ function PartnerPage() {
                         <Crown className="h-3 w-3" /> Member Privilege
                       </span>
                       <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
-                        <Check className="h-3.5 w-3.5" /> Unlimited Usage
+                        <Check className="h-3.5 w-3.5" /> Check listing conditions
                       </span>
                     </div>
 
@@ -501,61 +488,12 @@ function PartnerPage() {
                     </div>
                   </div>
 
-                  {/* Interactive Bill Savings Calculator */}
-                  <div className="p-5 sm:p-6 border-b border-slate-100 bg-amber-50/40">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calculator className="h-4 w-4 text-[#c25e36]" />
-                      <span className="text-xs font-bold text-slate-900">
-                        Calculate Your Exact Savings
-                      </span>
-                    </div>
-
-                    <div className="mt-2">
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-2.5 font-bold text-slate-400 text-sm">
-                          ₹
-                        </span>
-                        <input
-                          type="number"
-                          value={calcBill}
-                          onChange={(e) => setCalcBill(e.target.value)}
-                          placeholder="Enter bill amount"
-                          className="w-full rounded-xl border border-slate-200 bg-white pl-8 pr-4 py-2 text-sm font-bold text-slate-900 outline-none focus:border-amber-400 shadow-2xs"
-                        />
-                      </div>
-
-                      {/* Calculation Outcome */}
-                      {billAmount > 0 && (
-                        <div className="mt-3 rounded-xl border border-amber-200 bg-white p-3 space-y-1.5 shadow-2xs">
-                          <div className="flex justify-between text-xs text-slate-600">
-                            <span>Total Bill:</span>
-                            <span className="font-bold text-slate-900">{inr(billAmount)}</span>
-                          </div>
-                          <div className="flex justify-between text-xs text-amber-800 font-bold">
-                            <span>PennyGrade Discount:</span>
-                            <span className="text-amber-600">-{inr(estimatedSavings)}</span>
-                          </div>
-                          <div className="border-t border-slate-100 pt-1.5 flex justify-between text-xs font-extrabold text-slate-900">
-                            <span>You Pay Staff:</span>
-                            <span className="text-emerald-700 font-display text-sm">
-                              {inr(estimatedPayable)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {!meetsMinBill && (
-                        <p className="mt-2 text-[11px] font-bold text-amber-700">
-                          * Minimum bill of {inr(offer.minimum_bill)} required to unlock discount.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Prominent Verification Button right inside calculator */}
+                  <div className="border-b border-slate-100 bg-amber-50/40 p-5 text-xs leading-relaxed text-slate-700 sm:p-6">
+                    The final discount is calculated by PennyGrade's secure verification flow from the live offer terms and your bill. This listing is informational and does not guarantee a discount amount.
                     <Link
                       to="/p/$partnerSlug"
                       params={{ partnerSlug: p.slug }}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#c25e36] py-3 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-amber-500/25 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#c25e36] py-3 text-xs font-extrabold text-white shadow-md shadow-amber-500/25 transition-all hover:brightness-110"
                     >
                       <QrCode className="h-4 w-4" />
                       <span>Proceed to Counter Verification</span>
@@ -595,7 +533,7 @@ function PartnerPage() {
 
                     <div className="flex justify-between border-b border-slate-100 pb-2">
                       <span className="text-slate-500 font-medium">Eligible Visits</span>
-                      <span className="font-bold text-emerald-700">Unlimited (6 Months)</span>
+                      <span className="font-bold text-emerald-700">As stated in offer terms</span>
                     </div>
 
                     {offer.terms_conditions && (
@@ -654,8 +592,8 @@ function PartnerPage() {
                 <span className="font-display text-base font-black text-[#c25e36]">
                   {offer ? offerHeadline(offer) : "New Partner"}
                 </span>
-                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-800 border border-amber-200/60">
-                  Unlimited
+                  <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-800 border border-amber-200/60">
+                  Offer terms apply
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 font-semibold">

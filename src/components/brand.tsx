@@ -1,20 +1,40 @@
 import { Link } from "@tanstack/react-router";
-import emblemUrl from "@/assets/pennygrade-emblem.png";
-import cardUrl from "@/assets/pennygrade-card.jpg";
+import emblemWebp from "@/assets/pennygrade-emblem.webp";
+import emblemPng from "@/assets/pennygrade-emblem.png";
+import cardWebp from "@/assets/pennygrade-card.webp";
+import cardWebp420 from "@/assets/pennygrade-card-420.webp";
+import cardJpg from "@/assets/pennygrade-card.jpg";
 import { cn } from "@/lib/utils";
 
-export const LOGO_URL = emblemUrl;
-export const EMBLEM_URL = emblemUrl;
-export const CARD_URL = cardUrl;
+export const LOGO_URL = emblemWebp;
+export const EMBLEM_URL = emblemWebp;
+export const CARD_URL = cardWebp;
+export { cardWebp, cardWebp420, cardJpg, emblemWebp, emblemPng };
 
 /** Official PennyGrade eagle emblem */
 export function LogoMark({ className, variant = "badge" }: { className?: string; variant?: "badge" | "raw" }) {
   if (variant === "raw") {
-    return <img src={emblemUrl} alt="PennyGrade Eagle Emblem" width={36} height={36} decoding="async" className={cn("object-contain filter drop-shadow-sm", className)} />;
+    return (
+      <img
+        src={emblemWebp}
+        alt="PennyGrade Eagle Emblem"
+        width={36}
+        height={36}
+        decoding="async"
+        className={cn("object-contain filter drop-shadow-sm", className)}
+      />
+    );
   }
   return (
     <span className={cn("inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-950 to-black p-1 ring-1 ring-amber-400/50 shadow-sm", className)}>
-      <img src={emblemUrl} alt="PennyGrade Eagle Emblem" width={36} height={36} decoding="async" className="h-full w-full object-contain filter drop-shadow" />
+      <img
+        src={emblemWebp}
+        alt="PennyGrade Eagle Emblem"
+        width={36}
+        height={36}
+        decoding="async"
+        className="h-full w-full object-contain filter drop-shadow"
+      />
     </span>
   );
 }
@@ -48,12 +68,14 @@ export function Wordmark({
 /** Official PennyGrade 3D Luxury Physical Membership Card */
 export function PhysicalCardPreview({
   className,
-  code = "PEN-7X4P-92LM",
+  code,
   interactive = true,
+  priority = false,
 }: {
   className?: string;
   code?: string;
   interactive?: boolean;
+  priority?: boolean;
 }) {
   return (
     <div
@@ -63,19 +85,26 @@ export function PhysicalCardPreview({
         className
       )}
     >
-      <img
-        src={cardUrl}
-        alt="PennyGrade Physical Membership Card"
-        width={420}
-        height={262}
-        decoding="async"
-        className="h-auto w-full rounded-2xl object-cover select-none"
-      />
-      {code && code !== "PEN-7X4P-92LM" && (
-        <div className="absolute bottom-[11%] left-[8%] rounded bg-slate-950/85 px-2.5 py-1 font-mono text-xs font-extrabold tracking-wider text-amber-200 border border-amber-400/40 backdrop-blur-sm shadow-md">
-          {code}
-        </div>
-      )}
+      <picture>
+        <source
+          type="image/webp"
+          srcSet={`${cardWebp420} 420w, ${cardWebp} 840w`}
+          sizes="(max-width: 640px) 320px, 420px"
+        />
+        <img
+          src={cardWebp}
+          alt="Illustrative PennyGrade membership card specimen"
+          width={420}
+          height={262}
+          fetchPriority={priority ? "high" : "auto"}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          className="h-auto w-full rounded-2xl object-cover select-none"
+        />
+      </picture>
+      <div className="absolute bottom-[9%] left-[7%] rounded bg-slate-950/90 px-2.5 py-1 font-mono text-[10px] font-extrabold tracking-wider text-amber-100 border border-amber-400/40 backdrop-blur-sm shadow-md">
+        {code || "SPECIMEN - ID REDACTED"}
+      </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
     </div>
   );

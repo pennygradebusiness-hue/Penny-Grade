@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { getSiteUrl } from "@/lib/seo";
 import { getRealtimeTransport } from "@/lib/config";
+import { hasCompletePartnerEvidence } from "@/lib/partner-publication";
 import { store, type V1Partner } from "@/lib/v1-store";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -54,8 +55,11 @@ export const Route = createFileRoute("/sitemap.xml")({
           { loc: `${origin}/how-it-works`, priority: "0.8", changefreq: "weekly" },
           { loc: `${origin}/partners`, priority: "0.9", changefreq: "daily" },
           { loc: `${origin}/offers`, priority: "0.9", changefreq: "daily" },
+          { loc: `${origin}/prebook`, priority: "0.8", changefreq: "weekly" },
           { loc: `${origin}/become-a-member`, priority: "0.8", changefreq: "weekly" },
           { loc: `${origin}/partner-with-us`, priority: "0.8", changefreq: "weekly" },
+          { loc: `${origin}/about`, priority: "0.5", changefreq: "monthly" },
+          { loc: `${origin}/contact`, priority: "0.5", changefreq: "monthly" },
           { loc: `${origin}/terms`, priority: "0.3", changefreq: "monthly" },
           { loc: `${origin}/privacy`, priority: "0.3", changefreq: "monthly" },
           { loc: `${origin}/merchant-agreement`, priority: "0.3", changefreq: "monthly" },
@@ -67,13 +71,23 @@ export const Route = createFileRoute("/sitemap.xml")({
         const partnerEntries: SitemapUrlEntry[] = [];
         const seenSlugs = new Set<string>();
         const delPartnerSet = new Set(store.deletedPartnerIds || []);
+        const demoPartnerSlugs = new Set([
+          "abc-cafe",
+          "urban-brew",
+          "the-grand-stay",
+          "glow-salon",
+          "fitzone",
+          "saffron-table",
+        ]);
 
         // Check in-memory store first
         if (store.partners && store.partners.size > 0) {
           for (const partner of store.partners.values()) {
             if (
               partner.status === "ACTIVE" &&
+              hasCompletePartnerEvidence(partner) &&
               partner.slug &&
+              !demoPartnerSlugs.has(partner.slug) &&
               !delPartnerSet.has(partner.id) &&
               !delPartnerSet.has(partner.slug) &&
               !seenSlugs.has(partner.slug)

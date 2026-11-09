@@ -152,20 +152,17 @@ function PartnerWithUsPage() {
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/80 px-3.5 py-1 text-xs font-bold text-amber-900 shadow-2xs mb-5">
                 <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
-                Zero Hardware · Guaranteed High-Value Footfall
+                Simple Verification · Local Member Discovery
               </div>
 
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
-                Partner with PennyGrade. Grow Your Local Footfall.
+                <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+                Partner with PennyGrade. Share a Member Offer.
               </h1>
 
               <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">
-                Join prestigious venues like{" "}
-                <strong className="text-slate-900 font-bold">
-                  ABC Café, Urban Brew, The Grand Stay, and FitZone
-                </strong>
-                . Welcome affluent, verified PennyGrade cardholders into your establishment with
-                zero complex tech.
+                Join the PennyGrade local business network to publish an agreed member offer and
+                help members discover your business. Participation does not guarantee a particular
+                number of visits or sales.
               </p>
 
               {/* Key Merchant Value Pillars */}
@@ -174,10 +171,10 @@ function PartnerWithUsPage() {
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-800 font-bold">
                     <QrCode className="h-5 w-5" />
                   </div>
-                  <h4 className="mt-3 text-xs font-bold text-slate-900">Zero Hardware Setup</h4>
+                  <h4 className="mt-3 text-xs font-bold text-slate-900">Online Verification</h4>
                   <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-                    We provide a free premium acrylic QR standee. No POS integration or machines
-                    needed.
+                    Membership verification uses PennyGrade's web flow. Ask us about the setup
+                    currently available for your business.
                   </p>
                 </div>
 
@@ -518,7 +515,7 @@ function PartnerWithUsPage() {
                   </Button>
 
                   <p className="text-center text-[11px] text-slate-500">
-                    No upfront setup fees. By applying, you agree to the{" "}
+                    Applying is an enquiry, not a signed partnership. Both parties must agree and sign the partner terms before a listing is published:{" "}
                     <Link to="/merchant-agreement" className="font-semibold underline hover:text-amber-600">
                       Merchant Agreement
                     </Link>{" "}

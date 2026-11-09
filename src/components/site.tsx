@@ -22,8 +22,10 @@ import { Wordmark, LogoMark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAdminSession } from "@/lib/admin-session";
 import { offerHeadline, offerSub, inr, formatDays } from "@/lib/format";
 import type { PublicPartner } from "@/lib/public.functions";
+import { PrebookingPopup } from "@/components/prebooking-popup";
 
 export function SiteHeader() {
   const { user } = useSession();
@@ -33,8 +35,11 @@ export function SiteHeader() {
   const navigate = useNavigate();
 
   const desktopLinks = [
+    { to: "/about", label: "About" },
+    { to: "/about", label: "About" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
+    { to: "/prebook", label: "Prebook" },
     { to: "/how-it-works", label: "How It Works" },
     { to: "/partner-with-us", label: "Partner With Us" },
     { to: "/history", label: "History" },
@@ -42,24 +47,33 @@ export function SiteHeader() {
 
   const mobileLinks = [
     { to: "/", label: "Home" },
+    { to: "/about", label: "About PennyGrade" },
+    { to: "/contact", label: "Contact" },
+    { to: "/about", label: "About PennyGrade" },
+    { to: "/contact", label: "Contact" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
+    { to: "/prebook", label: "Prebook upcoming offers" },
     { to: "/how-it-works", label: "How It Works" },
-    { to: "/become-a-member", label: "Become a Member" },
+    { to: "/checkout", label: "Buy Your Card (₹500)" },
     { to: "/partner-with-us", label: "Partner With Us" },
     { to: "/history", label: "History" },
   ];
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    clearAdminSession();
+    await import("@/lib/admin.functions")
+      .then(({ logoutAdminSession }) => logoutAdminSession())
+      .catch(() => {});
     navigate({ to: "/", replace: true });
   };
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#ececf1] bg-white/95 text-foreground backdrop-blur-md transition-all">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-2 sm:px-6 lg:px-8 xl:px-10">
         {/* Brand */}
-        <Wordmark className="shrink-0" />
+        <Wordmark className="shrink-0 max-[360px]:gap-1 [&>span:first-child]:max-[360px]:h-8 [&>span:first-child]:max-[360px]:w-8 [&>span:last-child]:max-[360px]:text-base" />
 
         {/* Desktop Nav - Spacious & Uncrowded */}
         <nav className="hidden items-center gap-7 lg:flex xl:gap-9">
@@ -109,11 +123,9 @@ export function SiteHeader() {
                   <span>Daltonganj, Jharkhand</span>
                 </div>
                 <p className="mt-1.5 text-slate-500 leading-relaxed text-[11px]">
-                  PennyGrade membership and in-person counter discounts are currently live exclusively across partner outlets in Daltonganj (Palamu).
+                  PennyGrade card delivery and in-person member discounts are currently available
+                  only in Daltonganj, Jharkhand.
                 </p>
-                <div className="mt-2.5 rounded-lg bg-amber-50 p-2 text-[10px] font-medium text-amber-800 border border-amber-200/60">
-                  Expansion to Ranchi and other cities coming soon!
-                </div>
               </div>
             )}
           </div>
@@ -140,16 +152,22 @@ export function SiteHeader() {
           ) : (
             <>
               <Link
-                to="/become-a-member"
+                to="/checkout"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 text-[13px] font-extrabold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4 mr-1.5" /> Get Card (₹500)
+                <CreditCard className="h-4 w-4 mr-1.5" /> Buy Card (₹500)
               </Link>
             </>
           )}
         </div>
 
         {/* Mobile menu toggle */}
+        <div className="ml-auto mr-1 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-1 text-[10px] font-bold text-amber-900 max-[360px]:gap-0.5 max-[360px]:text-[9px] lg:hidden">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <MapPin className="h-3 w-3 text-amber-600" />
+          <span>Daltonganj</span>
+          <span className="rounded bg-amber-200 px-1 text-[8px] uppercase">Live</span>
+        </div>
         <button
           className="rounded-lg p-2 text-navy hover:bg-muted lg:hidden cursor-pointer"
           onClick={() => setOpen(!open)}
@@ -163,7 +181,10 @@ export function SiteHeader() {
 
       {/* Mobile Drawer */}
       {open && (
-        <div id="mobile-navigation" className="border-t border-[#ececf1] bg-white px-4 pb-6 pt-2 shadow-lg lg:hidden">
+        <div
+          id="mobile-navigation"
+          className="border-t border-[#ececf1] bg-white px-4 pb-6 pt-2 shadow-lg lg:hidden"
+        >
           <nav className="flex flex-col space-y-1">
             {mobileLinks.map((l) => (
               <Link
@@ -185,20 +206,36 @@ export function SiteHeader() {
 
             {user ? (
               <div className="flex gap-2">
-                <Button asChild className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500">
-                  <Link to="/admin" onClick={() => setOpen(false)}>Admin Console</Link>
+                <Button
+                  asChild
+                  className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500"
+                >
+                  <Link to="/admin" onClick={() => setOpen(false)}>
+                    Admin Console
+                  </Link>
                 </Button>
-                <Button variant="outline" className="flex-1 rounded-xl border-slate-200" onClick={signOut}>
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl border-slate-200"
+                  onClick={signOut}
+                >
                   Sign out
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                <Button asChild className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500">
-                  <Link to="/partners" onClick={() => setOpen(false)}>Explore Partners</Link>
+                <Button
+                  asChild
+                  className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500"
+                >
+                  <Link to="/partners" onClick={() => setOpen(false)}>
+                    Explore Partners
+                  </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full rounded-xl border-slate-200">
-                  <Link to="/history" onClick={() => setOpen(false)}>Check Member History</Link>
+                  <Link to="/history" onClick={() => setOpen(false)}>
+                    Check Member History
+                  </Link>
                 </Button>
               </div>
             )}
@@ -218,7 +255,8 @@ export function SiteFooter() {
         <div className="md:col-span-1">
           <Wordmark className="text-white" />
           <p className="mt-4 text-xs leading-relaxed text-navy-muted">
-            India's Smart Physical Card Discount Membership connecting members with trusted local businesses.
+            India's Smart Physical Card Discount Membership connecting members with trusted local
+            businesses.
           </p>
 
           <div className="mt-5 space-y-2.5 text-xs">
@@ -263,17 +301,31 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/become-a-member" className="text-navy-muted transition-colors hover:text-white">
-                Become a Member
+              <Link to="/checkout" className="text-navy-muted transition-colors hover:text-white">
+                Buy Your Card (₹500)
               </Link>
             </li>
             <li>
-              <Link to="/partner-with-us" className="text-navy-muted transition-colors hover:text-white">
+              <Link
+                to="/track-order"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
+                Track Card Delivery
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/partner-with-us"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
                 Partner With Us
               </Link>
             </li>
             <li>
-              <Link to="/how-it-works" className="text-navy-muted transition-colors hover:text-white">
+              <Link
+                to="/how-it-works"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
                 How It Works
               </Link>
             </li>
@@ -287,10 +339,15 @@ export function SiteFooter() {
 
         {/* Col 3: Support & Legal */}
         <div>
-          <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">Support & Legal</h4>
+          <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">
+            Support & Legal
+          </h4>
           <ul className="space-y-2.5 text-xs font-semibold">
             <li>
-              <a href="mailto:pennygradebusiness@gmail.com" className="text-navy-muted transition-colors hover:text-white">
+              <a
+                href="mailto:pennygradebusiness@gmail.com"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
                 Contact Support
               </a>
             </li>
@@ -305,13 +362,35 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/merchant-agreement" className="text-navy-muted transition-colors hover:text-white">
+              <Link
+                to="/merchant-agreement"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
                 Merchant Agreement
               </Link>
             </li>
             <li>
-              <Link to="/membership-terms" className="text-navy-muted transition-colors hover:text-white">
+              <Link
+                to="/membership-terms"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
                 Membership & Card Terms
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/refund-policy"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
+                Refund & Cancellation Policy
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/shipping-policy"
+                className="text-navy-muted transition-colors hover:text-white"
+              >
+                Shipping & Delivery Policy
               </Link>
             </li>
             <li>
@@ -320,7 +399,10 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/admin/login" className="text-navy-muted/60 transition-colors hover:text-gold">
+              <Link
+                to="/admin/login"
+                className="text-navy-muted/60 transition-colors hover:text-gold"
+              >
                 Admin Console
               </Link>
             </li>
@@ -329,9 +411,12 @@ export function SiteFooter() {
 
         {/* Col 4: Physical Card Perks */}
         <div>
-          <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">Start Saving Today</h4>
+          <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">
+            Start Saving Today
+          </h4>
           <p className="text-xs leading-relaxed text-navy-muted">
-            Carry your physical PennyGrade card and enjoy guaranteed savings at top dining, shopping, wellness & entertainment spots.
+            Carry your physical PennyGrade card and explore member offers at participating local
+            businesses. Offer terms vary by partner.
           </p>
           <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3.5">
             <div className="flex items-center gap-2 text-xs font-bold text-white">
@@ -339,7 +424,7 @@ export function SiteFooter() {
               <span>Zero App Download Needed</span>
             </div>
             <p className="mt-1 text-[11px] text-navy-muted">
-              Scan the counter QR standee at any partner and save instantly.
+              Check the partner listing for verification steps and offer conditions.
             </p>
           </div>
         </div>
@@ -350,11 +435,31 @@ export function SiteFooter() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
           <span>&copy; {new Date().getFullYear()} PennyGrade. All rights reserved.</span>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link to="/terms" className="hover:text-white">Terms</Link>
-            <Link to="/privacy" className="hover:text-white">Privacy</Link>
-            <Link to="/merchant-agreement" className="hover:text-white">Merchant Agreement</Link>
-            <Link to="/disclaimer" className="hover:text-white">Disclaimer</Link>
-            <Link to="/how-it-works" className="hover:text-white">Help</Link>
+            <Link to="/about" className="hover:text-white">About Us</Link>
+            <Link to="/contact" className="hover:text-white">Contact Us</Link>
+            <Link to="/become-a-member" className="hover:text-white">Membership &amp; Pricing</Link>
+            <Link to="/membership-terms" className="hover:text-white">Membership Terms</Link>
+            <Link to="/terms" className="hover:text-white">
+              Terms
+            </Link>
+            <Link to="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            <Link to="/refund-policy" className="hover:text-white">
+              Refunds
+            </Link>
+            <Link to="/shipping-policy" className="hover:text-white">
+              Shipping
+            </Link>
+            <Link to="/merchant-agreement" className="hover:text-white">
+              Merchant Agreement
+            </Link>
+            <Link to="/disclaimer" className="hover:text-white">
+              Disclaimer
+            </Link>
+            <Link to="/how-it-works" className="hover:text-white">
+              Help
+            </Link>
           </div>
         </div>
       </div>
@@ -362,7 +467,13 @@ export function SiteFooter() {
   );
 }
 
-export function SiteLayout({ children }: { children: React.ReactNode }) {
+export function SiteLayout({
+  children,
+  hideFooterOnMobile = false,
+}: {
+  children: React.ReactNode;
+  hideFooterOnMobile?: boolean;
+}) {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <a
@@ -375,14 +486,20 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
       <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
-      <SiteFooter />
+      <PrebookingPopup />
+      <div className={hideFooterOnMobile ? "hidden sm:block" : undefined}>
+        <SiteFooter />
+      </div>
     </div>
   );
 }
 
 export function Breadcrumbs({ items }: { items: Array<{ label: string; to?: string }> }) {
   return (
-    <nav className="mb-6 flex items-center gap-2 text-xs font-semibold text-muted-foreground" aria-label="Breadcrumb">
+    <nav
+      className="mb-6 flex items-center gap-2 text-xs font-semibold text-muted-foreground"
+      aria-label="Breadcrumb"
+    >
       <Link to="/" className="inline-flex items-center gap-1 transition-colors hover:text-gold">
         <Home className="h-3.5 w-3.5" />
         <span>Home</span>
@@ -421,7 +538,9 @@ export function PageHero({
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
         {eyebrow && (
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600">{eyebrow}</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600">
+            {eyebrow}
+          </p>
         )}
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
           {title}{" "}
@@ -431,39 +550,75 @@ export function PageHero({
             </span>
           )}
         </h1>
-        {children && <div className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">{children}</div>}
+        {children && (
+          <div className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+            {children}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
+export function optimizeImageUrl(
+  url: string,
+  { width = 480, quality = 75 }: { width?: number; quality?: number } = {}
+) {
+  if (!url) return url;
+  if (url.includes("images.unsplash.com")) {
+    try {
+      const parsed = new URL(url);
+      parsed.searchParams.set("auto", "format");
+      parsed.searchParams.set("fit", "crop");
+      parsed.searchParams.set("w", String(width));
+      parsed.searchParams.set("q", String(quality));
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  }
+  return url;
+}
+
 function getCategoryCover(categoryName?: string | null) {
   const cat = (categoryName || "").toLowerCase();
   if (cat.includes("caf") || cat.includes("coffee") || cat.includes("bakery")) {
-    return "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=700&q=80";
+    return "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=480&q=75";
   }
   if (cat.includes("rest") || cat.includes("din") || cat.includes("food")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=700&q=80";
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=480&q=75";
   }
-  if (cat.includes("hotel") || cat.includes("stay") || cat.includes("resort") || cat.includes("inn")) {
-    return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=700&q=80";
+  if (
+    cat.includes("hotel") ||
+    cat.includes("stay") ||
+    cat.includes("resort") ||
+    cat.includes("inn")
+  ) {
+    return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=480&q=75";
   }
-  if (cat.includes("salon") || cat.includes("spa") || cat.includes("beauty") || cat.includes("hair")) {
-    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=700&q=80";
+  if (
+    cat.includes("salon") ||
+    cat.includes("spa") ||
+    cat.includes("beauty") ||
+    cat.includes("hair")
+  ) {
+    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=480&q=75";
   }
   if (cat.includes("fit") || cat.includes("gym") || cat.includes("yoga")) {
-    return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=700&q=80";
+    return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=480&q=75";
   }
   if (cat.includes("shop") || cat.includes("retail") || cat.includes("store")) {
-    return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=700&q=80";
+    return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=480&q=75";
   }
-  return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=700&q=80";
+  return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=480&q=75";
 }
 
 export function PartnerCard({ p }: { p: PublicPartner }) {
   const offer = p.offers && p.offers.length > 0 ? p.offers[0] : null;
   const [isFav, setIsFav] = useState(false);
-  const coverUrl = p.cover_image_url || getCategoryCover(p.category?.name);
+  const rawCoverUrl = p.cover_image_url || getCategoryCover(p.category?.name);
+  const coverUrl = optimizeImageUrl(rawCoverUrl, { width: 480, quality: 75 });
+  const coverSrcSet = `${optimizeImageUrl(rawCoverUrl, { width: 360, quality: 70 })} 360w, ${optimizeImageUrl(rawCoverUrl, { width: 640, quality: 75 })} 640w`;
 
   // Format discount pill
   let discountBadge = "";
@@ -487,11 +642,13 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <img
           src={coverUrl}
+          srcSet={coverSrcSet}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
           alt={p.business_name}
           loading="lazy"
           decoding="async"
-          width={700}
-          height={438}
+          width={480}
+          height={300}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
@@ -544,33 +701,39 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
 
         <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
           <MapPin className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-          <span className="truncate">{p.city ? `${p.city}, Jharkhand` : "Daltonganj, Jharkhand"}</span>
+          <span className="truncate">
+            {p.city ? `${p.city}, Jharkhand` : "Daltonganj, Jharkhand"}
+          </span>
         </div>
 
         <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
-          {p.description || "Discover verified member savings, warm ambience, and dedicated PennyGrade partner benefits."}
+          {p.description ||
+            "Discover verified member savings, warm ambience, and dedicated PennyGrade partner benefits."}
         </p>
 
         {/* Clear Discount Conditions */}
-        {offer && (offer.minimum_bill > 0 || offer.max_discount || (offer.valid_days?.length && offer.valid_days.length < 7)) && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
-            {offer.minimum_bill > 0 && (
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
-                Min Bill {inr(offer.minimum_bill)}
-              </span>
-            )}
-            {offer.max_discount && (
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
-                Max {inr(offer.max_discount)}
-              </span>
-            )}
-            {offer.valid_days?.length && offer.valid_days.length < 7 && (
-              <span className="rounded-md bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 border border-amber-200/60">
-                {formatDays(offer.valid_days)}
-              </span>
-            )}
-          </div>
-        )}
+        {offer &&
+          (offer.minimum_bill > 0 ||
+            offer.max_discount ||
+            (offer.valid_days?.length && offer.valid_days.length < 7)) && (
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+              {offer.minimum_bill > 0 && (
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
+                  Min Bill {inr(offer.minimum_bill)}
+                </span>
+              )}
+              {offer.max_discount && (
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
+                  Max {inr(offer.max_discount)}
+                </span>
+              )}
+              {offer.valid_days?.length && offer.valid_days.length < 7 && (
+                <span className="rounded-md bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 border border-amber-200/60">
+                  {formatDays(offer.valid_days)}
+                </span>
+              )}
+            </div>
+          )}
 
         {/* Footer Offer strip */}
         <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
@@ -581,7 +744,9 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
               </span>
               <div className="min-w-0">
                 <p className="truncate text-[11px] font-medium text-slate-600">{discountNote}</p>
-                <p className="text-[10px] font-semibold text-slate-400 leading-tight">Exclusive for members</p>
+                <p className="text-[10px] font-semibold text-slate-400 leading-tight">
+                  Exclusive for members
+                </p>
               </div>
             </div>
           ) : (
@@ -590,8 +755,12 @@ export function PartnerCard({ p }: { p: PublicPartner }) {
                 New Partner
               </span>
               <div className="min-w-0">
-                <p className="truncate text-[11px] font-medium text-slate-500">Offers updating soon</p>
-                <p className="text-[10px] font-semibold text-slate-400 leading-tight">Exclusive for members</p>
+                <p className="truncate text-[11px] font-medium text-slate-500">
+                  Offers updating soon
+                </p>
+                <p className="text-[10px] font-semibold text-slate-400 leading-tight">
+                  Exclusive for members
+                </p>
               </div>
             </div>
           )}

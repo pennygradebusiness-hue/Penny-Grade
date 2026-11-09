@@ -94,13 +94,10 @@ function TermsPage() {
       <section id="business-model" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">3. Platform Nature & Scope</h2>
         <p className="mt-2">
-          PennyGrade operates as a discovery and discount verification platform connecting consumers with local brick-and-mortar 
-          businesses. <strong className="text-slate-900 dark:text-white">PennyGrade is NOT a payment gateway, banking institution, or wallet.</strong> 
-          PennyGrade does not collect bill payments from customers on behalf of Partner Merchants, nor does PennyGrade process in-store financial transactions.
+          PennyGrade operates a local membership network connecting members with participating brick-and-mortar businesses. PennyGrade sells its own membership and physical card; online checkout is processed by the payment provider shown at checkout. PennyGrade does not operate a payment gateway, bank, or wallet, and does not collect or process partner businesses' customer bills.
         </p>
         <p className="mt-2">
-          When you dine or shop at a Partner outlet, you pay the Partner directly at their counter using cash, UPI, debit/credit cards, 
-          or any payment method accepted by that Partner, with the verified PennyGrade discount deducted from your offline bill.
+          When you visit a Partner outlet, that business supplies its own goods or services, applies its listed member benefit where eligible, and collects payment directly from you using its accepted payment methods.
         </p>
       </section>
 
@@ -247,6 +244,9 @@ function TermsPage() {
           <p><strong>Postal Address:</strong> Daltonganj, Palamu, Jharkhand - 822101, India</p>
           <p><strong>Working Hours:</strong> Monday – Saturday, 10:00 AM – 6:00 PM IST</p>
         </div>
+        <p className="mt-3 text-sm">
+          We respond to and resolve customer complaints within four business days of receiving them. For a payment complaint, include your order number and checkout contact details; never send full payment credentials or one-time passcodes.
+        </p>
       </section>
 
       <section id="governing-law" className="scroll-mt-36">

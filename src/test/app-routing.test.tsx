@@ -14,4 +14,22 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it.each([
+    ["/checkout", "/checkout"],
+    ["/track-order", "/track-order"],
+    ["/refund-policy", "/refund-policy"],
+    ["/shipping-policy", "/shipping-policy"],
+    ["/verify", "/verify"],
+    ["/admin/orders", "/_authenticated/admin/orders"],
+    ["/how-it-works", "/how-it-works"],
+    ["/order-confirmation/ORD-ABCD-EFGH", "/order-confirmation/$orderNumber"],
+    ["/p/sample-partner", "/p/$partnerSlug"],
+    ["/verification/00000000-0000-4000-8000-000000000000", "/verification/$sessionId"],
+  ])("matches %s directly to its route", (path, expectedRouteId) => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const matches = router.matchRoutes(path);
+
+    expect(matches.some((match) => match.routeId === expectedRouteId)).toBe(true);
+  });
 });

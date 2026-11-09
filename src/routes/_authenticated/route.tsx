@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminSession, clearAdminSession, checkAdminSessionStatus } from "@/lib/admin-session";
+import { logoutAdminSession } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/_authenticated")({
       }
 
       clearAdminSession();
+      await logoutAdminSession().catch(() => {});
       if (status === "expired") {
         throw redirect({
           to: "/admin/login",

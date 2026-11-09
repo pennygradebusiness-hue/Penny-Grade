@@ -25,7 +25,7 @@ export const Route = createFileRoute("/merchant-agreement")({
     buildPageHead({
       title: "Merchant Partnership Agreement | PennyGrade Business",
       description:
-        "Official Merchant & Partner Partnership Agreement governing offline discount verification, zero upfront fees, promotional support, and partner obligations in Daltonganj.",
+        "Draft merchant partnership agreement template for participating local businesses in Daltonganj.",
       path: "/merchant-agreement",
       jsonLd: buildBreadcrumbSchema([
         { name: "Home", path: "/" },
@@ -40,12 +40,15 @@ function MerchantAgreementPage() {
     <LegalDocLayout
       currentPath="/merchant-agreement"
       title="Merchant Partnership Agreement"
-      subtitle="Standard commercial terms and operating guidelines governing partnerships between PennyGrade and participating offline merchants, cafés, restaurants, salons, and retail outlets."
+      subtitle="Draft template for review. A partnership exists only after both parties sign this agreement and complete the offer schedule for that business."
       version="1.0"
       effectiveDate="October 14, 2026"
-      lastUpdated="October 14, 2026"
+      lastUpdated="November 9, 2026"
       toc={TOC}
     >
+      <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+        This public page is a standard draft template, not evidence that any particular merchant has signed. Confirm and record the merchant's details, benefit, validity, minimum bill, discount cap, exclusions, and responsibilities in the execution schedule before publishing that offer.
+      </div>
       <section id="preamble" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">1. Preamble & Purpose</h2>
         <p className="mt-2">
@@ -71,16 +74,13 @@ function MerchantAgreementPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">2. Commercial Model & Zero Upfront Fee</h2>
         <div className="mt-2 space-y-2">
           <p>
-            <strong>Zero Joining &amp; Setup Fee:</strong> In accordance with PennyGrade&rsquo;s confirmed commercial policy, 
-            PennyGrade does <strong className="text-slate-900 dark:text-white">NOT charge any upfront registration, joining, listing, or onboarding fee</strong> to the Merchant.
+            The parties must record any agreed platform fee, commission, or other commercial consideration in the signed schedule. No amount is assumed by this template. PennyGrade's initial member revenue is the customer membership fee; a partner's retail bill is collected directly by that partner.
           </p>
           <p>
-            <strong>Complimentary Promotional QR Standee:</strong> PennyGrade provides the Merchant with high-quality, 
-            custom-branded acrylic counter QR standees and promotional door stickers at zero cost to the Merchant.
+            Any physical promotional materials, their cost, delivery, ownership, and return must be agreed in writing in the schedule. This template does not promise free materials.
           </p>
           <p>
-            <strong>No Sales Commissions:</strong> PennyGrade does not deduct commissions or percentages from the Merchant&rsquo;s 
-            gross revenue. The Merchant keeps 100% of all customer payments.
+            Partner customer transactions are between the customer and the partner. Any separate commercial arrangement must be recorded and reviewed before it begins.
           </p>
         </div>
       </section>
@@ -142,8 +142,7 @@ function MerchantAgreementPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">6. Platform Promotion & Acrylic QR Standees</h2>
         <div className="mt-2 space-y-2">
           <p>
-            <strong>Directory &amp; Digital Promotion:</strong> PennyGrade shall feature the Merchant in the PennyGrade online directory, 
-            public catalog, search filters, and local promotional channels (including social media channels and member bulletins).
+            <strong>Directory Listing:</strong> After both parties sign this agreement and PennyGrade records business verification and the agreed benefit, PennyGrade may publish the approved listing. Additional promotion requires mutual agreement.
           </p>
           <p>
             <strong>Display of Standees:</strong> The Merchant agrees to place and maintain the official PennyGrade acrylic QR standee 
@@ -191,9 +190,7 @@ function MerchantAgreementPage() {
       <section id="term-renewal" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">10. Term & Automatic Renewal (1 Year)</h2>
         <p className="mt-2">
-          This Agreement shall remain in full force and effect for an initial period of{" "}
-          <strong className="text-slate-900 dark:text-white">one (1) year</strong> from the Effective Date, and shall automatically renew 
-          for successive one-year periods unless terminated by either party in accordance with Section 11.
+          The parties must enter the agreed start date, end date, renewal choice, and review date in the signed schedule. This template creates no automatic renewal.
         </p>
       </section>
 
@@ -201,8 +198,7 @@ function MerchantAgreementPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">11. Termination Rights (15 Days' Notice)</h2>
         <div className="mt-2 space-y-2">
           <p>
-            <strong>Termination for Convenience:</strong> Either party may terminate this Agreement without cause and without any penalty fee 
-            by providing <strong className="text-slate-900 dark:text-white">fifteen (15) days&rsquo; prior written notice</strong> via email.
+          <strong>Termination:</strong> The parties must agree the notice period and termination process in the signed schedule. Either party may request suspension while a safety, fraud, or material member-benefit complaint is investigated.
           </p>
           <p>
             <strong>Immediate Termination for Cause:</strong> PennyGrade may immediately terminate this Agreement and remove the Merchant&rsquo;s 
@@ -254,8 +250,7 @@ function MerchantAgreementPage() {
       <section id="execution-schedule" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">15. Formal Execution & Offer Schedule</h2>
         <p className="mt-2">
-          This Agreement is formally executed by the authorized representatives of both parties as of the Effective Date written below. 
-          To sign or print a physical copy for your records, use the &ldquo;Print Document&rdquo; button above.
+          This page is an unsigned template. It is not an agreement with any named merchant and does not prove that any partner has signed. Complete the schedule, have both authorised parties sign, retain the signed copy securely, and only then record the agreement as signed in the partner record.
         </p>
 
         <div className="mt-6 rounded-2xl border-2 border-slate-300 bg-slate-50/50 p-6 dark:border-slate-700 dark:bg-slate-900/50 space-y-6">

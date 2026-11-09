@@ -21,6 +21,8 @@ dist-ssr
 
 # Wrangler / Cloudflare
 .wrangler/
+.local-qa-env/
+artifacts/local-qa/
 # Environment variables & external tool metadata
 .env
 .env.*

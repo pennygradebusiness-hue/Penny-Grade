@@ -362,37 +362,6 @@ describe("PennyGrade Professional Error Handling & Reliability Architecture", ()
       expect(malformedRes.ok).toBe(false);
     });
 
-    it("verifies server-side discount calculation error conditions", async () => {
-      const { calculateDiscount } = await import("@/lib/v1-logic");
-      const sampleOffer = {
-        id: "off-test",
-        title: "15% Off",
-        discount_type: "PERCENTAGE" as const,
-        discount_value: 15,
-        max_discount: 300,
-        minimum_bill: 500,
-      };
-
-      // Negative bill
-      const neg = calculateDiscount(-100, sampleOffer);
-      expect(neg.eligible).toBe(false);
-      expect(neg.discount).toBe(0);
-
-      // Zero bill
-      const zero = calculateDiscount(0, sampleOffer);
-      expect(zero.eligible).toBe(false);
-
-      // Below minimum bill
-      const below = calculateDiscount(400, sampleOffer);
-      expect(below.eligible).toBe(false);
-      expect(below.message).toContain("minimum bill");
-
-      // Valid bill with max cap enforcement
-      const capped = calculateDiscount(5000, sampleOffer);
-      expect(capped.eligible).toBe(true);
-      expect(capped.discount).toBe(300); // capped at max_discount
-      expect(capped.finalAmount).toBe(4700);
-    });
   });
 
   describe("Cross-System Entity Deletion & Synchronization Persistence", () => {

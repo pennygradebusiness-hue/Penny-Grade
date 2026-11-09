@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   LayoutDashboard,
   Users,
+  Package,
   CreditCard,
   Layers,
   Tags,
@@ -19,6 +20,7 @@ import {
   X,
   LogOut,
   ExternalLink,
+  CalendarDays,
 } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +80,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 /** Most important daily operational actions displayed prominently in the top navbar */
 const NAVBAR_PRIMARY_NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/orders", label: "Orders", icon: Package },
   { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin/partners", label: "Partners", icon: Store },
   { to: "/admin/verifications", label: "Verifications", icon: ListChecks },
@@ -99,9 +102,11 @@ type SidebarSection = {
 /** Management, catalog, configuration & governance tools displayed in the left sidebar */
 const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
-    title: "Catalog & Cards",
+    title: "Orders & Inventory",
     items: [
+      { to: "/admin/orders", label: "Orders & Delivery", icon: Package },
       { to: "/admin/offers", label: "Offers", icon: BadgePercent },
+      { to: "/admin/prebooking", label: "Prebooking Campaigns", icon: CalendarDays },
       { to: "/admin/cards", label: "Physical Cards", icon: CreditCard },
       { to: "/admin/plans", label: "Membership Plans", icon: Layers },
       { to: "/admin/categories", label: "Categories", icon: Tags },
@@ -155,7 +160,7 @@ function AdminLayout() {
       if (remainingMs < twentyNineDaysMs && remainingMs > 0) {
         try {
           const res = await refreshSessionFn();
-          if (res?.session_token && !isCancelled) {
+          if (res?.expires_at && !isCancelled) {
             saveAdminSessionClient(
               {
                 id: session.id,
@@ -164,7 +169,6 @@ function AdminLayout() {
                 full_name: session.full_name,
                 exp: res.expires_at,
               },
-              res.session_token
             );
           }
         } catch (err) {

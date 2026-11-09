@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -35,6 +35,15 @@ function MembershipPage() {
           </dl>
         </div>
       )}
+      <section className="mt-8 rounded-2xl border bg-card p-5">
+        <h2 className="font-semibold">Membership assistance</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Contact PennyGrade for renewal questions, a lost or damaged card, account help, or an issue with a partner benefit. Renewal is handled with support; this portal does not automatically renew a membership.</p>
+        <div className="mt-4 flex flex-wrap gap-3 text-sm">
+          <a className="font-medium text-primary underline" href="mailto:pennygradebusiness@gmail.com?subject=PennyGrade%20membership%20support">Email support</a>
+          <a className="font-medium text-primary underline" href="tel:+919356897893">Call +91 93568 97893</a>
+          <Link className="font-medium text-primary underline" to="/partners">Explore participating businesses</Link>
+        </div>
+      </section>
     </AccountLayout>
   );
 }

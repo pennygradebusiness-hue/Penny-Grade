@@ -5,6 +5,7 @@ import {
   renewAdminSessionToken,
   ADMIN_SESSION_TTL_MS,
   ADMIN_SESSION_TTL_SECONDS,
+  serializeAdminSessionCookie,
 } from "@/lib/admin-auth.server";
 import {
   getAdminSession,
@@ -20,6 +21,23 @@ import {
 } from "@/lib/admin-session";
 
 describe("Administrator Session Persistence & Enterprise Lifecycle Guard", () => {
+  it("serializes the signed admin token into a Secure HttpOnly SameSite cookie", () => {
+    const cookie = serializeAdminSessionCookie("signed.token", 3600, true);
+    expect(cookie).toContain("pennygrade_admin_session=signed.token");
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("Secure");
+    expect(cookie).toContain("SameSite=Lax");
+    expect(cookie).toContain("Path=/");
+  });
+
+  it("expires the HttpOnly admin cookie on server logout", () => {
+    const cookie = serializeAdminSessionCookie("", 0, true, true);
+    expect(cookie).toContain("pennygrade_admin_session=");
+    expect(cookie).toContain("Max-Age=0");
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("Secure");
+  });
+
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -133,7 +151,7 @@ describe("Administrator Session Persistence & Enterprise Lifecycle Guard", () =>
   });
 
   describe("Client-Side Session State & Expiration Automatic Purge", () => {
-    it("successfully saves and retrieves a valid active session", () => {
+    it("saves display metadata while keeping the signed cookie inaccessible to JavaScript", () => {
       const token = createAdminSessionToken({
         id: "adm-active",
         email: "active@pennygrade.in",
@@ -156,6 +174,7 @@ describe("Administrator Session Persistence & Enterprise Lifecycle Guard", () =>
       expect(session?.email).toBe("active@pennygrade.in");
       expect(session?.role).toBe("manager");
       expect(session?.exp).toBeGreaterThan(Date.now());
+      expect(document.cookie).not.toContain(`${ADMIN_SESSION_COOKIE}=`);
     });
 
     it("automatically purges and returns null when session has expired", () => {
@@ -186,24 +205,22 @@ describe("Administrator Session Persistence & Enterprise Lifecycle Guard", () =>
       expect(localStorage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
     });
 
-    it("automatically purges localStorage if browser cookie was cleared/expired", () => {
-      // Simulate leftover localStorage with cookie missing
-      localStorage.setItem(
-        ADMIN_SESSION_STORAGE_KEY,
-        JSON.stringify({
-          id: "adm-stale",
-          email: "stale@pennygrade.in",
-          role: "super_admin",
-          exp: Date.now() + 100_000,
-        })
+    it("keeps display metadata readable without exposing the HttpOnly cookie to JavaScript", () => {
+      const token = createAdminSessionToken({
+        id: "adm-stale",
+        email: "stale@pennygrade.in",
+        role: "super_admin",
+      });
+      saveAdminSessionClient(
+        { id: "adm-stale", email: "stale@pennygrade.in", role: "super_admin" },
+        token,
       );
 
-      const session = getAdminSession();
-      expect(session).toBeNull();
-      expect(localStorage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
+      expect(getAdminSession()?.email).toBe("stale@pennygrade.in");
+      expect(document.cookie).not.toContain(`${ADMIN_SESSION_COOKIE}=`);
     });
 
-    it("clears both storage and cookies on explicit clearAdminSession()", () => {
+    it("clears client-side display metadata on explicit clearAdminSession()", () => {
       const token = createAdminSessionToken({
         id: "adm-clear",
         email: "clear@pennygrade.in",

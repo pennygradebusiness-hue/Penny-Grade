@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { logoutAdminSession } from "@/lib/admin.functions";
 import { clearAdminSession } from "@/lib/admin-session";
 
 export const Route = createFileRoute("/admin/reset-password")({
@@ -212,6 +213,7 @@ function AdminResetPasswordPage() {
       try {
         await supabase.auth.signOut();
         clearAdminSession();
+        await logoutAdminSession();
       } catch {
         // ignore signout errors
       }

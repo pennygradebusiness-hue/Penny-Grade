@@ -36,7 +36,7 @@ function RegisterNotice() {
         <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground shadow-sm">
           <p className="font-semibold text-foreground">How PennyGrade Works</p>
           <p className="mt-1 leading-relaxed">
-            Members receive a physical PennyGrade card containing a unique ID (e.g. PEN-7X4P-92LM). No online password or customer signup is needed. Simply scan the permanent counter QR at any partner venue to redeem your discounts.
+            Members receive a physical PennyGrade card containing a unique ID (for example, PEN-XXXX-XXXX). No online password or customer signup is needed. Scan the partner's counter QR to start membership verification.
           </p>
         </div>
 

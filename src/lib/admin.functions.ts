@@ -1,3 +1,9 @@
+import {
+  sendTransactionalEmail,
+  renderDispatchNotificationEmail,
+  renderDeliveryConfirmationEmail,
+  type TransactionalEmailEvent,
+} from "./email.service";
 import { createServerFn } from "@tanstack/react-start";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
@@ -18,6 +24,8 @@ import {
   type V1AdminUser,
   type V1MemberApplication,
   type V1PartnerApplication,
+  type V1EmailNotification,
+  type V1Order,
 } from "./v1-store";
 import {
   addAdminLogic,
@@ -30,13 +38,24 @@ import {
   getFilteredOffersLogic,
   syncAdminPasswordAfterSupabaseResetLogic,
 } from "./v1-logic";
-import { createAdminSessionToken, requireAdminAuth, refreshCurrentAdminSession } from "./admin-auth.server";
+import {
+  createAdminSessionToken,
+  requireAdminAuth,
+  refreshCurrentAdminSession,
+  writeAdminSessionCookie,
+  clearAdminSessionCookie,
+} from "./admin-auth.server";
 import { supabase } from "@/integrations/supabase/client";
 import { getServiceRoleClient as getRawServiceRoleClient } from "./supabase-admin.server";
+import { hasCompletePartnerEvidence } from "./partner-publication";
 
 const memberSchema = z.object({
   full_name: z.string().trim().min(2, "Full name is required").max(100),
-  mobile: z.string().trim().min(10, "Valid 10-digit mobile is required").max(16)
+  mobile: z
+    .string()
+    .trim()
+    .min(10, "Valid 10-digit mobile is required")
+    .max(16)
     .regex(/^\+?[0-9\s()-]{10,16}$/, "Enter a valid mobile number"),
   email: z
     .string()
@@ -70,14 +89,19 @@ type AdminVerificationLog = {
 function getServiceRoleClient() {
   const db = getRawServiceRoleClient();
   if (!db && process.env.NODE_ENV === "production") {
-    throw new Error("Admin database is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the server.");
+    throw new Error(
+      "Admin database is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the server.",
+    );
   }
   return db;
 }
 
 function isDuplicateAuthEmailError(error: { code?: string; message?: string } | null) {
   if (!error) return false;
-  return error.code === "email_exists" || /already (been )?(registered|exists)|user already registered/i.test(error.message || "");
+  return (
+    error.code === "email_exists" ||
+    /already (been )?(registered|exists)|user already registered/i.test(error.message || "")
+  );
 }
 
 // Admin Create Member — NO customer password, NO customer Supabase Auth account, Email optional
@@ -102,7 +126,13 @@ export const createMember = createServerFn({ method: "POST" })
         p_card_id: data.card_id || null,
       });
       if (error) throw new Error(`Could not create member: ${error.message}`);
-      const payload = result as { ok?: boolean; id: string; membership_number: string; card_number: string; card_id: string | null } | null;
+      const payload = result as {
+        ok?: boolean;
+        id: string;
+        membership_number: string;
+        card_number: string;
+        card_id: string | null;
+      } | null;
       if (!payload?.ok) throw new Error("Could not create member");
       return payload;
     }
@@ -212,13 +242,15 @@ export const createMember = createServerFn({ method: "POST" })
 // Admin Generate Card Batch
 export const generateCardBatch = createServerFn({ method: "POST" })
   .inputValidator((d: { count: number }) =>
-    z.object({ count: z.number().int().min(1).max(2000) }).parse(d)
+    z.object({ count: z.number().int().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { data: result, error } = await db.rpc("generate_physical_cards", { p_count: data.count });
+      const { data: result, error } = await db.rpc("generate_physical_cards", {
+        p_count: data.count,
+      });
       if (error) throw new Error(`Could not generate cards: ${error.message}`);
       const payload = result as { ok?: boolean; count: number } | null;
       if (!payload?.ok) throw new Error("Could not generate cards");
@@ -265,7 +297,16 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
   if (db) {
     const { data, error } = await db.rpc("get_all_physical_cards");
     if (error) throw new Error(`Could not load cards: ${error.message}`);
-    return (data || []) as Array<{ id: string; card_number: string; status: string; created_at: string; issued_at: string | null; membership_id: string | null; member: string; membership_number: string }>;
+    return (data || []) as Array<{
+      id: string;
+      card_number: string;
+      status: string;
+      created_at: string;
+      issued_at: string | null;
+      membership_id: string | null;
+      member: string;
+      membership_number: string;
+    }>;
   }
   await ensureStoreLoadedCloud();
 
@@ -286,7 +327,9 @@ export const getAdminCards = createServerFn({ method: "GET" }).handler(async () 
     };
   });
 
-  return cardsList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return cardsList.sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 });
 
 // Admin Get Members
@@ -324,22 +367,29 @@ export const getAdminMembers = createServerFn({ method: "GET" }).handler(async (
       card_id: m.card_id || "",
     }));
 
-  return membersList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return membersList.sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 });
 
 // Admin Update Member Status
 export const updateMemberStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED" }) =>
-    z.object({
-      id: z.string(),
-      status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "CANCELLED"]),
-    }).parse(d)
+    z
+      .object({
+        id: z.string(),
+        status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "CANCELLED"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { error } = await db.from("memberships").update({ status: data.status }).eq("id", data.id);
+      const { error } = await db
+        .from("memberships")
+        .update({ status: data.status })
+        .eq("id", data.id);
       if (error) throw new Error(`Could not update member: ${error.message}`);
       return { ok: true };
     }
@@ -442,21 +492,31 @@ export const deleteMember = createServerFn({ method: "POST" })
 // Admin Renew Membership
 export const renewMember = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; durationDays?: number }) =>
-    z.object({ id: z.string(), durationDays: z.number().optional() }).parse(d)
+    z.object({ id: z.string(), durationDays: z.number().optional() }).parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "membership_manager"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { data: member, error: readError } = await db.from("memberships").select("expiry_date").eq("id", data.id).maybeSingle();
+      const { data: member, error: readError } = await db
+        .from("memberships")
+        .select("expiry_date")
+        .eq("id", data.id)
+        .maybeSingle();
       if (readError) throw new Error(`Could not load membership: ${readError.message}`);
       if (!member) throw new Error("Member not found");
       const days = data.durationDays ?? 180;
-      if (!Number.isInteger(days) || days < 1 || days > 3650) throw new Error("Renewal duration must be between 1 and 3650 days");
-      const expiry = new Date(Math.max(Date.now(), new Date(`${member.expiry_date}T00:00:00`).getTime()));
+      if (!Number.isInteger(days) || days < 1 || days > 3650)
+        throw new Error("Renewal duration must be between 1 and 3650 days");
+      const expiry = new Date(
+        Math.max(Date.now(), new Date(`${member.expiry_date}T00:00:00`).getTime()),
+      );
       expiry.setDate(expiry.getDate() + days);
       const newExpiry = expiry.toISOString().slice(0, 10);
-      const { error } = await db.from("memberships").update({ expiry_date: newExpiry, status: "ACTIVE" }).eq("id", data.id);
+      const { error } = await db
+        .from("memberships")
+        .update({ expiry_date: newExpiry, status: "ACTIVE" })
+        .eq("id", data.id);
       if (error) throw new Error(`Could not renew membership: ${error.message}`);
       return { ok: true, new_expiry: newExpiry };
     }
@@ -473,7 +533,9 @@ export const renewMember = createServerFn({ method: "POST" })
     if (!targetMember) throw new Error("Member not found");
 
     const days = data.durationDays ?? 180;
-    const currentExpiry = new Date(Math.max(Date.now(), new Date(targetMember.expiry_date).getTime()));
+    const currentExpiry = new Date(
+      Math.max(Date.now(), new Date(targetMember.expiry_date).getTime()),
+    );
     currentExpiry.setDate(currentExpiry.getDate() + days);
     const newExpiry = currentExpiry.toISOString().slice(0, 10);
 
@@ -499,11 +561,13 @@ export const renewMember = createServerFn({ method: "POST" })
 // Admin Assign / Replace Card
 export const assignCardToMember = createServerFn({ method: "POST" })
   .inputValidator((d: { memberId: string; cardId: string; oldCardStatus?: "LOST" | "CANCELLED" }) =>
-    z.object({
-      memberId: z.string(),
-      cardId: z.string(),
-      oldCardStatus: z.enum(["LOST", "CANCELLED"]).optional(),
-    }).parse(d)
+    z
+      .object({
+        memberId: z.string(),
+        cardId: z.string(),
+        oldCardStatus: z.enum(["LOST", "CANCELLED"]).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "membership_manager"]);
@@ -570,126 +634,142 @@ export const assignCardToMember = createServerFn({ method: "POST" })
   });
 
 // Admin Get Admin Users (Server Function)
-export const getAdminUsers = createServerFn({ method: "GET" }).handler(async (): Promise<V1AdminUser[]> => {
-  requireAdminAuth(["super_admin"]);
-  const db = getServiceRoleClient();
-  if (db) {
-    const { data: roles, error } = await db.from("user_roles").select("id,user_id,role,created_at");
-    if (error) throw new Error(`Could not load administrator roles: ${error.message}`);
-    const userIds = [...new Set((roles || []).map((r) => r.user_id))];
-    const { data: profiles, error: profileError } = userIds.length
-      ? await db.from("profiles").select("user_id,full_name,email").in("user_id", userIds)
-      : { data: [], error: null };
-    if (profileError) throw new Error(`Could not load administrator profiles: ${profileError.message}`);
-    const profileById = new Map((profiles || []).map((p) => [p.user_id, p]));
-    return (roles || []).map((r) => {
-      const profile = profileById.get(r.user_id);
-      return {
-        id: r.id,
-        user_id: r.user_id,
-        full_name: profile?.full_name || "Administrator",
-        email: profile?.email || "",
-        role: r.role as V1AdminUser["role"],
-        created_at: r.created_at,
-      };
-    });
-  }
-  if (!store.adminUsers) store.adminUsers = [];
-  if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
+export const getAdminUsers = createServerFn({ method: "GET" }).handler(
+  async (): Promise<V1AdminUser[]> => {
+    requireAdminAuth(["super_admin"]);
+    const db = getServiceRoleClient();
+    if (db) {
+      const { data: roles, error } = await db
+        .from("user_roles")
+        .select("id,user_id,role,created_at");
+      if (error) throw new Error(`Could not load administrator roles: ${error.message}`);
+      const userIds = [...new Set((roles || []).map((r) => r.user_id))];
+      const { data: profiles, error: profileError } = userIds.length
+        ? await db.from("profiles").select("user_id,full_name,email").in("user_id", userIds)
+        : { data: [], error: null };
+      if (profileError)
+        throw new Error(`Could not load administrator profiles: ${profileError.message}`);
+      const profileById = new Map((profiles || []).map((p) => [p.user_id, p]));
+      return (roles || []).map((r) => {
+        const profile = profileById.get(r.user_id);
+        return {
+          id: r.id,
+          user_id: r.user_id,
+          full_name: profile?.full_name || "Administrator",
+          email: profile?.email || "",
+          role: r.role as V1AdminUser["role"],
+          created_at: r.created_at,
+        };
+      });
+    }
+    if (!store.adminUsers) store.adminUsers = [];
+    if (!store.deletedAdminUserIds) store.deletedAdminUserIds = [];
 
-  const delAdminSet = new Set(store.deletedAdminUserIds.map((x) => x.toLowerCase()));
+    const delAdminSet = new Set(store.deletedAdminUserIds.map((x) => x.toLowerCase()));
 
-  // Only seed default admin users if store was never seeded before and is empty
-  if (!store.seededAdminUsers && store.adminUsers.length === 0) {
-    const fallbackUsers: V1AdminUser[] = [
-      {
-        id: "admin-primary-owner",
-        user_id: "uid-primary-owner",
-        full_name: "PennyGrade Business",
-        email: "pennygradebusiness@gmail.com",
-        role: "super_admin",
-        is_password_set: false,
-        created_at: new Date().toISOString(),
-      },
-    ];
-    store.adminUsers = fallbackUsers.filter(
-      (u) => !delAdminSet.has(u.id.toLowerCase()) && !delAdminSet.has(u.email.toLowerCase())
-    );
-    store.seededAdminUsers = true;
-  }
+    // Only seed default admin users if store was never seeded before and is empty
+    if (!store.seededAdminUsers && store.adminUsers.length === 0) {
+      const fallbackUsers: V1AdminUser[] = [
+        {
+          id: "admin-primary-owner",
+          user_id: "uid-primary-owner",
+          full_name: "PennyGrade Business",
+          email: "pennygradebusiness@gmail.com",
+          role: "super_admin",
+          is_password_set: false,
+          created_at: new Date().toISOString(),
+        },
+      ];
+      store.adminUsers = fallbackUsers.filter(
+        (u) => !delAdminSet.has(u.id.toLowerCase()) && !delAdminSet.has(u.email.toLowerCase()),
+      );
+      store.seededAdminUsers = true;
+    }
 
-  const storeUsers: V1AdminUser[] = (store.adminUsers || [])
-    .filter(
-      (u) =>
-        !delAdminSet.has(u.id?.toLowerCase()) &&
-        !delAdminSet.has(u.user_id?.toLowerCase()) &&
-        !delAdminSet.has(u.email?.toLowerCase())
-    )
-    .map((u) => ({
-      id: u.id,
-      user_id: u.user_id,
-      full_name: u.full_name,
-      email: u.email,
-      role: u.role,
-      created_at: u.created_at,
-    }));
+    const storeUsers: V1AdminUser[] = (store.adminUsers || [])
+      .filter(
+        (u) =>
+          !delAdminSet.has(u.id?.toLowerCase()) &&
+          !delAdminSet.has(u.user_id?.toLowerCase()) &&
+          !delAdminSet.has(u.email?.toLowerCase()),
+      )
+      .map((u) => ({
+        id: u.id,
+        user_id: u.user_id,
+        full_name: u.full_name,
+        email: u.email,
+        role: u.role,
+        created_at: u.created_at,
+      }));
 
-  try {
-    const [{ data: r, error: rErr }, { data: p }] = await Promise.all([
-      supabase.from("user_roles").select("*"),
-      supabase.from("profiles").select("user_id,full_name,email"),
-    ]);
+    try {
+      const [{ data: r, error: rErr }, { data: p }] = await Promise.all([
+        supabase.from("user_roles").select("*"),
+        supabase.from("profiles").select("user_id,full_name,email"),
+      ]);
 
-    if (!rErr && r && r.length > 0) {
-      const pm = new Map((p ?? []).map((x) => [x.user_id, x]));
-      const dbUsers: V1AdminUser[] = r
-        .filter(
-          (roleRec) =>
-            !delAdminSet.has(roleRec.id?.toLowerCase()) &&
-            !delAdminSet.has(roleRec.user_id?.toLowerCase())
-        )
-        .map((roleRec) => {
-          const prof = pm.get(roleRec.user_id);
-          return {
-            id: roleRec.id,
-            user_id: roleRec.user_id,
-            full_name: prof?.full_name || "Admin Staff",
-            email: prof?.email || "staff@pennygrade.in",
-            role: roleRec.role as V1AdminUser["role"],
-            created_at: roleRec.created_at,
-          };
-        })
-        .filter((d) => !delAdminSet.has(d.email.toLowerCase()));
+      if (!rErr && r && r.length > 0) {
+        const pm = new Map((p ?? []).map((x) => [x.user_id, x]));
+        const dbUsers: V1AdminUser[] = r
+          .filter(
+            (roleRec) =>
+              !delAdminSet.has(roleRec.id?.toLowerCase()) &&
+              !delAdminSet.has(roleRec.user_id?.toLowerCase()),
+          )
+          .map((roleRec) => {
+            const prof = pm.get(roleRec.user_id);
+            return {
+              id: roleRec.id,
+              user_id: roleRec.user_id,
+              full_name: prof?.full_name || "Admin Staff",
+              email: prof?.email || "staff@pennygrade.in",
+              role: roleRec.role as V1AdminUser["role"],
+              created_at: roleRec.created_at,
+            };
+          })
+          .filter((d) => !delAdminSet.has(d.email.toLowerCase()));
 
-      const seenEmails = new Set(storeUsers.map((u) => u.email.toLowerCase()));
-      for (const d of dbUsers) {
-        if (!seenEmails.has(d.email.toLowerCase())) {
-          storeUsers.push(d);
+        const seenEmails = new Set(storeUsers.map((u) => u.email.toLowerCase()));
+        for (const d of dbUsers) {
+          if (!seenEmails.has(d.email.toLowerCase())) {
+            storeUsers.push(d);
+          }
         }
       }
+    } catch {
+      // fallback to store
     }
-  } catch {
-    // fallback to store
-  }
 
-  return storeUsers;
-});
+    return storeUsers;
+  },
+);
 
 // Admin addAdmin (delegation with initial password generation)
 export const addAdmin = createServerFn({ method: "POST" })
-  .inputValidator((d: { email: string; role: "super_admin" | "manager" | "membership_manager" | "support"; full_name?: string; temporary_password?: string }) =>
-    z.object({
-      email: z.string().trim().email(),
-      role: z.enum(["super_admin", "manager", "membership_manager", "support"]),
-      full_name: z.string().optional(),
-      temporary_password: z.string().min(6).optional(),
-    }).parse(d)
+  .inputValidator(
+    (d: {
+      email: string;
+      role: "super_admin" | "manager" | "membership_manager" | "support";
+      full_name?: string;
+      temporary_password?: string;
+    }) =>
+      z
+        .object({
+          email: z.string().trim().email(),
+          role: z.enum(["super_admin", "manager", "membership_manager", "support"]),
+          full_name: z.string().optional(),
+          temporary_password: z.string().min(6).optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data }) => {
     requireAdminAuth(["super_admin"]);
     const db = getServiceRoleClient();
     if (db) {
-      if (data.email.trim().toLowerCase() === "pennygradebusiness@gmail.com" && data.role !== "super_admin") {
+      if (
+        data.email.trim().toLowerCase() === "pennygradebusiness@gmail.com" &&
+        data.role !== "super_admin"
+      ) {
         throw new Error("Action Forbidden: The primary system owner role cannot be demoted.");
       }
       const tempPassword = data.temporary_password?.trim() || randomBytes(18).toString("base64url");
@@ -713,12 +793,20 @@ export const addAdmin = createServerFn({ method: "POST" })
         const email = data.email.trim().toLowerCase();
         const perPage = 1000;
         for (let page = 1; page <= 100 && !authUser; page++) {
-          const { data: usersPage, error: listError } = await db.auth.admin.listUsers({ page, perPage });
-          if (listError) throw new Error(`Could not find the existing account: ${listError.message}`);
-          authUser = usersPage.users.find((user) => user.email?.trim().toLowerCase() === email) ?? null;
+          const { data: usersPage, error: listError } = await db.auth.admin.listUsers({
+            page,
+            perPage,
+          });
+          if (listError)
+            throw new Error(`Could not find the existing account: ${listError.message}`);
+          authUser =
+            usersPage.users.find((user) => user.email?.trim().toLowerCase() === email) ?? null;
           if (usersPage.users.length < perPage) break;
         }
-        if (!authUser) throw new Error("An account with this email already exists, but it could not be found for role assignment.");
+        if (!authUser)
+          throw new Error(
+            "An account with this email already exists, but it could not be found for role assignment.",
+          );
         existingAccount = true;
       }
 
@@ -747,7 +835,8 @@ export const addAdmin = createServerFn({ method: "POST" })
       const adminUser: V1AdminUser = {
         id: authUser.id,
         user_id: authUser.id,
-        full_name: data.full_name?.trim() || authUser.user_metadata?.full_name || data.email.split("@")[0],
+        full_name:
+          data.full_name?.trim() || authUser.user_metadata?.full_name || data.email.split("@")[0],
         email: authUser.email || data.email,
         role: data.role,
         is_password_set: existingAccount || !!data.temporary_password,
@@ -774,16 +863,22 @@ export const addAdmin = createServerFn({ method: "POST" })
 // Admin Reset Password
 export const resetAdminPassword = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; new_password?: string }) =>
-    z.object({
-      id: z.string(),
-      new_password: z.string().min(6).optional(),
-    }).parse(d)
+    z
+      .object({
+        id: z.string(),
+        new_password: z.string().min(6).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     requireAdminAuth(["super_admin"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { data: role, error: lookupError } = await db.from("user_roles").select("user_id").eq("id", data.id).maybeSingle();
+      const { data: role, error: lookupError } = await db
+        .from("user_roles")
+        .select("user_id")
+        .eq("id", data.id)
+        .maybeSingle();
       if (lookupError) throw new Error(`Could not find administrator: ${lookupError.message}`);
       if (!role) throw new Error("Administrator not found");
       const newPassword = data.new_password || randomBytes(18).toString("base64url");
@@ -798,21 +893,25 @@ export const resetAdminPassword = createServerFn({ method: "POST" })
 // Verify Admin Login Credentials against store
 export const verifyAdminLoginCredentials = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; password: string }) =>
-    z.object({
-      email: z.string().trim().email(),
-      password: z.string().min(1),
-    }).parse(d)
+    z
+      .object({
+        email: z.string().trim().email(),
+        password: z.string().min(1),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const result = verifyAdminLoginCredentialsLogic(data);
     if (result.ok && result.user) {
-      return { ...result, session_token: createAdminSessionToken(result.user) };
+      writeAdminSessionCookie(createAdminSessionToken(result.user));
     }
     return result;
   });
 
 export const createSupabaseAdminSession = createServerFn({ method: "POST" })
-  .inputValidator((d: { access_token: string }) => z.object({ access_token: z.string().min(1) }).parse(d))
+  .inputValidator((d: { access_token: string }) =>
+    z.object({ access_token: z.string().min(1) }).parse(d),
+  )
   .handler(async ({ data }) => {
     const db = getServiceRoleClient();
     if (!db) throw new Error("Admin session service is not configured");
@@ -824,38 +923,57 @@ export const createSupabaseAdminSession = createServerFn({ method: "POST" })
     ]);
     if (roleError) throw new Error(`Could not verify administrator role: ${roleError.message}`);
     const rolesPriority = ["super_admin", "manager", "membership_manager", "support"];
-    const role = rolesPriority.find((candidate) => roles?.some((entry) => entry.role === candidate));
+    const role = rolesPriority.find((candidate) =>
+      roles?.some((entry) => entry.role === candidate),
+    );
     if (!role) {
       throw new Error("Forbidden: Administrator role required");
     }
     const userRole = role as V1AdminUser["role"];
-    const fullName = profile?.full_name || authData.user.user_metadata?.full_name || authData.user.email || "Administrator";
+    const fullName =
+      profile?.full_name ||
+      authData.user.user_metadata?.full_name ||
+      authData.user.email ||
+      "Administrator";
+    const sessionToken = createAdminSessionToken(
+        {
+          id: authData.user.id,
+          email: authData.user.email || profile?.email || "",
+          role: userRole,
+          full_name: fullName,
+        },
+        "supabase",
+      );
+    writeAdminSessionCookie(sessionToken);
     return {
-      session_token: createAdminSessionToken({
-        id: authData.user.id,
-        email: authData.user.email || profile?.email || "",
-        role: userRole,
-        full_name: fullName,
-      }, "supabase"),
       role: userRole,
       full_name: fullName,
     };
   });
 
 // Enterprise Sliding Session Renewal
-export const refreshAdminSession = createServerFn({ method: "POST" })
-  .handler(async () => {
-    return refreshCurrentAdminSession();
-  });
+export const refreshAdminSession = createServerFn({ method: "POST" }).handler(async () => {
+  const refreshed = refreshCurrentAdminSession();
+  writeAdminSessionCookie(refreshed.session_token, refreshed.expires_at);
+  return { expires_at: refreshed.expires_at };
+});
+
+export const logoutAdminSession = createServerFn({ method: "POST" }).handler(async () => {
+  clearAdminSessionCookie();
+  return { ok: true };
+});
 
 // First-Time Setup / Self-Service Password Set
 export const firstTimeSetPassword = createServerFn({ method: "POST" })
-  .inputValidator((d: { email: string; new_password: string; current_temporary_password?: string }) =>
-    z.object({
-      email: z.string().trim().email(),
-      new_password: z.string().min(6, "Password must be at least 6 characters"),
-      current_temporary_password: z.string().optional(),
-    }).parse(d)
+  .inputValidator(
+    (d: { email: string; new_password: string; current_temporary_password?: string }) =>
+      z
+        .object({
+          email: z.string().trim().email(),
+          new_password: z.string().min(6, "Password must be at least 6 characters"),
+          current_temporary_password: z.string().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data }) => {
     return firstTimeSetPasswordLogic(data);
@@ -864,25 +982,37 @@ export const firstTimeSetPassword = createServerFn({ method: "POST" })
 // Admin / Primary Owner Password Reset Code Request
 export const requestAdminPasswordResetCode = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string }) =>
-    z.object({
-      email: z.string().trim().email("Valid admin email is required").max(255),
-    }).parse(d)
+    z
+      .object({
+        email: z.string().trim().email("Valid admin email is required").max(255),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     // Recovery is handled by Supabase Auth email links. Do not expose the
     // legacy code/phone reset flow, which kept codes in process memory/logs.
     void data;
-    return { ok: true, message: "If the account is eligible, a password recovery link will be sent to its registered email." };
+    return {
+      ok: true,
+      message:
+        "If the account is eligible, a password recovery link will be sent to its registered email.",
+    };
   });
 
 // Admin / Primary Owner Reset Forgotten Password
 export const resetAdminForgottenPassword = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; verification_credential: string; new_password: string }) =>
-    z.object({
-      email: z.string().trim().email("Valid admin email is required").max(255),
-      verification_credential: z.string().trim().min(4, "Verification credential is required").max(50),
-      new_password: z.string().min(6, "Password must be at least 6 characters").max(100),
-    }).parse(d)
+    z
+      .object({
+        email: z.string().trim().email("Valid admin email is required").max(255),
+        verification_credential: z
+          .string()
+          .trim()
+          .min(4, "Verification credential is required")
+          .max(50),
+        new_password: z.string().min(6, "Password must be at least 6 characters").max(100),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     void data;
@@ -892,14 +1022,18 @@ export const resetAdminForgottenPassword = createServerFn({ method: "POST" })
 // Synchronize Admin Password After Verified Supabase Auth Reset
 export const syncAdminPasswordAfterSupabaseReset = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; new_password: string }) =>
-    z.object({
-      email: z.string().trim().email("Valid admin email is required").max(255),
-      new_password: z.string().min(6, "Password must be at least 6 characters").max(100),
-    }).parse(d)
+    z
+      .object({
+        email: z.string().trim().email("Valid admin email is required").max(255),
+        new_password: z.string().min(6, "Password must be at least 6 characters").max(100),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     void data;
-    throw new Error("Supabase Auth is the password source of truth. Use its verified recovery link to change this password.");
+    throw new Error(
+      "Supabase Auth is the password source of truth. Use its verified recovery link to change this password.",
+    );
   });
 
 // Admin Remove Role
@@ -909,16 +1043,28 @@ export const removeAdminRole = createServerFn({ method: "POST" })
     const admin = requireAdminAuth(["super_admin"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { data: role, error: lookupError } = await db.from("user_roles").select("id,user_id,role").eq("id", data.id).maybeSingle();
+      const { data: role, error: lookupError } = await db
+        .from("user_roles")
+        .select("id,user_id,role")
+        .eq("id", data.id)
+        .maybeSingle();
       if (lookupError) throw new Error(`Could not find administrator role: ${lookupError.message}`);
       if (!role) throw new Error("Administrator role not found");
-      const { data: profile } = await db.from("profiles").select("email").eq("user_id", role.user_id).maybeSingle();
+      const { data: profile } = await db
+        .from("profiles")
+        .select("email")
+        .eq("user_id", role.user_id)
+        .maybeSingle();
       if (profile?.email?.toLowerCase() === "pennygradebusiness@gmail.com") {
         throw new Error("Action Forbidden: The primary system owner role cannot be removed.");
       }
       if (role.role === "super_admin") {
-        const { count, error: countError } = await db.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "super_admin");
-        if (countError) throw new Error(`Could not verify administrator count: ${countError.message}`);
+        const { count, error: countError } = await db
+          .from("user_roles")
+          .select("id", { count: "exact", head: true })
+          .eq("role", "super_admin");
+        if (countError)
+          throw new Error(`Could not verify administrator count: ${countError.message}`);
         if ((count || 0) <= 1) throw new Error("The last super administrator cannot be removed.");
       }
       const { error } = await db.from("user_roles").delete().eq("id", data.id);
@@ -932,17 +1078,28 @@ export const removeAdminRole = createServerFn({ method: "POST" })
     const targetEmail = target?.email?.toLowerCase() || "";
     const targetUserId = target?.user_id || data.id;
 
-    if (targetEmail === "pennygradebusiness@gmail.com" || data.id.toLowerCase() === "admin-primary-owner" || data.id.toLowerCase() === "pennygradebusiness@gmail.com") {
-      throw new Error("Action Forbidden: The primary system owner (pennygradebusiness@gmail.com) cannot be removed.");
+    if (
+      targetEmail === "pennygradebusiness@gmail.com" ||
+      data.id.toLowerCase() === "admin-primary-owner" ||
+      data.id.toLowerCase() === "pennygradebusiness@gmail.com"
+    ) {
+      throw new Error(
+        "Action Forbidden: The primary system owner (pennygradebusiness@gmail.com) cannot be removed.",
+      );
     }
 
     // Track in deleted list so it never resurrects
     if (!store.deletedAdminUserIds.includes(data.id)) store.deletedAdminUserIds.push(data.id);
-    if (targetUserId && !store.deletedAdminUserIds.includes(targetUserId)) store.deletedAdminUserIds.push(targetUserId);
-    if (targetEmail && !store.deletedAdminUserIds.includes(targetEmail)) store.deletedAdminUserIds.push(targetEmail);
+    if (targetUserId && !store.deletedAdminUserIds.includes(targetUserId))
+      store.deletedAdminUserIds.push(targetUserId);
+    if (targetEmail && !store.deletedAdminUserIds.includes(targetEmail))
+      store.deletedAdminUserIds.push(targetEmail);
 
     store.adminUsers = store.adminUsers.filter(
-      (u) => u.id !== data.id && u.user_id !== data.id && (!targetEmail || u.email.toLowerCase() !== targetEmail)
+      (u) =>
+        u.id !== data.id &&
+        u.user_id !== data.id &&
+        (!targetEmail || u.email.toLowerCase() !== targetEmail),
     );
 
     if (target && store.auditLogs) {
@@ -959,8 +1116,12 @@ export const removeAdminRole = createServerFn({ method: "POST" })
     }
 
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
-      const isUserUuid = targetUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        data.id,
+      );
+      const isUserUuid =
+        targetUserId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
       if (isUuid) {
         await supabase.from("user_roles").delete().eq("id", data.id);
       }
@@ -978,7 +1139,7 @@ export const removeAdminRole = createServerFn({ method: "POST" })
 // Admin Get Verification Logs (Server Function)
 export const getAdminVerificationLogs = createServerFn({ method: "GET" })
   .inputValidator((d: { sinceDays?: number } | undefined) =>
-    z.object({ sinceDays: z.number().optional() }).optional().parse(d)
+    z.object({ sinceDays: z.number().optional() }).optional().parse(d),
   )
   .handler(async ({ data }): Promise<AdminVerificationLog[]> => {
     requireAdminAuth(["super_admin", "manager"]);
@@ -992,7 +1153,9 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
     if (db) {
       const { data: dbData, error } = await db
         .from("verification_logs")
-        .select("id,verification_session_id,user_id,bill_amount,discount_amount,final_amount,status,created_at,partner:partners(id,business_name,category:categories(name)),offer:offers(title),membership:memberships(membership_number)")
+        .select(
+          "id,verification_session_id,user_id,bill_amount,discount_amount,final_amount,status,created_at,partner:partners(id,business_name,category:categories(name)),offer:offers(title),membership:memberships(membership_number)",
+        )
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .limit(5000);
@@ -1004,7 +1167,9 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
     }
 
     if (process.env.NODE_ENV === "production") {
-      throw new Error("Could not load verification history: server database credentials are not configured");
+      throw new Error(
+        "Could not load verification history: server database credentials are not configured",
+      );
     }
 
     await ensureStoreLoadedCloud();
@@ -1037,145 +1202,171 @@ export const getAdminVerificationLogs = createServerFn({ method: "GET" })
   });
 
 // Admin Get Audit Logs (Server Function)
-export const getAdminAuditLogs = createServerFn({ method: "GET" }).handler(async (): Promise<V1AuditLog[]> => {
-  requireAdminAuth(["super_admin", "manager"]);
-  const db = getServiceRoleClient();
-  if (db) {
-    const [{ data: rows, error }, { data: profiles, error: profileError }] = await Promise.all([
-      db.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(500),
-      db.from("profiles").select("user_id,full_name,email"),
-    ]);
-    if (error) throw new Error(`Could not load audit history: ${error.message}`);
-    if (profileError) throw new Error(`Could not load audit actors: ${profileError.message}`);
-    const profileById = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
-    return (rows ?? []).map((row) => ({
-      id: row.id,
-      admin_user_id: row.admin_user_id,
-      action: row.action,
-      target_type: row.target_type ?? "general",
-      target_id: row.target_id,
-      metadata: (row.metadata ?? {}) as Record<string, unknown>,
-      created_at: row.created_at,
-      who: profileById.get(row.admin_user_id)?.full_name || profileById.get(row.admin_user_id)?.email || "Administrator",
-    }));
-  }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Could not load audit history: server database credentials are not configured");
-  }
-  await ensureStoreLoadedCloud();
-  if (!store.auditLogs) store.auditLogs = [];
-  const storeAudits: V1AuditLog[] = (store.auditLogs || []).map((a) => ({
-    id: a.id,
-    admin_user_id: a.admin_user_id,
-    action: a.action,
-    target_type: a.target_type,
-    target_id: a.target_id,
-    metadata: a.metadata,
-    created_at: a.created_at,
-    who: a.who || "Super Admin",
-  }));
-
-  if (!storeAudits.length) {
-    const fallbackAudits: V1AuditLog[] = [
-      {
-        id: "audit-1",
-        admin_user_id: "admin-super",
-        action: "Created Member Card Batch",
-        target_type: "cards",
-        target_id: "batch-v1-25",
-        metadata: { count: 25, status: "AVAILABLE" },
-        created_at: new Date(Date.now() - 5 * 864e5).toISOString(),
-        who: "Samir Pandey (Super Admin)",
-      },
-      {
-        id: "audit-2",
-        admin_user_id: "admin-super",
-        action: "Activated Partner Outlets",
-        target_type: "partner",
-        target_id: "abc-cafe",
-        metadata: { name: "ABC Café", status: "ACTIVE" },
-        created_at: new Date(Date.now() - 4 * 864e5).toISOString(),
-        who: "Admin Manager",
-      },
-      {
-        id: "audit-3",
-        admin_user_id: "admin-super",
-        action: "Issued Membership Card",
-        target_type: "membership",
-        target_id: "mem-samir-001",
-        metadata: { card_number: "PEN-7X4P-92LM", member: "Samir Pandey" },
-        created_at: new Date(Date.now() - 3 * 864e5).toISOString(),
-        who: "Samir Pandey (Super Admin)",
-      },
-      {
-        id: "audit-4",
-        admin_user_id: "admin-super",
-        action: "Updated Partner Offer",
-        target_type: "offer",
-        target_id: "offer-abc-10",
-        metadata: { partner: "ABC Café", discount: "10% OFF", min_bill: 500 },
-        created_at: new Date(Date.now() - 2 * 864e5).toISOString(),
-        who: "Admin Manager",
-      },
-      {
-        id: "audit-5",
-        admin_user_id: "admin-super",
-        action: "System Security Audit Passed",
-        target_type: "security",
-        target_id: "sec-audit-01",
-        metadata: { test_suites: "12/12 passing", encryption: "crypto-random" },
-        created_at: new Date(Date.now() - 1 * 864e5).toISOString(),
-        who: "System",
-      },
-    ];
-    storeAudits.push(...fallbackAudits);
-  }
-
-  try {
-    const [{ data: a, error: aErr }, { data: p }] = await Promise.all([
-      supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(500),
-      supabase.from("profiles").select("user_id,full_name,email"),
-    ]);
-
-    if (!aErr && a && a.length > 0) {
-      const pm = new Map((p ?? []).map((x) => [x.user_id, x.full_name || x.email]));
-      const dbAudits: V1AuditLog[] = a.map((x) => ({
-        id: x.id,
-        admin_user_id: x.admin_user_id,
-        action: x.action,
-        target_type: x.target_type ?? "general",
-        target_id: x.target_id,
-        metadata: (x.metadata ?? {}) as Record<string, any>,
-        created_at: x.created_at,
-        who: pm.get(x.admin_user_id) ?? "Super Admin",
+export const getAdminAuditLogs = createServerFn({ method: "GET" }).handler(
+  async (): Promise<V1AuditLog[]> => {
+    requireAdminAuth(["super_admin", "manager"]);
+    const db = getServiceRoleClient();
+    if (db) {
+      const [{ data: rows, error }, { data: profiles, error: profileError }] = await Promise.all([
+        db.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(500),
+        db.from("profiles").select("user_id,full_name,email"),
+      ]);
+      if (error) throw new Error(`Could not load audit history: ${error.message}`);
+      if (profileError) throw new Error(`Could not load audit actors: ${profileError.message}`);
+      const profileById = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
+      return (rows ?? []).map((row) => ({
+        id: row.id,
+        admin_user_id: row.admin_user_id,
+        action: row.action,
+        target_type: row.target_type ?? "general",
+        target_id: row.target_id,
+        metadata: (row.metadata ?? {}) as Record<
+          string,
+          import("@/integrations/supabase/types").Json | undefined
+        >,
+        created_at: row.created_at,
+        who:
+          profileById.get(row.admin_user_id)?.full_name ||
+          profileById.get(row.admin_user_id)?.email ||
+          "Administrator",
       }));
-
-      const seen = new Set(storeAudits.map((item) => item.id));
-      const merged = [...storeAudits];
-      for (const item of dbAudits) {
-        if (!seen.has(item.id)) {
-          merged.push(item);
-        }
-      }
-      return merged.sort((x, y) => y.created_at.localeCompare(x.created_at));
     }
-  } catch {
-    // Fallback to store
-  }
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Could not load audit history: server database credentials are not configured",
+      );
+    }
+    await ensureStoreLoadedCloud();
+    if (!store.auditLogs) store.auditLogs = [];
+    const storeAudits: V1AuditLog[] = (store.auditLogs || []).map((a) => ({
+      id: a.id,
+      admin_user_id: a.admin_user_id,
+      action: a.action,
+      target_type: a.target_type,
+      target_id: a.target_id,
+      metadata: a.metadata,
+      created_at: a.created_at,
+      who: a.who || "Super Admin",
+    }));
 
-  return storeAudits.sort((x, y) => y.created_at.localeCompare(x.created_at));
-});
+    if (!storeAudits.length) {
+      const fallbackAudits: V1AuditLog[] = [
+        {
+          id: "audit-1",
+          admin_user_id: "admin-super",
+          action: "Created Member Card Batch",
+          target_type: "cards",
+          target_id: "batch-v1-25",
+          metadata: { count: 25, status: "AVAILABLE" },
+          created_at: new Date(Date.now() - 5 * 864e5).toISOString(),
+          who: "Samir Pandey (Super Admin)",
+        },
+        {
+          id: "audit-2",
+          admin_user_id: "admin-super",
+          action: "Activated Partner Outlets",
+          target_type: "partner",
+          target_id: "abc-cafe",
+          metadata: { name: "ABC Café", status: "ACTIVE" },
+          created_at: new Date(Date.now() - 4 * 864e5).toISOString(),
+          who: "Admin Manager",
+        },
+        {
+          id: "audit-3",
+          admin_user_id: "admin-super",
+          action: "Issued Membership Card",
+          target_type: "membership",
+          target_id: "mem-samir-001",
+          metadata: { card_number: "PEN-7X4P-92LM", member: "Samir Pandey" },
+          created_at: new Date(Date.now() - 3 * 864e5).toISOString(),
+          who: "Samir Pandey (Super Admin)",
+        },
+        {
+          id: "audit-4",
+          admin_user_id: "admin-super",
+          action: "Updated Partner Offer",
+          target_type: "offer",
+          target_id: "offer-abc-10",
+          metadata: { partner: "ABC Café", discount: "10% OFF", min_bill: 500 },
+          created_at: new Date(Date.now() - 2 * 864e5).toISOString(),
+          who: "Admin Manager",
+        },
+        {
+          id: "audit-5",
+          admin_user_id: "admin-super",
+          action: "System Security Audit Passed",
+          target_type: "security",
+          target_id: "sec-audit-01",
+          metadata: { test_suites: "12/12 passing", encryption: "crypto-random" },
+          created_at: new Date(Date.now() - 1 * 864e5).toISOString(),
+          who: "System",
+        },
+      ];
+      storeAudits.push(...fallbackAudits);
+    }
+
+    try {
+      const [{ data: a, error: aErr }, { data: p }] = await Promise.all([
+        supabase
+          .from("audit_logs")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(500),
+        supabase.from("profiles").select("user_id,full_name,email"),
+      ]);
+
+      if (!aErr && a && a.length > 0) {
+        const pm = new Map((p ?? []).map((x) => [x.user_id, x.full_name || x.email]));
+        const dbAudits: V1AuditLog[] = a.map((x) => ({
+          id: x.id,
+          admin_user_id: x.admin_user_id,
+          action: x.action,
+          target_type: x.target_type ?? "general",
+          target_id: x.target_id,
+          metadata: (x.metadata ?? {}) as Record<
+            string,
+            import("@/integrations/supabase/types").Json | undefined
+          >,
+          created_at: x.created_at,
+          who: pm.get(x.admin_user_id) ?? "Super Admin",
+        }));
+
+        const seen = new Set(storeAudits.map((item) => item.id));
+        const merged = [...storeAudits];
+        for (const item of dbAudits) {
+          if (!seen.has(item.id)) {
+            merged.push(item);
+          }
+        }
+        return merged.sort((x, y) => y.created_at.localeCompare(x.created_at));
+      }
+    } catch {
+      // Fallback to store
+    }
+
+    return storeAudits.sort((x, y) => y.created_at.localeCompare(x.created_at));
+  },
+);
 
 // Admin Record Audit Log (Server Function)
 export const recordAdminAuditFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { action: string; target_type: string; target_id?: string | null; metadata?: Record<string, any>; who?: string }) =>
-    z.object({
-      action: z.string(),
-      target_type: z.string(),
-      target_id: z.string().nullable().optional(),
-      metadata: z.record(z.any()).optional(),
-      who: z.string().optional(),
-    }).parse(d)
+  .inputValidator(
+    (d: {
+      action: string;
+      target_type: string;
+      target_id?: string | null;
+      metadata?: Record<string, import("@/integrations/supabase/types").Json | undefined>;
+      who?: string;
+    }) =>
+      z
+        .object({
+          action: z.string(),
+          target_type: z.string(),
+          target_id: z.string().nullable().optional(),
+          metadata: z.record(z.any()).optional(),
+          who: z.string().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth();
@@ -1278,12 +1469,19 @@ export const getMemberApplications = createServerFn({ method: "GET" }).handler(a
 });
 
 export const updateMemberApplicationStatus = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; status: "PENDING_VERIFICATION" | "CONTACTED" | "APPROVED" | "REJECTED"; notes?: string }) =>
-    z.object({
-      id: z.string(),
-      status: z.enum(["PENDING_VERIFICATION", "CONTACTED", "APPROVED", "REJECTED"]),
-      notes: z.string().optional(),
-    }).parse(d)
+  .inputValidator(
+    (d: {
+      id: string;
+      status: "PENDING_VERIFICATION" | "CONTACTED" | "APPROVED" | "REJECTED";
+      notes?: string;
+    }) =>
+      z
+        .object({
+          id: z.string(),
+          status: z.enum(["PENDING_VERIFICATION", "CONTACTED", "APPROVED", "REJECTED"]),
+          notes: z.string().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "membership_manager"]);
@@ -1317,7 +1515,7 @@ export const updateMemberApplicationStatus = createServerFn({ method: "POST" })
 // Admin Approve Application and issue active card
 export const approveAndIssueMemberCard = createServerFn({ method: "POST" })
   .inputValidator((d: { applicationId: string; cardId?: string }) =>
-    z.object({ applicationId: z.string(), cardId: z.string().optional() }).parse(d)
+    z.object({ applicationId: z.string(), cardId: z.string().optional() }).parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "membership_manager"]);
@@ -1481,12 +1679,19 @@ export const getPartnerApplications = createServerFn({ method: "GET" }).handler(
 });
 
 export const updatePartnerApplicationStatus = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; status: "PENDING_REVIEW" | "CONTACTED" | "ONBOARDED" | "REJECTED"; notes?: string }) =>
-    z.object({
-      id: z.string(),
-      status: z.enum(["PENDING_REVIEW", "CONTACTED", "ONBOARDED", "REJECTED"]),
-      notes: z.string().optional(),
-    }).parse(d)
+  .inputValidator(
+    (d: {
+      id: string;
+      status: "PENDING_REVIEW" | "CONTACTED" | "ONBOARDED" | "REJECTED";
+      notes?: string;
+    }) =>
+      z
+        .object({
+          id: z.string(),
+          status: z.enum(["PENDING_REVIEW", "CONTACTED", "ONBOARDED", "REJECTED"]),
+          notes: z.string().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "manager"]);
@@ -1523,9 +1728,21 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
   requireAdminAuth(["super_admin", "manager", "support"]);
   const db = getServiceRoleClient();
   if (db) {
-    const { data, error } = await db.from("partners").select("*, category:categories(name)").order("business_name");
+    const { data, error } = await db
+      .from("partners")
+      .select("*, category:categories(name)")
+      .order("business_name");
     if (error) throw new Error(`Could not load partners: ${error.message}`);
-    return (data || []).map((p: any) => ({ ...p, category_name: p.category?.name || "General" }));
+    const { data: evidence, error: evidenceError } = await db
+      .from("partner_private_evidence")
+      .select("partner_id,representative_name,business_verified_at,agreement_reference,agreement_signed_at,benefit_dispute_contact,internal_verification_notes,agreement_document_reference");
+    if (evidenceError) throw new Error(`Could not load partner evidence: ${evidenceError.message}`);
+    const evidenceByPartner = new Map((evidence || []).map((record) => [record.partner_id, record]));
+    return (data || []).map((p) => ({
+      ...p,
+      ...(evidenceByPartner.get(p.id) || {}),
+      category_name: p.category?.name || "General",
+    }));
   }
   await ensureStoreLoadedCloud();
 
@@ -1544,7 +1761,9 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
       category_name: p.category_name || "General",
       description: p.description || "",
       logo_url: p.logo_url || "",
-      cover_image_url: p.cover_image_url || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+      cover_image_url:
+        p.cover_image_url ||
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
       phone: p.phone || "",
       email: p.email || "",
       website: p.website || "",
@@ -1553,6 +1772,11 @@ export const getAdminPartners = createServerFn({ method: "GET" }).handler(async 
       latitude: p.latitude ?? null,
       longitude: p.longitude ?? null,
       business_hours: p.business_hours || "",
+      representative_name: p.representative_name || "",
+      business_verified_at: p.business_verified_at || null,
+      agreement_reference: p.agreement_reference || null,
+      agreement_signed_at: p.agreement_signed_at || null,
+      benefit_dispute_contact: p.benefit_dispute_contact || "",
       status: p.status,
       featured: Boolean(p.featured),
       created_at: p.created_at,
@@ -1579,6 +1803,11 @@ const savePartnerSchema = z.object({
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   business_hours: z.string().optional().default(""),
+  representative_name: z.string().trim().optional().default(""),
+  business_verified_at: z.string().optional().default(""),
+  agreement_reference: z.string().trim().optional().default(""),
+  agreement_signed_at: z.string().optional().default(""),
+  benefit_dispute_contact: z.string().trim().optional().default(""),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).default("ACTIVE"),
   featured: z.boolean().default(false),
 });
@@ -1587,30 +1816,54 @@ export const savePartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => savePartnerSchema.parse(d))
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "manager"]);
+    if (data.status === "ACTIVE" && (!data.representative_name || !data.business_verified_at || !data.agreement_reference || !data.agreement_signed_at || !data.benefit_dispute_contact)) {
+      throw new Error("A partner cannot be published until business verification, signed agreement, authorised representative, and member issue contact are recorded.");
+    }
     const db = getServiceRoleClient();
     if (db) {
       const partnerId = data.id || safeRandomUUID();
-      const { data: partner, error } = await db.from("partners").upsert({
-        id: partnerId,
-        business_name: data.business_name,
-        slug: data.slug.trim().toLowerCase(),
-        category_id: data.category_id,
-        description: data.description || null,
-        logo_url: data.logo_url || null,
-        cover_image_url: data.cover_image_url || null,
-        phone: data.phone || null,
-        email: data.email || null,
-        website: data.website || null,
-        address: data.address || null,
-        city: data.city || "Daltonganj",
-        latitude: data.latitude ?? null,
-        longitude: data.longitude ?? null,
-        business_hours: data.business_hours || null,
-        status: data.status,
-        featured: data.featured,
-      }).select().single();
+      const partnerFields = {
+          id: partnerId,
+          business_name: data.business_name,
+          slug: data.slug.trim().toLowerCase(),
+          category_id: data.category_id,
+          description: data.description || null,
+          logo_url: data.logo_url || null,
+          cover_image_url: data.cover_image_url || null,
+          phone: data.phone || null,
+          email: data.email || null,
+          website: data.website || null,
+          address: data.address || null,
+          city: data.city || "Daltonganj",
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          business_hours: data.business_hours || null,
+          featured: data.featured,
+        };
+      if (data.id && data.status !== "ACTIVE") {
+        const { error: deactivateError } = await db.from("partners").update({ status: data.status }).eq("id", partnerId);
+        if (deactivateError) throw new Error(`Could not withdraw partner before editing evidence: ${deactivateError.message}`);
+      }
+      const partnerWrite = data.id
+        ? await db.from("partners").update(partnerFields).eq("id", partnerId)
+        : await db.from("partners").insert({ ...partnerFields, status: "INACTIVE" });
+      if (partnerWrite.error) throw new Error(`Could not save partner: ${partnerWrite.error.message}`);
+      const { error: evidenceError } = await db.from("partner_private_evidence").upsert({
+        partner_id: partnerId,
+        representative_name: data.representative_name || null,
+        business_verified_at: data.business_verified_at || null,
+        agreement_reference: data.agreement_reference || null,
+        agreement_signed_at: data.agreement_signed_at || null,
+        benefit_dispute_contact: data.benefit_dispute_contact || null,
+      });
+      if (evidenceError) throw new Error(`Partner was saved but evidence was not saved: ${evidenceError.message}`);
+      const { error: statusError } = await db.from("partners").update({ status: data.status }).eq("id", partnerId);
+      if (statusError) throw new Error(`Evidence was saved but partner status was not updated: ${statusError.message}`);
+      const { data: partner, error } = await db.from("partners").select("*, category:categories(name)").eq("id", partnerId).single();
       if (error) throw new Error(`Could not save partner: ${error.message}`);
-      return { ok: true, partner };
+      return { ok: true, partner: { ...partner, representative_name: data.representative_name || null,
+        business_verified_at: data.business_verified_at || null, agreement_reference: data.agreement_reference || null,
+        agreement_signed_at: data.agreement_signed_at || null, benefit_dispute_contact: data.benefit_dispute_contact || null } };
     }
     await ensureStoreLoadedCloud();
 
@@ -1628,7 +1881,9 @@ export const savePartner = createServerFn({ method: "POST" })
       category_name: data.category_name || "General",
       description: data.description || "",
       logo_url: data.logo_url || "",
-      cover_image_url: data.cover_image_url || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
+      cover_image_url:
+        data.cover_image_url ||
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
       phone: data.phone || "",
       email: data.email || "",
       website: data.website || "",
@@ -1637,6 +1892,11 @@ export const savePartner = createServerFn({ method: "POST" })
       latitude: data.latitude ?? null,
       longitude: data.longitude ?? null,
       business_hours: data.business_hours || "",
+      representative_name: data.representative_name || "",
+      business_verified_at: data.business_verified_at || null,
+      agreement_reference: data.agreement_reference || null,
+      agreement_signed_at: data.agreement_signed_at || null,
+      benefit_dispute_contact: data.benefit_dispute_contact || "",
       status: data.status,
       featured: data.featured,
       created_at: now,
@@ -1662,7 +1922,7 @@ export const savePartner = createServerFn({ method: "POST" })
     try {
       const { getServerSupabase } = await import("./supabase-admin.server");
       const sb = getServerSupabase();
-      await sb.from("partners").upsert({
+      const partnerFields = {
         id: partnerId,
         business_name: data.business_name,
         slug: partnerRecord.slug,
@@ -1678,9 +1938,20 @@ export const savePartner = createServerFn({ method: "POST" })
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,
         business_hours: data.business_hours || null,
-        status: data.status,
         featured: data.featured,
+      };
+      if (data.id && data.status !== "ACTIVE") await sb.from("partners").update({ status: data.status }).eq("id", partnerId);
+      if (data.id) await sb.from("partners").update(partnerFields).eq("id", partnerId);
+      else await sb.from("partners").insert({ ...partnerFields, status: "INACTIVE" });
+      await sb.from("partner_private_evidence").upsert({
+        partner_id: partnerId,
+        representative_name: data.representative_name || null,
+        business_verified_at: data.business_verified_at || null,
+        agreement_reference: data.agreement_reference || null,
+        agreement_signed_at: data.agreement_signed_at || null,
+        benefit_dispute_contact: data.benefit_dispute_contact || null,
       });
+      await sb.from("partners").update({ status: data.status }).eq("id", partnerId);
     } catch {
       // Non-blocking mirror
     }
@@ -1689,17 +1960,30 @@ export const savePartner = createServerFn({ method: "POST" })
   });
 
 export const updatePartnerStatus = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }) =>
-    z.object({
-      id: z.string(),
-      status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
-      featured: z.boolean().optional(),
-    }).parse(d)
+  .inputValidator(
+    (d: { id: string; status?: "ACTIVE" | "INACTIVE" | "SUSPENDED"; featured?: boolean }) =>
+      z
+        .object({
+          id: z.string(),
+          status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
+          featured: z.boolean().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data }) => {
     const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
+      if (data.status === "ACTIVE") {
+        const { data: partner, error: verifyError } = await db
+          .from("partner_private_evidence")
+          .select("representative_name,business_verified_at,agreement_reference,agreement_signed_at,benefit_dispute_contact")
+          .eq("partner_id", data.id)
+          .maybeSingle();
+        if (verifyError || !hasCompletePartnerEvidence(partner)) {
+          throw new Error("A partner cannot be published until business verification, signed agreement, authorised representative, and member issue contact are recorded.");
+        }
+      }
       const patch: Record<string, unknown> = {};
       if (data.status !== undefined) patch.status = data.status;
       if (data.featured !== undefined) patch.featured = data.featured;
@@ -1711,6 +1995,10 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
 
     const partner = store.partners?.get(data.id);
     if (!partner) throw new Error("Partner not found");
+
+    if (data.status === "ACTIVE" && (!partner.representative_name || !partner.business_verified_at || !partner.agreement_reference || !partner.agreement_signed_at || !partner.benefit_dispute_contact)) {
+      throw new Error("A partner cannot be published until business verification, signed agreement, authorised representative, and member issue contact are recorded.");
+    }
 
     if (data.status !== undefined) partner.status = data.status;
     if (data.featured !== undefined) partner.featured = data.featured;
@@ -1732,7 +2020,7 @@ export const updatePartnerStatus = createServerFn({ method: "POST" })
     try {
       const { getServerSupabase } = await import("./supabase-admin.server");
       const sb = getServerSupabase();
-      const patch: any = {};
+      const patch: { status?: string; featured?: boolean } = {};
       if (data.status !== undefined) patch.status = data.status;
       if (data.featured !== undefined) patch.featured = data.featured;
       await sb.from("partners").update(patch).eq("id", data.id);
@@ -1789,7 +2077,10 @@ export const getAdminOffers = createServerFn({ method: "GET" }).handler(async ()
   requireAdminAuth(["super_admin", "manager", "support"]);
   const db = getServiceRoleClient();
   if (db) {
-    const { data, error } = await db.from("offers").select("*, partner:partners(id,business_name,slug)").order("created_at", { ascending: false });
+    const { data, error } = await db
+      .from("offers")
+      .select("*, partner:partners(id,business_name,slug)")
+      .order("created_at", { ascending: false });
     if (error) throw new Error(`Could not load offers: ${error.message}`);
     return data || [];
   }
@@ -1824,11 +2115,15 @@ export const getAdminOffers = createServerFn({ method: "GET" }).handler(async ()
         status: o.status,
         created_at: o.created_at,
         updated_at: o.updated_at,
-        partner: partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined,
+        partner: partner
+          ? { id: partner.id, business_name: partner.business_name, slug: partner.slug }
+          : undefined,
       };
     });
 
-  return offersList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return offersList.sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 });
 
 const saveOfferSchema = z.object({
@@ -1855,22 +2150,26 @@ export const saveOffer = createServerFn({ method: "POST" })
     const admin = requireAdminAuth(["super_admin", "manager"]);
     const db = getServiceRoleClient();
     if (db) {
-      const { data: offer, error } = await db.from("offers").upsert({
-        id: data.id || safeRandomUUID(),
-        partner_id: data.partner_id,
-        title: data.title,
-        description: data.description || null,
-        discount_type: data.discount_type,
-        discount_value: data.discount_value,
-        max_discount: data.max_discount ?? null,
-        minimum_bill: data.minimum_bill,
-        valid_from: data.valid_from || null,
-        valid_until: data.valid_until || null,
-        valid_days: data.valid_days,
-        terms_conditions: data.terms_conditions || null,
-        usage_limit_type: "UNLIMITED",
-        status: data.status,
-      }).select().single();
+      const { data: offer, error } = await db
+        .from("offers")
+        .upsert({
+          id: data.id || safeRandomUUID(),
+          partner_id: data.partner_id,
+          title: data.title,
+          description: data.description || null,
+          discount_type: data.discount_type,
+          discount_value: data.discount_value,
+          max_discount: data.max_discount ?? null,
+          minimum_bill: data.minimum_bill,
+          valid_from: data.valid_from || null,
+          valid_until: data.valid_until || null,
+          valid_days: data.valid_days,
+          terms_conditions: data.terms_conditions || null,
+          usage_limit_type: "UNLIMITED",
+          status: data.status,
+        })
+        .select()
+        .single();
       if (error) throw new Error(`Could not save offer: ${error.message}`);
       return { ok: true, offer };
     }
@@ -1901,7 +2200,9 @@ export const saveOffer = createServerFn({ method: "POST" })
       status: data.status,
       created_at: now,
       updated_at: now,
-      partner: partner ? { id: partner.id, business_name: partner.business_name, slug: partner.slug } : undefined,
+      partner: partner
+        ? { id: partner.id, business_name: partner.business_name, slug: partner.slug }
+        : undefined,
     };
 
     store.offers.set(offerId, offerRecord);
@@ -1990,3 +2291,573 @@ export const deleteOffer = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * ============================================================
+ * ADMIN ORDER FULFILMENT & TRANSACTIONAL EMAIL LOG OPERATIONS
+ * ============================================================
+ */
+
+export interface AdminOrderRow {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  amount: number;
+  currency: string;
+  payment_status: string;
+  order_status: string;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  card_number: string | null;
+  membership_number: string | null;
+  plan_name: string;
+  delivery_address: string;
+  delivery_city: string;
+  delivery_state: string;
+  delivery_pincode: string;
+  courier_name: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  internal_notes: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminEmailNotificationLog {
+  id: string;
+  recipient_email: string;
+  recipient_name?: string | null;
+  event_type: string;
+  subject: string;
+  provider: string;
+  provider_message_id?: string | null;
+  delivery_status: string;
+  attempt_count: number;
+  last_error?: string | null;
+  sent_at?: string | null;
+  created_at: string;
+  related_order_id?: string | null;
+  related_redemption_id?: string | null;
+}
+
+export const getAdminOrders = createServerFn({ method: "GET" }).handler(
+  async (): Promise<AdminOrderRow[]> => {
+    requireAdminAuth(["super_admin", "manager", "membership_manager", "support"]);
+    const db = getServiceRoleClient();
+
+    if (db) {
+      try {
+        const { data, error } = await db
+          .from("membership_orders")
+          .select(
+            `
+            *,
+            plan:membership_plans(name),
+            membership:memberships(membership_number, card_number),
+            card:physical_cards(card_number)
+          `,
+          )
+          .order("created_at", { ascending: false });
+
+        if (!error && data) {
+          return data.map((o) => ({
+            id: o.id,
+            order_number: o.order_number,
+            customer_name: o.customer_name,
+            customer_email: o.customer_email,
+            customer_phone: o.customer_phone,
+            amount: Number(o.amount),
+            currency: o.currency || "INR",
+            payment_status: o.payment_status,
+            order_status: o.order_status,
+            razorpay_order_id: o.razorpay_order_id,
+            razorpay_payment_id: o.razorpay_payment_id,
+            card_number: o.card?.card_number || o.membership?.card_number || null,
+            membership_number: o.membership?.membership_number || null,
+            plan_name: o.plan?.name || "PennyGrade 6-Month Membership",
+            delivery_address: [
+              o.delivery_address_line1,
+              o.delivery_address_line2,
+              o.delivery_landmark,
+            ]
+              .filter(Boolean)
+              .join(", "),
+            delivery_city: o.delivery_city,
+            delivery_state: o.delivery_state,
+            delivery_pincode: o.delivery_pincode,
+            courier_name: o.courier_name,
+            tracking_number: o.tracking_number,
+            tracking_url: o.tracking_url,
+            internal_notes: o.internal_notes,
+            shipped_at: o.shipped_at,
+            delivered_at: o.delivered_at,
+            created_at: o.created_at,
+            updated_at: o.updated_at,
+          }));
+        }
+      } catch (err) {
+        console.warn("[getAdminOrders] DB query error, falling back to store:", err);
+      }
+    }
+
+    // In-memory store fallback
+    const list: AdminOrderRow[] = [];
+    if (store.orders) {
+      for (const o of store.orders.values()) {
+        const member =
+          o.membership_id && store.members ? store.members.get(o.membership_id) : undefined;
+        list.push({
+          id: o.id,
+          order_number: o.order_number,
+          customer_name: o.customer_name,
+          customer_email: o.customer_email,
+          customer_phone: o.customer_phone,
+          amount: Number(o.amount),
+          currency: o.currency || "INR",
+          payment_status: o.payment_status,
+          order_status: o.order_status,
+          razorpay_order_id: o.razorpay_order_id,
+          razorpay_payment_id: o.razorpay_payment_id,
+          card_number:
+            o.physical_card_id && store.cards
+              ? store.cards.get(o.physical_card_id)?.card_number || null
+              : null,
+          membership_number: member?.membership_number || null,
+          plan_name: "PennyGrade 6-Month Membership",
+          delivery_address: [
+            o.delivery_address_line1,
+            o.delivery_address_line2,
+            o.delivery_landmark,
+          ]
+            .filter(Boolean)
+            .join(", "),
+          delivery_city: o.delivery_city,
+          delivery_state: o.delivery_state,
+          delivery_pincode: o.delivery_pincode,
+          courier_name: o.courier_name || null,
+          tracking_number: o.tracking_number || null,
+          tracking_url: o.tracking_url || null,
+          internal_notes: o.internal_notes || null,
+          shipped_at: o.shipped_at || null,
+          delivered_at: o.delivered_at || null,
+          created_at: o.created_at,
+          updated_at: o.updated_at,
+        });
+      }
+    }
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+);
+
+/**
+ * Update order fulfilment status (SHIPPED, DELIVERED, etc.) and courier details
+ */
+export const updateAdminOrderStatus = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: {
+      orderId: string;
+      status:
+        | "PROCESSING"
+        | "READY_TO_DISPATCH"
+        | "SHIPPED"
+        | "DELIVERED"
+        | "CANCELLED"
+        | "FULFILMENT_EXCEPTION";
+      courierName?: string | null;
+      trackingNumber?: string | null;
+      trackingUrl?: string | null;
+      notes?: string | null;
+    }) =>
+      z
+        .object({
+          orderId: z.string().min(1),
+          status: z.enum([
+            "PROCESSING",
+            "READY_TO_DISPATCH",
+            "SHIPPED",
+            "DELIVERED",
+            "CANCELLED",
+            "FULFILMENT_EXCEPTION",
+          ]),
+          courierName: z.string().nullable().optional(),
+          trackingNumber: z.string().nullable().optional(),
+          trackingUrl: z.string().nullable().optional(),
+          notes: z.string().nullable().optional(),
+        })
+        .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const admin = requireAdminAuth(["super_admin", "manager", "membership_manager"]);
+    const db = getServiceRoleClient();
+    let updatedOrder:
+      | (V1Order & {
+          membership?: { card_number?: string | null; membership_number?: string | null } | null;
+        })
+      | null = null;
+
+    if (db) {
+      const { data: res, error } = await db.rpc("admin_update_order_status", {
+        p_order_id: data.orderId,
+        p_status: data.status,
+        p_courier_name: data.courierName || null,
+        p_tracking_number: data.trackingNumber || null,
+        p_tracking_url: data.trackingUrl || null,
+        p_notes: data.notes || null,
+        p_admin_user: admin.full_name || admin.email,
+      });
+
+      if (error) {
+        throw new Error(`Failed to update order status: ${error.message}`);
+      }
+      if (!res?.ok) throw new Error(res?.message || "Could not update order status.");
+
+      const { data: o } = await db
+        .from("membership_orders")
+        .select("*, membership:memberships(membership_number, card_number)")
+        .eq("id", data.orderId)
+        .single();
+      updatedOrder = o as unknown as typeof updatedOrder;
+    } else if (store.orders?.has(data.orderId)) {
+      const o = store.orders.get(data.orderId)!;
+      o.order_status = data.status;
+      if (data.courierName !== undefined) o.courier_name = data.courierName;
+      if (data.trackingNumber !== undefined) o.tracking_number = data.trackingNumber;
+      if (data.trackingUrl !== undefined) o.tracking_url = data.trackingUrl;
+      if (data.notes) o.internal_notes = ((o.internal_notes || "") + "\n" + data.notes).trim();
+      if (data.status === "SHIPPED") o.shipped_at = new Date().toISOString();
+      if (data.status === "DELIVERED") o.delivered_at = new Date().toISOString();
+      o.updated_at = new Date().toISOString();
+
+      if (!store.orderHistory) store.orderHistory = [];
+      store.orderHistory.push({
+        id: safeRandomUUID(),
+        order_id: data.orderId,
+        from_status: null,
+        to_status: data.status,
+        changed_by: admin.email,
+        notes: data.notes || null,
+        created_at: new Date().toISOString(),
+      });
+
+      const member =
+        o.membership_id && store.members ? store.members.get(o.membership_id) : undefined;
+      updatedOrder = {
+        ...o,
+        membership: member
+          ? { card_number: member.card_number, membership_number: member.membership_number }
+          : null,
+      };
+    }
+
+    if (!updatedOrder) {
+      throw new Error("Order not found or update could not be persisted.");
+    }
+
+    const customerEmail = updatedOrder.customer_email;
+    const customerName = updatedOrder.customer_name;
+    const orderNumber = updatedOrder.order_number;
+    const cardNumber = updatedOrder.membership?.card_number || null;
+    const membershipNumber = updatedOrder.membership?.membership_number || null;
+
+    if (data.status === "SHIPPED" && customerEmail) {
+      const emailData = renderDispatchNotificationEmail({
+        customerName,
+        customerEmail,
+        orderNumber,
+        cardNumber: cardNumber || undefined,
+        membershipNumber: membershipNumber || undefined,
+        dispatchDate: new Date().toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        courierName: data.courierName || updatedOrder.courier_name,
+        trackingNumber: data.trackingNumber || updatedOrder.tracking_number,
+        trackingUrl: data.trackingUrl || updatedOrder.tracking_url,
+      });
+
+      sendTransactionalEmail({
+        recipientEmail: customerEmail,
+        recipientName: customerName,
+        eventType: "CARD_DISPATCHED",
+        subject: emailData.subject,
+        html: emailData.html,
+        idempotencyKey: `order-dispatch-${data.orderId}`,
+        relatedOrderId: data.orderId,
+      }).catch((err) => console.warn("[EmailDispatchError]:", err));
+    }
+
+    if (data.status === "DELIVERED" && customerEmail) {
+      const emailData = renderDeliveryConfirmationEmail({
+        customerName,
+        customerEmail,
+        orderNumber,
+        cardNumber: cardNumber || undefined,
+        membershipNumber: membershipNumber || undefined,
+        deliveryDate: new Date().toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+      });
+
+      sendTransactionalEmail({
+        recipientEmail: customerEmail,
+        recipientName: customerName,
+        eventType: "CARD_DELIVERED",
+        subject: emailData.subject,
+        html: emailData.html,
+        idempotencyKey: `order-delivered-${data.orderId}`,
+        relatedOrderId: data.orderId,
+      }).catch((err) => console.warn("[EmailDeliveredError]:", err));
+    }
+
+    return { ok: true, status: data.status, orderId: data.orderId };
+  });
+
+/**
+ * Assign / Reassign physical card from inventory to an order
+ */
+export const assignAdminOrderCard = createServerFn({ method: "POST" })
+  .inputValidator((d: { orderId: string; cardId: string }) =>
+    z
+      .object({
+        orderId: z.string().min(1),
+        cardId: z.string().min(1),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    requireAdminAuth(["super_admin", "manager", "membership_manager"]);
+    const db = getServiceRoleClient();
+
+    if (db) {
+      const { data: res, error } = await db.rpc("admin_assign_card_to_order", {
+        p_order_id: data.orderId,
+        p_card_id: data.cardId,
+      });
+
+      if (error) {
+        throw new Error(`Failed to assign card: ${error.message}`);
+      }
+      return res as { ok: boolean; card_number?: string; membership_id?: string };
+    }
+
+    // In-memory store fallback
+    if (store.orders?.has(data.orderId) && store.cards?.has(data.cardId)) {
+      const order = store.orders.get(data.orderId)!;
+      const card = store.cards.get(data.cardId)!;
+
+      if (order.payment_status !== "PAID" || order.order_status === "CANCELLED") {
+        throw new Error("Only captured, non-refunded, non-cancelled orders can receive a physical card.");
+      }
+      if (order.physical_card_id && order.physical_card_id !== data.cardId) {
+        throw new Error("A card is already assigned. Use a dedicated replacement workflow.");
+      }
+      if (order.physical_card_id === data.cardId) {
+        return { ok: true, card_number: card.card_number, membership_id: order.membership_id };
+      }
+
+      if (card.status !== "AVAILABLE") {
+        throw new Error("Selected card is not available");
+      }
+
+      const membershipId = order.membership_id || safeRandomUUID();
+      const membershipNumber = generatePenCode();
+      const now = new Date().toISOString();
+
+      card.status = "ACTIVE";
+      card.membership_id = membershipId;
+      card.issued_at = now;
+
+      if (!store.members) store.members = new Map();
+      store.members.set(membershipId, {
+        id: membershipId,
+        membership_number: membershipNumber,
+        full_name: order.customer_name,
+        mobile: order.customer_phone,
+        email: order.customer_email,
+        plan_id: order.membership_plan_id,
+        plan_name: "PennyGrade 6-Month Membership",
+        start_date: now.slice(0, 10),
+        expiry_date: new Date(Date.now() + 180 * 864e5).toISOString().slice(0, 10),
+        status: "ACTIVE",
+        card_id: card.id,
+        card_number: card.card_number,
+        created_at: now,
+        updated_at: now,
+      });
+
+      order.physical_card_id = card.id;
+      order.membership_id = membershipId;
+      order.order_status = "PROCESSING";
+      order.updated_at = now;
+
+      return { ok: true, card_number: card.card_number, membership_id: membershipId };
+    }
+
+    throw new Error("Order or card not found.");
+  });
+
+/**
+ * Fetch transactional email logs for administrative monitoring & audit
+ */
+export const getAdminEmailLogs = createServerFn({ method: "GET" }).handler(
+  async (): Promise<AdminEmailNotificationLog[]> => {
+    requireAdminAuth(["super_admin", "manager", "membership_manager", "support"]);
+    const db = getServiceRoleClient();
+
+    if (db) {
+      try {
+        const { data, error } = await db
+          .from("email_notifications")
+          .select(
+            "id, recipient_email, recipient_name, event_type, subject, provider, provider_message_id, delivery_status, attempt_count, last_error, sent_at, created_at, related_order_id, related_redemption_id",
+          )
+          .order("created_at", { ascending: false })
+          .limit(200);
+
+        if (!error && data) {
+          return data;
+        }
+      } catch (err) {
+        console.warn("[getAdminEmailLogs] DB error:", err);
+      }
+    }
+
+    // Store fallback
+    const list: V1EmailNotification[] = [];
+    if (store.emailNotifications) {
+      for (const e of store.emailNotifications.values()) {
+        list.push(e);
+      }
+    }
+    return list
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .map((item) => ({
+        ...item,
+        provider_message_id: item.provider_message_id || null,
+        last_error: item.last_error || null,
+        sent_at: item.sent_at || null,
+        related_order_id: item.related_order_id || null,
+        related_redemption_id: item.related_redemption_id || null,
+      }));
+  },
+);
+
+/**
+ * Retry a failed or pending transactional email
+ */
+export const retryAdminEmail = createServerFn({ method: "POST" })
+  .inputValidator((d: { notificationId: string }) =>
+    z.object({ notificationId: z.string().min(1) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    requireAdminAuth(["super_admin", "manager"]);
+    const db = getServiceRoleClient();
+    if (!db)
+      throw new Error("Email retry is unavailable because persistent storage is not configured.");
+    const { data: notif, error } = await db
+      .from("email_notifications")
+      .select("*")
+      .eq("id", data.notificationId)
+      .maybeSingle();
+    if (error) throw new Error("Could not load email retry record.");
+    if (!notif) throw new Error("Email notification record not found.");
+    if (notif.delivery_status === "SENT") return { ok: true, status: "ALREADY_SENT" as const };
+    if (!notif.html_body) {
+      throw new Error(
+        "This older email has no saved message content and cannot be safely retried.",
+      );
+    }
+
+    const eventType = z
+      .enum(["PURCHASE_CONFIRMATION", "CARD_DISPATCHED", "CARD_DELIVERED", "OFFER_REDEMPTION"])
+      .parse(notif.event_type) as TransactionalEmailEvent;
+    return sendTransactionalEmail({
+      recipientEmail: notif.recipient_email,
+      recipientName: notif.recipient_name || undefined,
+      eventType,
+      subject: notif.subject,
+      html: notif.html_body,
+      idempotencyKey: notif.idempotency_key || `notification-retry-${notif.id}`,
+      relatedOrderId: notif.related_order_id || undefined,
+      relatedRedemptionId: notif.related_redemption_id || undefined,
+    });
+  });
+
+/**
+ * Get comprehensive order & email notification metrics for dashboard
+ */
+export const getAdminOrderStats = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Record<string, number>> => {
+    requireAdminAuth(["super_admin", "manager", "membership_manager", "support"]);
+    const db = getServiceRoleClient();
+
+    if (db) {
+      try {
+        const { data, error } = await db.rpc("get_order_summary_stats");
+        if (!error && data) {
+          return data;
+        }
+      } catch (err) {
+        console.warn("[getAdminOrderStats] Stored procedure fallback:", err);
+      }
+    }
+
+    // Store fallback metrics
+    let total_orders = 0;
+    let pending_payments = 0;
+    let paid_orders = 0;
+    let processing = 0;
+    let ready_to_dispatch = 0;
+    let shipped = 0;
+    let delivered = 0;
+    let failed_payments = 0;
+    let exceptions = 0;
+
+    if (store.orders) {
+      total_orders = store.orders.size;
+      for (const o of store.orders.values()) {
+        if (o.payment_status === "PENDING") pending_payments++;
+        if (o.payment_status === "PAID") paid_orders++;
+        if (o.payment_status === "FAILED") failed_payments++;
+        if (o.order_status === "PROCESSING") processing++;
+        if (o.order_status === "READY_TO_DISPATCH") ready_to_dispatch++;
+        if (o.order_status === "SHIPPED") shipped++;
+        if (o.order_status === "DELIVERED") delivered++;
+        if (o.order_status === "FULFILMENT_EXCEPTION") exceptions++;
+      }
+    }
+
+    let emails_sent = 0;
+    let emails_pending = 0;
+    let emails_failed = 0;
+
+    if (store.emailNotifications) {
+      for (const e of store.emailNotifications.values()) {
+        if (e.delivery_status === "SENT") emails_sent++;
+        if (e.delivery_status === "PENDING") emails_pending++;
+        if (e.delivery_status === "FAILED") emails_failed++;
+      }
+    }
+
+    return {
+      total_orders,
+      pending_payments,
+      paid_orders,
+      processing,
+      ready_to_dispatch,
+      shipped,
+      delivered,
+      failed_payments,
+      exceptions,
+      emails_sent,
+      emails_pending,
+      emails_failed,
+    };
+  },
+);

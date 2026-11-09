@@ -1,4 +1,4 @@
-import { getCookie, getRequestHeader } from "@tanstack/react-start/server";
+import { getCookie, getRequestHeader, setResponseHeader } from "@tanstack/react-start/server";
 import { store, type V1AdminUser } from "./v1-store";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
@@ -8,6 +8,29 @@ const envDays = Number(process.env.ADMIN_SESSION_TTL_DAYS);
 export const ADMIN_SESSION_TTL_DAYS = !isNaN(envDays) && envDays > 0 ? envDays : 30;
 export const ADMIN_SESSION_TTL_MS = ADMIN_SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
 export const ADMIN_SESSION_TTL_SECONDS = Math.floor(ADMIN_SESSION_TTL_MS / 1000);
+const ADMIN_SESSION_COOKIE = "pennygrade_admin_session";
+
+export function writeAdminSessionCookie(token: string, expiresAt = Date.now() + ADMIN_SESSION_TTL_MS) {
+  const maxAge = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  setResponseHeader("Set-Cookie", serializeAdminSessionCookie(token, maxAge, secure.length > 0));
+}
+
+export function clearAdminSessionCookie() {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  setResponseHeader("Set-Cookie", serializeAdminSessionCookie("", 0, secure.length > 0, true));
+}
+
+export function serializeAdminSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  secure: boolean,
+  clear = false,
+) {
+  const value = clear ? "" : encodeURIComponent(token);
+  const expires = clear ? "; Expires=Thu, 01 Jan 1970 00:00:00 GMT" : "";
+  return `${ADMIN_SESSION_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${expires}${secure ? "; Secure" : ""}`;
+}
 
 function sessionSecret() {
   const secret = process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -62,7 +85,7 @@ export function readAdminSession(token: string): AdminSession | null {
 export function refreshCurrentAdminSession(): { session_token: string; expires_at: number } {
   let cookieRaw: string | undefined;
   try {
-    cookieRaw = getCookie("pennygrade_admin_session");
+    cookieRaw = getCookie(ADMIN_SESSION_COOKIE);
   } catch {
     // Outside request context
   }
@@ -109,7 +132,7 @@ export function requireAdminAuth(requiredRoles?: string[]): V1AdminUser {
 
   let cookieRaw: string | undefined;
   try {
-    cookieRaw = getCookie("pennygrade_admin_session");
+    cookieRaw = getCookie(ADMIN_SESSION_COOKIE);
   } catch {
     // Outside request context
   }

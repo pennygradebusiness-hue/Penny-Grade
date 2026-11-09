@@ -11,7 +11,7 @@ const TOC: LegalTocItem[] = [
   { id: "cookies-tracking", title: "6. Cookies & Tracking Technologies" },
   { id: "security", title: "7. Data Protection & Security Safeguards" },
   { id: "retention", title: "8. Data Retention Policy" },
-  { id: "user-rights", title: "9. Rights of Data Principals (DPDPA 2023)" },
+  { id: "user-rights", title: "9. Privacy Requests" },
   { id: "children", title: "10. Children's Privacy" },
   { id: "grievance-contact", title: "11. Grievance Officer & Contact Information" },
   { id: "updates", title: "12. Policy Updates & Version History" },
@@ -49,13 +49,11 @@ function PrivacyPage() {
           This Privacy Policy explains how <strong className="text-slate-900 dark:text-white">PennyGrade</strong> (&ldquo;We&rdquo;, 
           &ldquo;Us&rdquo;, or &ldquo;Our&rdquo;), operating via the website{" "}
           <strong className="text-slate-900 dark:text-white">pennygrade.in</strong>, collects, processes, stores, and protects 
-          your personal information when you purchase or use our physical membership cards, access our digital verification screens, 
-          or enroll as a partner merchant in Daltonganj, Palamu, and across Jharkhand, India.
+          your personal information when you purchase or use our physical membership cards, book a PennyGrade prebooking campaign, access our digital verification screens,
+          or submit a partner enquiry. Membership-card checkout currently accepts card delivery addresses in Daltonganj, Jharkhand; prebooking checkout collects the contact details needed to record and confirm a reservation.
         </p>
         <p className="mt-2">
-          We process personal data in strict compliance with applicable Indian data protection laws, including the 
-          <strong> Digital Personal Data Protection Act, 2023 (DPDPA 2023)</strong> and the 
-          <strong> Information Technology Act, 2000</strong> read with the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011.
+          We handle personal data for membership administration, payments, fulfilment, support, security, and legal obligations. This policy should be reviewed by an Indian privacy professional against the laws and commencement provisions that apply to the business.
         </p>
       </section>
 
@@ -69,8 +67,8 @@ function PrivacyPage() {
             <ul className="mt-2 list-disc pl-5 space-y-1 text-xs">
               <li><strong>Member Name:</strong> Used to personalize membership records and verify the rightful cardholder.</li>
               <li><strong>Mobile Number:</strong> Used solely for membership activation, two-factor history verification, and urgent account security notifications.</li>
-              <li><strong>Unique PenCode:</strong> The cryptographically random identifier (e.g., <code>PEN-7X4P-92LM</code>) physically stamped on your card.</li>
-              <li><strong>Membership Plan &amp; Expiry Date:</strong> Tier details (Standard, Plus, Elite) and validity periods.</li>
+              <li><strong>Membership ID:</strong> The randomly generated identifier physically stamped on your card.</li>
+              <li><strong>Membership Plan &amp; Expiry Date:</strong> The selected plan and its validity period.</li>
             </ul>
           </div>
 
@@ -136,8 +134,11 @@ function PrivacyPage() {
           trusted infrastructure partners under strict confidentiality:
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1.5">
-          <li><strong>Database &amp; Cloud Infrastructure:</strong> We utilize Supabase (PostgreSQL) hosted in SOC 2 Type II compliant secure data facilities for database storage and secure authentication.</li>
-          <li><strong>Web Hosting:</strong> Our web application is deployed via high-performance cloud hosting networks providing edge caching and enterprise SSL/TLS encryption.</li>
+          <li><strong>Database &amp; Authentication:</strong> Supabase is used for application data and account authentication.</li>
+          <li><strong>Payment processing:</strong> If Razorpay is approved and enabled, checkout details needed to process a PennyGrade membership or prebooking payment will be shared with Razorpay. PennyGrade does not receive or store full payment-card credentials.</li>
+          <li><strong>Transactional emails:</strong> Resend may process a customer's email address and message content to deliver membership, order, or prebooking confirmation emails.</li>
+          <li><strong>Physical delivery:</strong> A courier or local delivery provider may receive the recipient name, phone number, and address required to deliver the physical membership card.</li>
+          <li><strong>Web hosting:</strong> Hosting and security providers process technical request data needed to operate and protect the website.</li>
           <li><strong>Legal &amp; Law Enforcement:</strong> We may disclose data if legally required by an order issued by a competent Indian court, regulatory body, or law enforcement authority under applicable legislation.</li>
         </ul>
       </section>
@@ -171,24 +172,24 @@ function PrivacyPage() {
           We retain personal data only for as long as necessary to fulfill the operational purposes set forth herein:
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1">
-          <li><strong>Active Memberships:</strong> Data is retained throughout your active membership term and for a reasonable period (up to 3 years) following expiration to facilitate renewals, audit verifications, or dispute resolutions.</li>
-          <li><strong>Verification Logs:</strong> Retained for auditing and accounting reconciliation, after which logs may be permanently anonymized for analytical trends.</li>
+          <li><strong>Membership account data:</strong> Retained while the membership is active and for up to 3 years after expiry for membership support and disputes, unless a longer period is required by law.</li>
+          <li><strong>Order, payment, invoice and fulfilment records:</strong> Retained for 10 years from the relevant order date where required by the payment provider's terms or applicable law. Razorpay's current merchant terms specify a 10-year transaction-record period.</li>
+          <li><strong>Verification logs:</strong> Retained for service integrity, dispute handling and legal/accounting requirements, then deleted or de-identified when no longer needed. Records connected to a payment/order may follow the longer transaction-record period above.</li>
         </ul>
       </section>
 
       <section id="user-rights" className="scroll-mt-36">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">9. Rights of Data Principals (DPDPA 2023)</h2>
         <p className="mt-2">
-          Under the Digital Personal Data Protection Act, 2023, you are recognized as a Data Principal and enjoy the following statutory rights:
+          You can contact PennyGrade to request access to, correction of, or deletion of personal information, subject to verification, operational needs and legal retention requirements. Statutory rights and timelines depend on the provisions in force for the relevant request.
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1.5">
-          <li><strong>Right to Access:</strong> You may request a summary of the personal data collected about you and details of processing activities.</li>
-          <li><strong>Right to Correction &amp; Erasure:</strong> You may request correction of inaccurate data or deletion of your account information, subject to statutory retention obligations.</li>
-          <li><strong>Right of Grievance Redressal:</strong> You have the right to register complaints regarding data processing with our designated Grievance Officer.</li>
-          <li><strong>Right to Nominate:</strong> You may nominate an individual to exercise your privacy rights in the event of death or incapacity.</li>
+          <li>Tell us which information is incorrect or what request you are making.</li>
+          <li>We may ask for enough information to verify your identity before disclosing or changing account data.</li>
+          <li>We will explain if a record must be retained for a payment, accounting, security or legal purpose.</li>
         </ul>
         <p className="mt-2">
-          To exercise any of these rights, please submit a written request to <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a> with your registered mobile number and PenCode.
+          To make a privacy request, email <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a>. Do not email passwords, one-time passcodes or full payment-card details.
         </p>
       </section>
 
@@ -202,18 +203,17 @@ function PrivacyPage() {
       </section>
 
       <section id="grievance-contact" className="scroll-mt-36">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">11. Grievance Officer & Contact Information</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">11. Privacy and Grievance Contact</h2>
         <p className="mt-2">
-          In accordance with the Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023, 
-          the contact details of our designated Data Protection &amp; Grievance Redressal Officer are as follows:
+          For privacy and membership grievances, contact PennyGrade using these details. This contact listing does not represent a separately registered legal office or legal entity.
         </p>
         <div className="mt-3 rounded-xl border border-border bg-muted/40 p-4 text-xs space-y-1.5">
-          <p><strong>Designation:</strong> Data Protection &amp; Grievance Officer</p>
-          <p><strong>Platform:</strong> PennyGrade (Samir Pandey, Operating Entity)</p>
+          <p><strong>Contact:</strong> PennyGrade support</p>
+          <p><strong>Business operator:</strong> Verify the legal name against business/KYC records before onboarding.</p>
           <p><strong>Email:</strong> <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a></p>
           <p><strong>Phone:</strong> <a href="tel:+919356897893" className="text-primary underline">+91 93568 97893</a></p>
-          <p><strong>Registered Operating Desk:</strong> Daltonganj, Palamu, Jharkhand - 822101, India</p>
-          <p><strong>Response Time:</strong> We acknowledge requests within 24 to 48 business hours and resolve verified grievances in accordance with statutory guidelines.</p>
+          <p><strong>Business contact location:</strong> Daltonganj, Palamu, Jharkhand - 822101, India</p>
+          <p><strong>Response Time:</strong> We aim to acknowledge privacy requests within 24 to 48 business hours. Customer complaints are handled under the published terms and applicable timelines.</p>
         </div>
       </section>
 

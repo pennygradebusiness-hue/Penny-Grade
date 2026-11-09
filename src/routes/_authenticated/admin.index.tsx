@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
 import { PageHeader, Stat, Panel, TableSkeleton, Chart } from "@/components/admin-ui";
-import { getAdminMembers, getAdminCards, getAdminPartners, getAdminOffers } from "@/lib/admin.functions";
+import { getAdminMembers, getAdminCards, getAdminPartners, getAdminOffers, getAdminOrderStats } from "@/lib/admin.functions";
 import { fetchLogs, groupSum, lastMonths, monthKey } from "@/lib/admin-data";
 import { inr } from "@/lib/format";
 
@@ -36,18 +36,20 @@ function Dashboard() {
   const fetchCardsFn = useServerFn(getAdminCards);
   const fetchPartnersFn = useServerFn(getAdminPartners);
   const fetchOffersFn = useServerFn(getAdminOffers);
+  const fetchOrderStatsFn = useServerFn(getAdminOrderStats);
 
   const q = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       try {
-        const [msRes, cardsRes, partnersRes, offersRes, logsRes] = await Promise.allSettled([
+        const [msRes, cardsRes, partnersRes, offersRes, logsRes, orderStatsRes] = await Promise.allSettled([
           withAdminQueryTimeout(fetchMembersFn(), "Members"),
           withAdminQueryTimeout(fetchCardsFn(), "Cards"),
           withAdminQueryTimeout(fetchPartnersFn(), "Partners"),
           withAdminQueryTimeout(fetchOffersFn(), "Offers"),
           withAdminQueryTimeout(fetchLogs(180), "Verification logs"),
+          withAdminQueryTimeout(fetchOrderStatsFn(), "Order Stats"),
         ]);
 
         const errors: string[] = [];
@@ -92,6 +94,7 @@ function Dashboard() {
         const partners = partnersRes.status === "fulfilled" ? (partnersRes.value ?? []) : [];
         const offers = offersRes.status === "fulfilled" ? (offersRes.value ?? []) : [];
         const logs = logsRes.status === "fulfilled" ? (logsRes.value ?? []) : [];
+        const orderStats = orderStatsRes.status === "fulfilled" ? (orderStatsRes.value ?? {}) : {};
 
         const active = ms.filter((m) => m.status === "ACTIVE" && Boolean(m.expiry_date && m.expiry_date >= today)).length;
         const expired = ms.filter((m) => m.status === "EXPIRED" || (m.status === "ACTIVE" && (!m.expiry_date || m.expiry_date < today))).length;
@@ -108,6 +111,7 @@ function Dashboard() {
           partners: activePartners,
           offers: activeOffers,
           logs,
+          orderStats,
           errors,
         };
       } catch (err) {
@@ -121,6 +125,7 @@ function Dashboard() {
           partners: 0,
           offers: 0,
           logs: [],
+          orderStats: {},
           errors: ["All dashboard services"],
         };
       }
@@ -170,6 +175,46 @@ function Dashboard() {
         <Stat label="Monthly Verifications" value={monthLogs.length} />
         <Stat label="Est. Discount Value" value={inr(monthLogs.reduce((s, l) => s + Number(l.discount_amount), 0))} sub="This month" />
       </div>
+      {/* Order Purchasing & Physical Fulfilment Pipeline */}
+      <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900">Card Purchasing & Physical Fulfilment Pipeline</h3>
+            <p className="text-xs text-slate-500">Live order statuses, inventory reservation, and courier tracking metrics.</p>
+          </div>
+          <Link
+            to="/admin/orders"
+            className="text-xs font-bold text-amber-700 hover:text-amber-800 underline flex items-center gap-1"
+          >
+            Manage All Orders &rarr;
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <Stat label="Total Orders" value={q.data.orderStats?.total_orders ?? 0} />
+          <Stat label="Pending Payments" value={q.data.orderStats?.pending_payments ?? 0} />
+          <Stat label="Paid Orders" value={q.data.orderStats?.paid_orders ?? 0} />
+          <Stat label="In Processing" value={q.data.orderStats?.processing ?? 0} />
+          <Stat label="Ready Dispatch" value={q.data.orderStats?.ready_to_dispatch ?? 0} />
+          <Stat label="Dispatched" value={q.data.orderStats?.shipped ?? 0} />
+          <Stat label="Delivered" value={q.data.orderStats?.delivered ?? 0} />
+          <Stat label="Exceptions" value={q.data.orderStats?.exceptions ?? 0} />
+        </div>
+
+        {/* Email Health Row */}
+        <div className="mt-4 flex flex-wrap items-center justify-between rounded-xl bg-slate-50 p-3 text-xs border border-slate-200">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-800">Resend Transactional Email Reliability:</span>
+            <span className="text-emerald-700 font-semibold">{q.data.orderStats?.emails_sent ?? 0} Sent</span> •
+            <span className="text-blue-700 font-semibold">{q.data.orderStats?.emails_pending ?? 0} Pending</span> •
+            <span className="text-red-600 font-semibold">{q.data.orderStats?.emails_failed ?? 0} Failed</span>
+          </div>
+          <Link to="/admin/orders" className="text-slate-600 font-bold hover:text-slate-900 underline text-[11px]">
+            View Notification Logs &rarr;
+          </Link>
+        </div>
+      </div>
+
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Panel title="Membership growth">
           <Chart>

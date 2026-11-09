@@ -43,12 +43,10 @@ export function parseTokenPayload(token: string): { exp?: number; [key: string]:
 }
 
 /**
- * Read the admin session cookie from browser document
+ * HttpOnly admin session cookies are intentionally unreadable to browser JavaScript.
  */
 export function getAdminCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${ADMIN_SESSION_COOKIE}=([^;]+)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  return null;
 }
 
 /**
@@ -59,10 +57,7 @@ export function getAdminSession(): AdminClientSession | null {
   if (typeof window === "undefined") return null;
 
   const raw = localStorage.getItem(ADMIN_SESSION_STORAGE_KEY);
-  const cookie = getAdminCookie();
-
-  // If both storage and cookie are missing, user is definitely logged out
-  if (!cookie && !raw) return null;
+  if (!raw) return null;
 
   let session: AdminClientSession | null = null;
   if (raw) {
@@ -73,16 +68,9 @@ export function getAdminSession(): AdminClientSession | null {
     }
   }
 
-  // Inspect the signed expiration timestamp embedded in the cookie token
-  let tokenExp: number | undefined;
-  if (cookie) {
-    const payload = parseTokenPayload(cookie);
-    if (payload?.exp && typeof payload.exp === "number") {
-      tokenExp = payload.exp;
-    }
-  }
-
-  const effectiveExp = tokenExp || session?.exp;
+  // This local record is only a UI hint. Every privileged server function
+  // authorizes against the signed, HttpOnly cookie.
+  const effectiveExp = session?.exp;
   const now = Date.now();
 
   // Must have required identity fields
@@ -97,12 +85,6 @@ export function getAdminSession(): AdminClientSession | null {
     return null;
   }
 
-  // If cookie was wiped or expired while local storage persists, purge
-  if (!cookie && typeof document !== "undefined") {
-    clearAdminSession();
-    return null;
-  }
-
   return {
     ...session,
     exp: effectiveExp || now + ADMIN_SESSION_TTL_MS,
@@ -110,16 +92,15 @@ export function getAdminSession(): AdminClientSession | null {
 }
 
 /**
- * Atomically saves admin session in both localStorage and long-lived browser cookie
+ * Saves non-authoritative display metadata. The signed session cookie is set by the server.
  */
 export function saveAdminSessionClient(
   payload: { id: string; email: string; role: string; full_name?: string; exp?: number },
-  signedToken: string
+  _signedToken?: string,
 ) {
   if (typeof window === "undefined") return;
 
-  const tokenPayload = parseTokenPayload(signedToken);
-  const exp = tokenPayload?.exp || payload.exp || Date.now() + ADMIN_SESSION_TTL_MS;
+  const exp = payload.exp || Date.now() + ADMIN_SESSION_TTL_MS;
 
   const sessionData: AdminClientSession = {
     id: payload.id,
@@ -134,40 +115,30 @@ export function saveAdminSessionClient(
   } catch {
     // Handle quota errors silently
   }
-
-  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
-  document.cookie = `${ADMIN_SESSION_COOKIE}=${signedToken}; path=/; max-age=${ADMIN_SESSION_TTL_SECONDS}; SameSite=Lax${
-    isSecure ? "; Secure" : ""
-  }`;
 }
 
 /**
- * Atomically clears all administrative session artifacts from browser
+ * Clears client-side display metadata. The server clears the HttpOnly cookie via logoutAdminSession.
  */
 export function clearAdminSession() {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
   } catch {}
-  if (typeof document !== "undefined") {
-    document.cookie = `${ADMIN_SESSION_COOKIE}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  }
 }
 
 /**
  * Authoritative check of admin session state.
  * Returns:
- * - "valid": token and storage present and unexpired.
- * - "expired": token or storage was present, but timestamp <= now.
- * - "none": no session credentials present (clean/logged out).
+ * - "valid": display metadata is present and unexpired; server functions still authorize the cookie.
+ * - "expired": metadata was present, but its timestamp has elapsed.
+ * - "none": no client metadata is present.
  */
 export function checkAdminSessionStatus(): "valid" | "expired" | "none" {
   if (typeof window === "undefined") return "none";
 
   const raw = localStorage.getItem(ADMIN_SESSION_STORAGE_KEY);
-  const cookie = getAdminCookie();
-
-  if (!cookie && !raw) return "none";
+  if (!raw) return "none";
 
   let session: AdminClientSession | null = null;
   if (raw) {
@@ -178,22 +149,14 @@ export function checkAdminSessionStatus(): "valid" | "expired" | "none" {
     }
   }
 
-  let tokenExp: number | undefined;
-  if (cookie) {
-    const payload = parseTokenPayload(cookie);
-    if (payload?.exp && typeof payload.exp === "number") {
-      tokenExp = payload.exp;
-    }
-  }
-
-  const effectiveExp = tokenExp || session?.exp;
+  const effectiveExp = session?.exp;
   const now = Date.now();
 
   if (effectiveExp && effectiveExp <= now) {
     return "expired";
   }
 
-  if (session && session.id && session.email && session.role && cookie) {
+  if (session && session.id && session.email && session.role) {
     return "valid";
   }
 
@@ -222,6 +185,9 @@ export function triggerAdminAutoLogout(reason: LogoutReason = "session_expired")
   } catch {}
 
   clearAdminSession();
+  void import("./admin.functions")
+    .then(({ logoutAdminSession }) => logoutAdminSession())
+    .catch(() => {});
 
   const url = `/admin/login?reason=${encodeURIComponent(redirectReason)}`;
 

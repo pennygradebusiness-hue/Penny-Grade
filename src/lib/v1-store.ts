@@ -1,9 +1,13 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { Json } from "@/integrations/supabase/types";
 
 // Universal crypto helper safe for both browser and Node.js
 export function safeRandomUUID(): string {
-  if (typeof globalThis.crypto !== "undefined" && typeof globalThis.crypto.randomUUID === "function") {
+  if (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.randomUUID === "function"
+  ) {
     return globalThis.crypto.randomUUID();
   }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -109,6 +113,11 @@ export interface V1Partner {
   latitude?: number | null;
   longitude?: number | null;
   business_hours?: string;
+  representative_name?: string;
+  business_verified_at?: string | null;
+  agreement_reference?: string | null;
+  agreement_signed_at?: string | null;
+  benefit_dispute_contact?: string;
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   featured: boolean;
   created_at: string;
@@ -162,7 +171,10 @@ export interface V1Offer {
 export function generatePenCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = new Uint8Array(8);
-  if (typeof globalThis.crypto !== "undefined" && typeof globalThis.crypto.getRandomValues === "function") {
+  if (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.getRandomValues === "function"
+  ) {
     globalThis.crypto.getRandomValues(bytes);
   } else {
     for (let i = 0; i < 8; i++) {
@@ -178,7 +190,10 @@ export function generatePenCode(): string {
 
 // Normalize membership / card input: remove spaces, handle lowercase, trim
 export function normalizeMembershipNumber(input: string): string {
-  const cleaned = input.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const cleaned = input
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
   if (cleaned.startsWith("PEN") && cleaned.length === 11) {
     return `PEN-${cleaned.slice(3, 7)}-${cleaned.slice(7, 11)}`;
   }
@@ -186,7 +201,10 @@ export function normalizeMembershipNumber(input: string): string {
     return `PEN-${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`;
   }
   // Try normal hyphenated pattern
-  const match = input.trim().toUpperCase().match(/^PEN-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
+  const match = input
+    .trim()
+    .toUpperCase()
+    .match(/^PEN-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
   if (match) {
     return `PEN-${match[1]}-${match[2]}`;
   }
@@ -222,7 +240,7 @@ export interface V1AuditLog {
   action: string;
   target_type: string;
   target_id: string | null;
-  metadata: Record<string, any>;
+  metadata: { [key: string]: Json | undefined };
   created_at: string;
   who: string;
 }
@@ -239,6 +257,77 @@ export interface V1AdminUser {
   created_at: string;
 }
 
+export interface V1Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  membership_plan_id: string;
+  membership_id: string | null;
+  physical_card_id: string | null;
+  amount: number;
+  currency: string;
+  payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+  order_status:
+    | "PAYMENT_PENDING"
+    | "PAID"
+    | "PROCESSING"
+    | "READY_TO_DISPATCH"
+    | "SHIPPED"
+    | "DELIVERED"
+    | "CANCELLED"
+    | "FULFILMENT_EXCEPTION";
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  razorpay_signature: string | null;
+  delivery_address_line1: string;
+  delivery_address_line2?: string | null;
+  delivery_landmark?: string | null;
+  delivery_city: string;
+  delivery_state: string;
+  delivery_pincode: string;
+  delivery_country: string;
+  courier_name?: string | null;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
+  internal_notes?: string | null;
+  shipped_at?: string | null;
+  delivered_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface V1EmailNotification {
+  id: string;
+  recipient_email: string;
+  recipient_name?: string | null;
+  event_type: string;
+  related_order_id?: string | null;
+  related_redemption_id?: string | null;
+  subject: string;
+  provider: string;
+  provider_message_id?: string | null;
+  delivery_status: "PENDING" | "SENT" | "FAILED" | "MOCK_SENT";
+  attempt_count: number;
+  last_error?: string | null;
+  sent_at?: string | null;
+  idempotency_key?: string | null;
+  metadata?: { [key: string]: Json | undefined };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface V1OrderStatusHistory {
+  id: string;
+  order_id: string;
+  from_status: string | null;
+  to_status: string;
+  changed_by: string;
+  notes?: string | null;
+  created_at: string;
+}
+
 export interface PennyGradeStore {
   members: Map<string, V1Member>;
   cards: Map<string, V1PhysicalCard>;
@@ -250,6 +339,9 @@ export interface PennyGradeStore {
   adminUsers: V1AdminUser[];
   memberApplications: V1MemberApplication[];
   partnerApplications: V1PartnerApplication[];
+  orders: Map<string, V1Order>;
+  emailNotifications: Map<string, V1EmailNotification>;
+  orderHistory: V1OrderStatusHistory[];
   deletedPartnerIds: string[];
   deletedOfferIds: string[];
   deletedMemberIds: string[];
@@ -261,7 +353,6 @@ export interface PennyGradeStore {
 
 // Server in-memory store with persistence across server function invocations
 declare global {
-  // eslint-disable-next-line no-var
   var __pennyGradeStore: PennyGradeStore | undefined;
 }
 
@@ -303,19 +394,30 @@ export function serializeStore(s: PennyGradeStore) {
   };
 }
 
-export function hydrateStore(parsed: any): void {
-  if (!parsed || typeof parsed !== "object") return;
+export function hydrateStore(value: unknown): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const parsed = value as Record<string, unknown>;
   const s = globalThis.__pennyGradeStore || store;
 
-  const deletedPartnerIds: string[] = Array.isArray(parsed.deletedPartnerIds) ? parsed.deletedPartnerIds : [];
-  const deletedOfferIds: string[] = Array.isArray(parsed.deletedOfferIds) ? parsed.deletedOfferIds : [];
-  const deletedMemberIds: string[] = Array.isArray(parsed.deletedMemberIds) ? parsed.deletedMemberIds : [];
-  const deletedAdminUserIds: string[] = Array.isArray(parsed.deletedAdminUserIds) ? parsed.deletedAdminUserIds : [];
+  const deletedPartnerIds: string[] = Array.isArray(parsed.deletedPartnerIds)
+    ? parsed.deletedPartnerIds
+    : [];
+  const deletedOfferIds: string[] = Array.isArray(parsed.deletedOfferIds)
+    ? parsed.deletedOfferIds
+    : [];
+  const deletedMemberIds: string[] = Array.isArray(parsed.deletedMemberIds)
+    ? parsed.deletedMemberIds
+    : [];
+  const deletedAdminUserIds: string[] = Array.isArray(parsed.deletedAdminUserIds)
+    ? parsed.deletedAdminUserIds
+    : [];
 
   const delPartnerSet = new Set([...(s.deletedPartnerIds || []), ...deletedPartnerIds]);
   const delOfferSet = new Set([...(s.deletedOfferIds || []), ...deletedOfferIds]);
   const delMemberSet = new Set([...(s.deletedMemberIds || []), ...deletedMemberIds]);
-  const delAdminSet = new Set([...(s.deletedAdminUserIds || []), ...deletedAdminUserIds].map((x) => x.toLowerCase()));
+  const delAdminSet = new Set(
+    [...(s.deletedAdminUserIds || []), ...deletedAdminUserIds].map((x) => x.toLowerCase()),
+  );
 
   s.deletedPartnerIds = Array.from(delPartnerSet);
   s.deletedOfferIds = Array.from(delOfferSet);
@@ -326,13 +428,20 @@ export function hydrateStore(parsed: any): void {
     if (!s.members) s.members = new Map();
     for (const [k, v] of parsed.members) {
       const m = v as V1Member;
-      if (!delMemberSet.has(k) && !delMemberSet.has(m?.membership_number) && !delMemberSet.has(m?.id)) {
+      if (
+        !delMemberSet.has(k) &&
+        !delMemberSet.has(m?.membership_number) &&
+        !delMemberSet.has(m?.id)
+      ) {
         s.members.set(k, m);
       }
     }
     for (const k of Array.from(s.members.keys())) {
       const m = s.members.get(k);
-      if (delMemberSet.has(k) || (m && (delMemberSet.has(m.id) || delMemberSet.has(m.membership_number)))) {
+      if (
+        delMemberSet.has(k) ||
+        (m && (delMemberSet.has(m.id) || delMemberSet.has(m.membership_number)))
+      ) {
         s.members.delete(k);
       }
     }
@@ -419,7 +528,9 @@ export async function ensureStoreLoadedCloud(): Promise<void> {
  */
 export function saveStoreToDisk(): void {
   try {
-    if (process.env.NODE_ENV === "test" || process.env.VITEST) return;
+    // This JSON snapshot is for local development only. Production business
+    // records must use the database/approved cloud persistence layer.
+    if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "test" || process.env.VITEST) return;
     if (typeof process === "undefined" || typeof fs?.existsSync !== "function") return;
     if (!globalThis.__pennyGradeStore) return;
     const s = globalThis.__pennyGradeStore;
@@ -454,7 +565,8 @@ export function seedPartners(): Map<string, V1Partner> {
       slug: "abc-cafe",
       category_id: "e7d3fd02-abd7-4ba4-b129-294ac76bff15",
       category_name: "Cafés",
-      description: "Neighbourhood specialty coffee, fresh bakes and all-day breakfast in a calm, sunlit space.",
+      description:
+        "Neighbourhood specialty coffee, fresh bakes and all-day breakfast in a calm, sunlit space.",
       logo_url: "",
       cover_image_url: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=70",
       phone: "+91 98200 11111",
@@ -484,8 +596,8 @@ export function seedPartners(): Map<string, V1Partner> {
       website: "",
       address: "45 Station Road",
       city: "Daltonganj",
-      latitude: 24.0430,
-      longitude: 84.0710,
+      latitude: 24.043,
+      longitude: 84.071,
       business_hours: "Mon–Sun · 9:00 AM – 10:30 PM",
       status: "ACTIVE",
       featured: false,
@@ -506,8 +618,8 @@ export function seedPartners(): Map<string, V1Partner> {
       website: "",
       address: "21 Court Road",
       city: "Daltonganj",
-      latitude: 24.0390,
-      longitude: 84.0680,
+      latitude: 24.039,
+      longitude: 84.068,
       business_hours: "Tue–Sun · 10:00 AM – 9:00 PM",
       status: "ACTIVE",
       featured: false,
@@ -654,104 +766,115 @@ function loadStoreFromDisk(): PennyGradeStore | null {
     if (!raw || !raw.trim()) return null;
     const parsed = JSON.parse(raw);
 
-      const deletedPartnerIds: string[] = Array.isArray(parsed.deletedPartnerIds) ? parsed.deletedPartnerIds : [];
-      const deletedOfferIds: string[] = Array.isArray(parsed.deletedOfferIds) ? parsed.deletedOfferIds : [];
-      const deletedMemberIds: string[] = Array.isArray(parsed.deletedMemberIds) ? parsed.deletedMemberIds : [];
-      const deletedAdminUserIds: string[] = Array.isArray(parsed.deletedAdminUserIds) ? parsed.deletedAdminUserIds : [];
-      const seededPartners: boolean = parsed.seededPartners ?? true;
-      const seededOffers: boolean = parsed.seededOffers ?? true;
-      const seededAdminUsers: boolean = parsed.seededAdminUsers ?? true;
+    const deletedPartnerIds: string[] = Array.isArray(parsed.deletedPartnerIds)
+      ? parsed.deletedPartnerIds
+      : [];
+    const deletedOfferIds: string[] = Array.isArray(parsed.deletedOfferIds)
+      ? parsed.deletedOfferIds
+      : [];
+    const deletedMemberIds: string[] = Array.isArray(parsed.deletedMemberIds)
+      ? parsed.deletedMemberIds
+      : [];
+    const deletedAdminUserIds: string[] = Array.isArray(parsed.deletedAdminUserIds)
+      ? parsed.deletedAdminUserIds
+      : [];
+    const seededPartners: boolean = parsed.seededPartners ?? true;
+    const seededOffers: boolean = parsed.seededOffers ?? true;
+    const seededAdminUsers: boolean = parsed.seededAdminUsers ?? true;
 
-      const delPartnerSet = new Set(deletedPartnerIds);
-      const delOfferSet = new Set(deletedOfferIds);
-      const delMemberSet = new Set(deletedMemberIds);
-      const delAdminSet = new Set(deletedAdminUserIds.map((x: string) => x.toLowerCase()));
+    const delPartnerSet = new Set(deletedPartnerIds);
+    const delOfferSet = new Set(deletedOfferIds);
+    const delMemberSet = new Set(deletedMemberIds);
+    const delAdminSet = new Set(deletedAdminUserIds.map((x: string) => x.toLowerCase()));
 
-      // Load partners: ignore any in delPartnerSet
-      const partners = new Map<string, V1Partner>();
-      if (Array.isArray(parsed.partners)) {
-        for (const [k, v] of parsed.partners) {
-          if (!delPartnerSet.has(k) && !delPartnerSet.has((v as V1Partner)?.slug)) {
-            partners.set(k, v);
-          }
+    // Load partners: ignore any in delPartnerSet
+    const partners = new Map<string, V1Partner>();
+    if (Array.isArray(parsed.partners)) {
+      for (const [k, v] of parsed.partners) {
+        if (!delPartnerSet.has(k) && !delPartnerSet.has((v as V1Partner)?.slug)) {
+          partners.set(k, v);
         }
       }
+    }
 
-      // Only seed initial default partners if store was never seeded before and is empty
-      if (!parsed.seededPartners && partners.size === 0) {
-        const seeded = seedPartners();
-        for (const [k, v] of seeded.entries()) {
-          if (!delPartnerSet.has(k) && !delPartnerSet.has(v.slug)) {
-            partners.set(k, v);
-          }
+    // Only seed initial default partners if store was never seeded before and is empty
+    if (!parsed.seededPartners && partners.size === 0) {
+      const seeded = seedPartners();
+      for (const [k, v] of seeded.entries()) {
+        if (!delPartnerSet.has(k) && !delPartnerSet.has(v.slug)) {
+          partners.set(k, v);
         }
       }
+    }
 
-      // Load offers: ignore any in delOfferSet OR belonging to deleted partner
-      const offers = new Map<string, V1Offer>();
-      if (Array.isArray(parsed.offers)) {
-        for (const [k, v] of parsed.offers) {
-          const offer = v as V1Offer;
-          if (
-            !delOfferSet.has(k) &&
-            !delOfferSet.has(offer?.id) &&
-            !delPartnerSet.has(offer?.partner_id)
-          ) {
-            offers.set(k, offer);
-          }
+    // Load offers: ignore any in delOfferSet OR belonging to deleted partner
+    const offers = new Map<string, V1Offer>();
+    if (Array.isArray(parsed.offers)) {
+      for (const [k, v] of parsed.offers) {
+        const offer = v as V1Offer;
+        if (
+          !delOfferSet.has(k) &&
+          !delOfferSet.has(offer?.id) &&
+          !delPartnerSet.has(offer?.partner_id)
+        ) {
+          offers.set(k, offer);
         }
       }
+    }
 
-      // Only seed initial default offers if store was never seeded before and is empty
-      if (!parsed.seededOffers && offers.size === 0) {
-        const seeded = seedOffers();
-        for (const [k, v] of seeded.entries()) {
-          if (!delOfferSet.has(k) && !delPartnerSet.has(v.partner_id)) {
-            offers.set(k, v);
-          }
+    // Only seed initial default offers if store was never seeded before and is empty
+    if (!parsed.seededOffers && offers.size === 0) {
+      const seeded = seedOffers();
+      for (const [k, v] of seeded.entries()) {
+        if (!delOfferSet.has(k) && !delPartnerSet.has(v.partner_id)) {
+          offers.set(k, v);
         }
       }
+    }
 
-      // Load members: ignore any in delMemberSet
-      const members = new Map<string, V1Member>();
-      if (Array.isArray(parsed.members)) {
-        for (const [k, v] of parsed.members) {
-          if (!delMemberSet.has(k) && !delMemberSet.has((v as V1Member)?.membership_number)) {
-            members.set(k, v);
-          }
+    // Load members: ignore any in delMemberSet
+    const members = new Map<string, V1Member>();
+    if (Array.isArray(parsed.members)) {
+      for (const [k, v] of parsed.members) {
+        if (!delMemberSet.has(k) && !delMemberSet.has((v as V1Member)?.membership_number)) {
+          members.set(k, v);
         }
       }
+    }
 
-      // Load admin users: ignore any in delAdminSet
-      let adminUsers: V1AdminUser[] = [];
-      if (Array.isArray(parsed.adminUsers)) {
-        adminUsers = parsed.adminUsers.filter(
-          (u: V1AdminUser) =>
-            !delAdminSet.has(u.id?.toLowerCase()) &&
-            !delAdminSet.has(u.user_id?.toLowerCase()) &&
-            !delAdminSet.has(u.email?.toLowerCase())
-        );
-      }
+    // Load admin users: ignore any in delAdminSet
+    let adminUsers: V1AdminUser[] = [];
+    if (Array.isArray(parsed.adminUsers)) {
+      adminUsers = parsed.adminUsers.filter(
+        (u: V1AdminUser) =>
+          !delAdminSet.has(u.id?.toLowerCase()) &&
+          !delAdminSet.has(u.user_id?.toLowerCase()) &&
+          !delAdminSet.has(u.email?.toLowerCase()),
+      );
+    }
 
-      return {
-        members,
-        cards: new Map(parsed.cards || []),
-        partners,
-        offers,
-        sessions: new Map(parsed.sessions || []),
-        logs: parsed.logs || [],
-        auditLogs: parsed.auditLogs || [],
-        adminUsers,
-        memberApplications: parsed.memberApplications || [],
-        partnerApplications: parsed.partnerApplications || [],
-        deletedPartnerIds,
-        deletedOfferIds,
-        deletedMemberIds,
-        deletedAdminUserIds,
-        seededPartners,
-        seededOffers,
-        seededAdminUsers,
-      };
+    return {
+      members,
+      cards: new Map(parsed.cards || []),
+      partners,
+      offers,
+      sessions: new Map(parsed.sessions || []),
+      logs: parsed.logs || [],
+      auditLogs: parsed.auditLogs || [],
+      adminUsers,
+      memberApplications: parsed.memberApplications || [],
+      partnerApplications: parsed.partnerApplications || [],
+      orders: new Map(parsed.orders || []),
+      emailNotifications: new Map(parsed.emailNotifications || []),
+      orderHistory: parsed.orderHistory || [],
+      deletedPartnerIds,
+      deletedOfferIds,
+      deletedMemberIds,
+      deletedAdminUserIds,
+      seededPartners,
+      seededOffers,
+      seededAdminUsers,
+    };
   } catch (err) {
     console.error("[PennyGrade] Failed to load store from disk:", err);
   }
@@ -773,7 +896,11 @@ function initStore(): PennyGradeStore {
 
     // In unit test environment, ensure test member exists if not deleted
     const isTestEnv = process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
-    if (isTestEnv && (!fromDisk.members || fromDisk.members.size === 0) && !fromDisk.deletedMemberIds?.includes("PEN-7X4P-92LM")) {
+    if (
+      isTestEnv &&
+      (!fromDisk.members || fromDisk.members.size === 0) &&
+      !fromDisk.deletedMemberIds?.includes("PEN-7X4P-92LM")
+    ) {
       const defaultCardId = "card-samir-001";
       const defaultMemberId = "mem-samir-001";
       const today = new Date().toISOString().slice(0, 10);
@@ -832,7 +959,10 @@ function initStore(): PennyGradeStore {
 
     // Clean up any stale offers belonging to deleted partners
     for (const [id, o] of Array.from(fromDisk.offers.entries())) {
-      if (fromDisk.deletedPartnerIds.includes(o.partner_id) || fromDisk.deletedOfferIds.includes(id)) {
+      if (
+        fromDisk.deletedPartnerIds.includes(o.partner_id) ||
+        fromDisk.deletedOfferIds.includes(id)
+      ) {
         fromDisk.offers.delete(id);
         if (!fromDisk.deletedOfferIds.includes(id)) {
           fromDisk.deletedOfferIds.push(id);
@@ -979,6 +1109,10 @@ function initStore(): PennyGradeStore {
     });
   }
 
+  const orders = new Map<string, V1Order>();
+  const emailNotifications = new Map<string, V1EmailNotification>();
+  const orderHistory: V1OrderStatusHistory[] = [];
+
   globalThis.__pennyGradeStore = {
     members,
     cards,
@@ -990,6 +1124,9 @@ function initStore(): PennyGradeStore {
     adminUsers,
     memberApplications,
     partnerApplications,
+    orders,
+    emailNotifications,
+    orderHistory,
     deletedPartnerIds: [],
     deletedOfferIds: [],
     deletedMemberIds: [],

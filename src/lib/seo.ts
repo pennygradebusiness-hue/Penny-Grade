@@ -17,6 +17,7 @@ export interface PageHeadOptions {
   noindex?: boolean;
   keywords?: string[];
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
+  links?: Array<Record<string, unknown>>;
 }
 
 import { getAppSiteUrl } from "./config";
@@ -48,7 +49,7 @@ export function buildCanonicalUrl(path = "/"): string {
   return `${origin}${normalizedPath.replace(/\/+$/, "")}`;
 }
 
-export const DEFAULT_OG_IMAGE = "/pennygrade-card.png";
+export const DEFAULT_OG_IMAGE = "/pennygrade-logo.webp";
 export const BRAND_NAME = "PennyGrade";
 
 /**
@@ -63,6 +64,7 @@ export function buildPageHead({
   noindex = false,
   keywords,
   jsonLd,
+  links: extraLinks,
 }: PageHeadOptions) {
   const origin = getSiteUrl();
   const canonicalUrl = buildCanonicalUrl(path);
@@ -107,7 +109,10 @@ export function buildPageHead({
     });
   }
 
-  const links: Array<{ rel: string; href: string }> = [{ rel: "canonical", href: canonicalUrl }];
+  const links: Array<Record<string, unknown>> = [
+    { rel: "canonical", href: canonicalUrl },
+    ...(extraLinks || []),
+  ];
 
   const scripts: Array<{ type: string; children: string }> = [];
 

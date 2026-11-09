@@ -113,9 +113,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { name: "author", content: "PennyGrade" },
         { property: "og:site_name", content: "PennyGrade" },
         { property: "og:type", content: "website" },
-        { property: "og:image", content: `${siteUrl}/pennygrade-card.png` },
+        { property: "og:image", content: `${siteUrl}/pennygrade-logo.webp` },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:image", content: `${siteUrl}/pennygrade-card.png` },
+        { name: "twitter:image", content: `${siteUrl}/pennygrade-logo.webp` },
         { name: "theme-color", content: "#1b2333" },
       ],
       links: [
@@ -123,12 +123,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+        { rel: "dns-prefetch", href: "https://fonts.googleapis.com" },
+        { rel: "dns-prefetch", href: "https://fonts.gstatic.com" },
         { rel: "preconnect", href: "https://images.unsplash.com" },
         { rel: "dns-prefetch", href: "https://images.unsplash.com" },
-        {
-          rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap",
-        },
       ],
     };
   },
@@ -143,6 +141,25 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <link
+          rel="preload"
+          as="style"
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+          media="print"
+          onLoad={(e) => {
+            e.currentTarget.media = "all";
+          }}
+        />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+          />
+        </noscript>
       </head>
       <body>
         {children}

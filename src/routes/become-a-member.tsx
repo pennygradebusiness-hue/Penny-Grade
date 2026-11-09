@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   CreditCard,
@@ -24,14 +24,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitMemberApplication } from "@/lib/admin.functions";
+import { getPublicMembershipPlans } from "@/lib/orders.functions";
+import { type PublicPlan } from "@/lib/orders.logic";
+import { inr } from "@/lib/format";
 import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 export const Route = createFileRoute("/become-a-member")({
+  beforeLoad: () => {
+    throw redirect({ to: "/checkout" });
+  },
   head: () =>
     buildPageHead({
-      title: "Become a Member | Apply for PennyGrade Physical Card",
+      title: "PennyGrade Membership & Pricing | Six-Month Physical Card",
       description:
-        "Apply for your PennyGrade physical membership card. Enjoy exclusive verified in-person discounts across cafés, restaurants, salons, and stores in Daltonganj. ₹500 for 6 months.",
+        "Purchase the PennyGrade six-month physical membership card for ₹500. Explore participating local businesses and their member offer terms.",
       path: "/become-a-member",
       jsonLd: buildBreadcrumbSchema([
         { name: "Home", path: "/" },
@@ -43,6 +49,16 @@ export const Route = createFileRoute("/become-a-member")({
 
 function BecomeAMemberPage() {
   const submitFn = useServerFn(submitMemberApplication);
+  const getPlansFn = useServerFn(getPublicMembershipPlans);
+  const [dbPlans, setDbPlans] = useState<PublicPlan[]>([]);
+
+  useEffect(() => {
+    getPlansFn()
+      .then((res) => {
+        if (res && res.length > 0) setDbPlans(res);
+      })
+      .catch(() => {});
+  }, []);
 
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -143,10 +159,9 @@ function BecomeAMemberPage() {
               </h1>
 
               <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">
-                PennyGrade gives you an authentic, luxury physical membership card granting instant
-                <strong className="text-slate-900 font-bold"> 10%–20% discounts </strong>
-                at curated cafés, dining spots, luxury hotels, gyms, and grooming salons across
-                Daltonganj.
+                PennyGrade provides a six-month physical membership and access to its participating
+                local business network. Benefits and offer conditions are listed by each partner;
+                members pay the business directly for purchases there.
               </p>
 
               {/* Quick Perks */}
@@ -161,10 +176,10 @@ function BecomeAMemberPage() {
 
                 <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 font-bold text-sm">
-                    10-20%
+                    Perks
                   </div>
-                  <p className="mt-2 text-xs font-bold text-slate-800">Direct Discount</p>
-                  <p className="text-[11px] text-slate-500">Applied instantly on bill</p>
+                  <p className="mt-2 text-xs font-bold text-slate-800">Member Benefits</p>
+                  <p className="text-[11px] text-slate-500">See partner listing for terms</p>
                 </div>
 
                 <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs col-span-2 sm:col-span-1">
@@ -180,7 +195,7 @@ function BecomeAMemberPage() {
             {/* Right Card Mockup Preview */}
             <div className="lg:col-span-5 flex justify-center">
               <div className="w-full max-w-sm">
-                <PhysicalCardPreview code="PEN-7X4P-92LM" />
+                <PhysicalCardPreview code="SPECIMEN - NO MEMBER ID" />
                 <p className="mt-3 text-center text-[11px] font-medium text-slate-500">
                   Every card contains a cryptographically unique identifier and gold holographic
                   seal.
@@ -196,6 +211,118 @@ function BecomeAMemberPage() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Form Column */}
           <div className="lg:col-span-7">
+            {/* Online Purchasing Banner & Plan Cards (Database Driven) */}
+            <div className="mb-8 rounded-3xl border-2 border-amber-400 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 sm:p-8 text-white shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-3 py-0.5 text-xs font-bold text-amber-300 border border-amber-400/30">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                    Recommended Instant Option
+                  </span>
+                  <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    Purchase Card Online & Complete Delivery
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Pay securely online with Razorpay (Cards, UPI, NetBanking). Your physical card
+                    is reserved atomically and dispatched directly to your doorstep.
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-extrabold text-white shadow-lg shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500 h-12 px-6"
+                  >
+                    <Link to="/checkout">
+                      Buy Now (₹500) <ArrowRight className="h-4 w-4 ml-1.5" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Dynamic Plans Display */}
+              <div className="mt-6 space-y-4">
+                {(dbPlans.length > 0
+                  ? dbPlans
+                  : [
+                      {
+                        id: "fd6de953-c15d-4b7f-aae4-b97b6d21b043",
+                        name: "PennyGrade 6-Month Membership",
+                        price: 500,
+                        duration_days: 180,
+                        benefits: [
+                          "Physical membership card included",
+                          "Access to participating businesses and their listed offers",
+                          "Online membership verification where available",
+                          "Delivery available in Daltonganj, Jharkhand",
+                        ],
+                      },
+                    ]
+                ).map((plan) => (
+                  <div
+                    key={plan.id}
+                    className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition-all hover:border-amber-400/50"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-extrabold text-white">{plan.name}</h3>
+                          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
+                            Physical Card Included
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {plan.duration_days} days validity (6 months) • Free doorstep delivery
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-2xl font-black text-amber-400">
+                            {inr(plan.price)}
+                          </div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            All Taxes Included
+                          </div>
+                        </div>
+                        <Button
+                          asChild
+                          className="rounded-xl bg-amber-500 hover:bg-amber-400 font-bold text-slate-950"
+                        >
+                          <Link to="/checkout">Order Online</Link>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2 border-t border-slate-800/80 pt-3 text-xs text-slate-300">
+                      {(plan.benefits || []).map((b, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          <span>{b}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3">
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  Instant email confirmation & automated dispatch tracking
+                </span>
+                <Link to="/track-order" className="text-amber-400 hover:underline font-bold">
+                  Track Existing Order &rarr;
+                </Link>
+              </div>
+            </div>
+
+            <div className="mb-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Or Apply for Cash-on-Handover Verification
+              </span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
             {submittedApp ? (
               /* Success / Verification Card */
               <div className="rounded-2xl border-2 border-amber-300 bg-white p-6 sm:p-8 shadow-xl">
@@ -248,8 +375,8 @@ function BecomeAMemberPage() {
                       We issue and encode your official physical PennyGrade card (`PEN-XXXX-XXXX`).
                     </li>
                     <li>
-                      The card is handed over to you directly, ready to use immediately at ABC Café,
-                      FitZone, and all partner venues.
+                      The physical card is prepared and delivered using the method selected at
+                      checkout. Check current partner listings before visiting.
                     </li>
                   </ol>
                 </div>
@@ -375,8 +502,8 @@ function BecomeAMemberPage() {
                         <option value="Courier to Residential / Office Address">
                           Courier to Address (₹50 extra)
                         </option>
-                        <option value="Pickup at ABC Café / Partner Venue">
-                          Pickup at Partner Venue
+                        <option value="Pickup at Partner Venue (if arranged)">
+                          Pickup at a Partner Venue (if arranged)
                         </option>
                       </select>
                     </div>
@@ -459,10 +586,10 @@ function BecomeAMemberPage() {
                     <Check className="h-3 w-3" />
                   </div>
                   <div>
-                    <strong className="text-slate-800">Guaranteed 10%–20% OFF:</strong>
+                    <strong className="text-slate-800">Partner-listed member benefits:</strong>
                     <p className="text-slate-500 mt-0.5">
-                      Applies across all participating dining, hotel, café, fitness, and salon
-                      partners.
+                      Check the business listing for its offer, eligibility, minimum bill, cap,
+                      exclusions, and validity conditions.
                     </p>
                   </div>
                 </div>
@@ -485,10 +612,9 @@ function BecomeAMemberPage() {
                     <Check className="h-3 w-3" />
                   </div>
                   <div>
-                    <strong className="text-slate-800">6 Months of Unlimited Usage:</strong>
+                    <strong className="text-slate-800">Six Months of Membership Access:</strong>
                     <p className="text-slate-500 mt-0.5">
-                      No limits on how many times you can visit your favourite café or gym in 6
-                      months.
+                      Explore current partner listings and follow each benefit's published terms and validity.
                     </p>
                   </div>
                 </div>
@@ -498,9 +624,9 @@ function BecomeAMemberPage() {
                     <Check className="h-3 w-3" />
                   </div>
                   <div>
-                    <strong className="text-slate-800">Direct Payback in 2 Visits:</strong>
+                    <strong className="text-slate-800">Savings depend on your eligible visits:</strong>
                     <p className="text-slate-500 mt-0.5">
-                      A ₹3,000 hotel stay or ₹1,500 café bill immediately saves ₹300–₹600!
+                      Savings vary by active partner offer, eligibility, bill amount, and partner terms. No savings or payback amount is guaranteed.
                     </p>
                   </div>
                 </div>

@@ -8,6 +8,29 @@
  * - TypeScript path alias resolution (@/*)
  */
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { resolve } from "node:path";
+
+const localQaMode = process.env.PENNYGRADE_LOCAL_QA === "1";
+const localQaEnvDir = resolve(process.cwd(), ".local-qa-env");
+
+if (localQaMode) {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
+  let supabaseHost = "";
+  try {
+    supabaseHost = new URL(supabaseUrl).hostname;
+  } catch {
+    throw new Error("Local QA requires a valid loopback Supabase URL.");
+  }
+  if (!["localhost", "127.0.0.1", "::1"].includes(supabaseHost)) {
+    throw new Error("Local QA blocked: Supabase must resolve to loopback.");
+  }
+  if (process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error("Local QA blocked: Razorpay credentials must be absent.");
+  }
+  if (!process.env.RESEND_API_KEY?.startsWith("re_mock_")) {
+    throw new Error("Local QA blocked: Resend must use the mock provider.");
+  }
+}
 
 if (process.env.NETLIFY === "true" && !process.env.NITRO_PRESET) {
   process.env.NITRO_PRESET = "netlify";
@@ -38,6 +61,7 @@ if (siteUrl && !process.env.VITE_SITE_URL) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default (defineConfig as any)({
+  ...(localQaMode ? { envDir: localQaEnvDir } : {}),
   server: {
     port: 8080,
     allowedHosts: true,

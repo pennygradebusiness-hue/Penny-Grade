@@ -136,7 +136,7 @@ function HistoryPage() {
               <div className="text-xs">
                 <p className="font-extrabold text-amber-400">Locate Your Membership ID</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-slate-300">
-                  Your cryptographic ID (e.g. <span className="font-mono font-bold text-amber-200">PEN-7X4P-92LM</span>) is embossed on your physical membership card.
+                  Your membership ID (for example, <span className="font-mono font-bold text-amber-200">PEN-XXXX-XXXX</span>) is embossed on your physical membership card.
                 </p>
               </div>
             </div>
@@ -151,7 +151,7 @@ function HistoryPage() {
                 </Label>
                 <Input
                   id="memNum"
-                  placeholder="e.g. PEN-7X4P-92LM"
+                  placeholder="e.g. PEN-XXXX-XXXX"
                   autoCapitalize="characters"
                   value={membershipNum}
                   onChange={(e) => {

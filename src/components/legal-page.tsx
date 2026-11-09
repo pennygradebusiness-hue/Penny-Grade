@@ -22,7 +22,14 @@ export interface LegalTocItem {
 }
 
 interface LegalDocLayoutProps {
-  currentPath: "/terms" | "/privacy" | "/merchant-agreement" | "/membership-terms" | "/disclaimer";
+  currentPath:
+    | "/terms"
+    | "/privacy"
+    | "/merchant-agreement"
+    | "/membership-terms"
+    | "/disclaimer"
+    | "/refund-policy"
+    | "/shipping-policy";
   title: string;
   subtitle: string;
   version?: string;
@@ -37,6 +44,8 @@ const LEGAL_DOCS = [
   { path: "/privacy", label: "Privacy Policy", icon: Shield },
   { path: "/merchant-agreement", label: "Merchant Agreement", icon: Handshake },
   { path: "/membership-terms", label: "Membership Terms", icon: CreditCard },
+  { path: "/refund-policy", label: "Refund Policy", icon: CreditCard },
+  { path: "/shipping-policy", label: "Shipping Policy", icon: MapPin },
   { path: "/disclaimer", label: "Website Disclaimer", icon: AlertCircle },
 ] as const;
 

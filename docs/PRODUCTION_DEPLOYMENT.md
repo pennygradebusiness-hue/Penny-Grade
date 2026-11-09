@@ -1,0 +1,60 @@
+# PennyGrade Production Deployment
+
+## Architecture
+
+- Framework: TanStack Start with React and file-based routes under `src/routes/`.
+- Build/runtime: Vite 8 and Nitro; `vite.config.ts` selects the Netlify Nitro preset when `NETLIFY=true`.
+- Hosting: Netlify. `netlify.toml` sets `pnpm run build` and publishes `dist`; tracked `public/_redirects` rewrites application paths to `/.netlify/functions/server`.
+- Route generation: the TanStack router plugin generates `src/routeTree.gen.ts` during Vite builds. Do not edit that file by hand.
+- Node: 22, as declared in `.node-version`, `.nvmrc`, and Netlify build configuration.
+- Package manager: pnpm 10.33.0.
+- Database/auth: the linked Supabase project configured in `supabase/config.toml`.
+
+The local Netlify build generated `dist/_redirects`, `dist/assets/`, and `.netlify/functions-internal/server/`, then packaged `server/server.mjs` as a function. Netlify Dev returned 404 for every route tested both with framework proxying and with static mode; diagnostic runs with the generated redirect present or removed and with either functions directory also returned 404. `netlify functions:invoke server` could not find a matching function. The exact local CLI/framework incompatibility is not established, and the runtime has not been proven through Netlify CLI. Netlify CLI reports that this workstation is not logged in, so account status, preview, logs, and production deploy commit remain unavailable.
+
+## Environment variables
+
+Set variables in the appropriate Netlify context. Values must be kept in Netlify's secret store and must never be copied into source control or browser bundles.
+
+| Variable name | Use | Exposure |
+|---|---|---|
+| `SITE_URL` | Canonical server-side site origin | Server |
+| `SUPABASE_PROJECT_ID` | Server Supabase project selection | Server |
+| `SUPABASE_URL` | Server Supabase endpoint | Server |
+| `SUPABASE_PUBLISHABLE_KEY` | Server-side public client key | Server config; publishable by design |
+| `SUPABASE_SERVICE_ROLE_KEY` | Privileged server database operations | **Server secret only** |
+| `ADMIN_SESSION_SECRET` | Signs admin session tokens | **Server secret only** |
+| `RAZORPAY_KEY_ID` | Server Razorpay API key ID | Server; public checkout key may be separately exposed |
+| `RAZORPAY_KEY_SECRET` | Razorpay API and payment-signature secret | **Server secret only** |
+| `RAZORPAY_WEBHOOK_SECRET` | Verifies Razorpay webhook signatures | **Server secret only** |
+| `VITE_RAZORPAY_KEY_ID` | Razorpay Checkout browser key ID | Browser-visible key ID only |
+| `RESEND_API_KEY` | Sends transactional email | **Server secret only** |
+| `RESEND_FROM_EMAIL` | Verified transactional sender address | Server |
+| `RESEND_FROM_NAME` | Transactional sender display name | Server |
+
+The project also supports `VITE_SITE_URL`, `VITE_SUPABASE_PROJECT_ID`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_PUBLISHABLE_KEY` build-time aliases. Only publishable values may be exposed through `VITE_` variables. Confirm the authoritative values with the deployment administrator before changing them.
+
+## Build and preview procedure
+
+1. Use Node 22 and pnpm 10.33.0.
+2. Install from the checked-in lockfile with `pnpm install --frozen-lockfile`.
+3. Run `pnpm test`, `pnpm typecheck`, and `pnpm build`.
+4. From the exact reviewed commit, run a Netlify preview deployment using the team's authenticated Netlify CLI or normal Git-based preview workflow.
+5. Set `ROUTE_SMOKE_BASE_URL` to the preview URL and run `pnpm smoke:routes`; resolve or explain the local Netlify Dev 404 using an authenticated preview before release.
+6. Run the isolated integration checklist in [PRODUCTION_TEST_REPORT.md](./PRODUCTION_TEST_REPORT.md). A 200 response alone is not a functional check.
+7. Promote the verified preview through the normal Netlify release process. Confirm the published commit and run the route smoke test against the production domain.
+
+Do not use a preview that points at live payment credentials or sends mail to real customers. Use provider test mode and isolated customer records.
+
+## Rollback
+
+1. Identify the last known-good immutable Netlify deploy in the Netlify deploy history.
+2. Restore that deploy using Netlify's published-deploy rollback action and verify the production domain.
+3. Check compatibility before rolling back code if a database migration has been applied. Do not reverse schema changes or restore a database snapshot without a separately reviewed recovery plan.
+4. Re-run the route smoke test and confirm payment/webhook health after rollback.
+
+The rollback procedure has not been exercised because Netlify deployment access was unavailable.
+
+## Current deployment status
+
+**BLOCKED.** No deployment was initiated. `pnpm --package=netlify-cli dlx netlify status` reports this workstation is not logged in. The Supabase migration inventory command reached the configured production project but returned HTTP 403 for insufficient account privileges. Netlify site linkage, preview URLs, deploy logs, variable contexts, and deployed commit remain to be checked by an authorized project operator.
