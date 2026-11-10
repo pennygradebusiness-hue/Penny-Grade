@@ -4,7 +4,7 @@ import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 
 const TOC: LegalTocItem[] = [
   { id: "enrollment", title: "1. Membership Enrollment & Card Issuance" },
-  { id: "offline-private", title: "2. Verification & Privacy" },
+  { id: "offline-private", title: "2. App-free access & counter verification" },
   { id: "pencode-security", title: "3. Unique PenCode & Card Custody" },
   { id: "non-transferable", title: "4. Personal & Non-Transferable Status" },
   { id: "unlimited-usage", title: "5. Unlimited Visit Frequency" },
@@ -48,20 +48,18 @@ function MembershipTermsPage() {
           PennyGrade offers a six-month physical membership card that provides access to its participating local business network. Each partner's current offer, eligibility, and exclusions are shown on its listing and may vary.
         </p>
         <p className="mt-2">
-          The six-month membership is currently ₹500 and includes one physical membership card. The card features a unique PenCode.
-          Membership privileges commence on the date of card activation and remain valid for the subscribed duration.
+          The current membership price is shown on the product page and at checkout. The six-month plan includes one physical membership card featuring a unique PenCode. Membership privileges commence on the date of card activation and remain valid for the subscribed duration.
         </p>
       </section>
 
       <section id="offline-private" className="scroll-mt-36">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">2. Offline & Private Guarantee</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">2. App-free access & counter verification</h2>
         <p className="mt-2">
           <strong>No Mandatory App Downloads:</strong> PennyGrade does not require you to download invasive mobile apps, 
           grant background location permissions, or maintain complex passwords to save money at local checkouts.
         </p>
         <p className="mt-2">
-          <strong>Privacy at Cashier Counters:</strong> Simply carry your physical card in your wallet. When availing discounts, 
-          you interact with a fast, web-based verification screen that never reveals your phone number or email to restaurant or shop staff.
+          <strong>Counter verification:</strong> Carry your physical card and use PennyGrade's web-based verification flow where supported. The verification screen is designed to show the member and offer details needed for a counter check, rather than displaying your phone number or email to partner staff.
         </p>
       </section>
 

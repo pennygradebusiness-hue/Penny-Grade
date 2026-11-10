@@ -23,7 +23,6 @@ import {
   ShoppingCart,
   Truck,
   CalendarDays,
-  Compass,
   Tag,
 } from "lucide-react";
 import { SiteLayout, PartnerCard } from "@/components/site";
@@ -43,13 +42,15 @@ import {
   buildWebSiteSchema,
   buildFaqSchema,
 } from "@/lib/seo";
+import { getPublicStorefrontMembershipProduct } from "@/lib/orders.functions";
+import { inr } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () =>
     buildPageHead({
-      title: "PennyGrade | Local Privilege & Membership Network",
+      title: "Shop PennyGrade Membership Card | Local Member Privileges",
       description:
-        "A six-month physical membership card connecting members with participating local businesses and their listed benefits in Daltonganj. ₹500.",
+        "Shop the PennyGrade six-month physical membership card online. Explore participating local businesses and their listed member benefits in Daltonganj.",
       path: "/",
       jsonLd: [
         buildOrganizationSchema(),
@@ -70,6 +71,7 @@ export const Route = createFileRoute("/")({
     Promise.all([
       context.queryClient.ensureQueryData(partnersQuery),
       context.queryClient.ensureQueryData(categoriesQuery),
+      getPublicStorefrontMembershipProduct(),
     ]),
   pendingComponent: () => (
     <SiteLayout hideFooterOnMobile>
@@ -114,137 +116,132 @@ const FAQ = [
 export default function Home() {
   const { data: partners } = useSuspenseQuery(partnersQuery);
   const { data: categories } = useSuspenseQuery(categoriesQuery);
+  const [, , product] = Route.useLoaderData();
   const featured = partners.slice(0, 6);
 
   return (
     <SiteLayout>
-      <MobileHome partners={featured} />
       <div className="block">
-        {/* 1. HERO SECTION (Original PennyGrade branding with Bespoke 3D Card Showcase) */}
-        <section className="hidden sm:block relative overflow-hidden bg-gradient-to-b from-white via-orange-50/30 to-white pb-8 pt-5 md:pb-20 md:pt-14">
-          <div className="mx-auto grid max-w-6xl items-center gap-3 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+        {/* Reference-inspired storefront hero */}
+        <section className="relative isolate overflow-hidden bg-[radial-gradient(ellipse_at_76%_42%,rgba(255,237,213,.65),transparent_38%),linear-gradient(180deg,#fff_0%,#fffdfa_76%,#fff7ed_100%)] pb-8 pt-8 sm:pb-14 sm:pt-12 lg:pb-20 lg:pt-16">
+          <div className="pointer-events-none absolute -bottom-28 -left-20 h-56 w-[120%] rotate-[-4deg] rounded-[50%] border-t border-amber-200/60 bg-gradient-to-r from-orange-100/70 via-white/70 to-amber-100/60" />
+          <div className="relative mx-auto grid max-w-[1480px] items-center gap-9 px-5 sm:px-8 lg:grid-cols-[1.08fr_.92fr] lg:gap-12 xl:px-10">
             {/* Left Column: Copy & Actions */}
-            <div>
-              <h1 className="font-display text-[2.45rem] font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-[54px] leading-[1.02]">
-                One Card. <span className="hidden sm:inline">Physical </span>{" "}
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600">
-                  Many Privileges.
-                </span>
+            <div className="relative z-10">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-orange-100/80 px-4 py-2 text-sm font-extrabold text-amber-900">
+                <Tag className="h-4 w-4 text-orange-600" /> Exclusive Local Privileges
+              </div>
+              <h1 className="max-w-[850px] font-display text-[2.65rem] font-black leading-[.99] tracking-[-.045em] text-slate-950 sm:text-5xl lg:text-[clamp(3.2rem,4vw,4.55rem)]">
+                Discover Local Privileges <span className="block">with <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">One Membership Card.</span></span>
               </h1>
 
-              <p className="mt-3 max-w-xl text-[15px] sm:mt-5 sm:text-lg font-medium leading-snug sm:leading-relaxed text-slate-600">
-                Join a local membership network, explore participating businesses, and use the
-                member benefits shown on each partner listing. Membership is ₹500 for six months;
-                eligible offers are applied by the partner when you pay them directly.
+              <p className="mt-5 max-w-[710px] text-base font-medium leading-[1.55] text-slate-700 sm:text-lg">
+                Shop the PennyGrade six-month physical membership card online{product ? ` for ${inr(product.plan.price)}` : ""} and explore participating local businesses offering listed member benefits. Each partner applies benefits under its own terms; customers pay partner businesses directly.
               </p>
 
               {/* 4-column Hero Stats Strip (Real PennyGrade Details) */}
-              <div className="my-5 grid grid-cols-4 gap-1 rounded-3xl bg-white p-3 shadow-card sm:my-7 sm:gap-5 sm:rounded-none sm:bg-transparent sm:p-0 sm:shadow-none">
-                <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-2.5 sm:text-left">
-                  <Store className="h-6 w-6 text-amber-500 shrink-0" />
+              <div className="my-7 grid grid-cols-2 gap-y-5 rounded-3xl bg-white/80 p-4 shadow-[0_10px_35px_rgba(15,23,42,.06)] sm:grid-cols-4 sm:gap-0 sm:rounded-none sm:bg-transparent sm:p-0 sm:shadow-none">
+                <div className="flex items-center gap-3 border-slate-200 sm:border-r sm:px-4 sm:first:pl-0">
+                  <Store className="h-8 w-8 text-orange-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
                       Local
                     </strong>
-                    <span className="text-[12px] font-bold text-slate-500">Partner Network</span>
+                    <span className="text-[12px] font-semibold text-slate-600">Partner Network</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-2.5 sm:text-left">
-                  <Percent className="h-6 w-6 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-3 border-slate-200 sm:border-r sm:px-4">
+                  <Gift className="h-8 w-8 text-orange-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
-                      Listed Offers
+                      Listed
                     </strong>
-                    <span className="text-[12px] font-bold text-slate-500">Terms vary by partner</span>
+                    <span className="text-[12px] font-semibold text-slate-600">Member Offers</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-2.5 sm:text-left">
-                  <Gift className="h-6 w-6 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-3 border-slate-200 sm:border-r sm:px-4">
+                  <CalendarDays className="h-8 w-8 text-orange-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
-                      ₹500
+                      6-Month
                     </strong>
-                    <span className="text-[12px] font-bold text-slate-500">6-Month Pass</span>
+                    <span className="text-[12px] font-semibold text-slate-600">Validity</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-2.5 sm:text-left">
-                  <ShieldCheck className="h-6 w-6 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-3 sm:px-4 sm:pr-0">
+                  <ShieldCheck className="h-8 w-8 text-orange-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
-                      100%
+                      Online
                     </strong>
-                    <span className="text-[12px] font-bold text-slate-500">Online verification</span>
+                    <span className="text-[12px] font-semibold text-slate-600">Membership Verification</span>
                   </div>
                 </div>
               </div>
 
               {/* Dual CTA buttons */}
-              <div className="hidden flex-wrap items-center gap-4 sm:flex">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <Link
-                  to="/checkout"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-8 text-sm font-extrabold text-white shadow-lg shadow-amber-500/30 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-xl hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0"
+                  to="/membership-card"
+                  className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-7 text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(249,115,22,.24)] transition-all hover:-translate-y-0.5 sm:px-9 sm:text-base"
                 >
-                  Become a Member
+                  <ShoppingCart className="h-5 w-5" /> Shop Membership Card <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   to="/partners"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-xl border-2 border-slate-900 bg-white px-8 text-sm font-extrabold text-slate-900 shadow-xs transition-all hover:bg-slate-900 hover:text-white hover:-translate-y-0.5 active:translate-y-0"
+                  className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-full border-2 border-slate-900 bg-white px-7 text-sm font-extrabold text-slate-900 transition-all hover:bg-slate-900 hover:text-white sm:px-9 sm:text-base"
                 >
-                  View Businesses
+                  <Store className="h-5 w-5" /> View Partner Businesses
                 </Link>
               </div>
             </div>
 
             {/* Right Column: Custom 3D Physical Card Showcase with Ambient Orbit Rings */}
-            <div className="relative flex min-h-[180px] items-center justify-center sm:min-h-[480px]">
+            <div className="relative flex min-h-[270px] items-center justify-center sm:min-h-[400px] lg:min-h-[520px]">
               {/* Ambient Warm Golden Halo Glow */}
-              <div className="absolute hidden h-[340px] w-[340px] rounded-full bg-gradient-to-tr from-amber-400/25 via-amber-200/20 to-orange-400/10 blur-3xl sm:block sm:h-[420px] sm:w-[420px]" />
+              <div className="absolute h-[260px] w-[260px] rounded-full bg-gradient-to-tr from-amber-400/30 via-amber-200/25 to-orange-400/10 blur-2xl sm:h-[380px] sm:w-[380px] lg:h-[490px] lg:w-[490px]" />
 
               {/* Concentric Luxury Orbital Rings */}
-              <div className="absolute hidden h-[320px] w-[320px] rounded-full border border-amber-300/40 bg-amber-50/50 sm:block sm:h-[400px] sm:w-[400px]" />
-              <div className="absolute hidden h-[260px] w-[260px] rounded-full border border-dashed border-amber-400/30 sm:block sm:h-[330px] sm:w-[330px]" />
+              <div className="absolute h-[240px] w-[240px] rounded-full border border-amber-300/50 bg-amber-50/40 sm:h-[350px] sm:w-[350px] lg:h-[440px] lg:w-[440px]" />
+              <div className="absolute h-[200px] w-[200px] rounded-full border border-amber-300/40 sm:h-[300px] sm:w-[300px] lg:h-[390px] lg:w-[390px]" />
 
               {/* Centerpiece 3D Card Visual with Interactive Lift */}
-              <div className="relative z-10 w-full max-w-[420px] transition-transform duration-300 hover:scale-[1.03] [&>div]:!rounded-2xl">
-                <PhysicalCardPreview priority className="shadow-[0_25px_50px_-12px_rgba(245,158,11,0.25)] ring-2 ring-amber-400/50" />
+              <div className="relative z-10 w-[88%] max-w-[550px] rotate-[-5deg] transition-transform duration-300 hover:rotate-[-2deg] hover:scale-[1.02] [&>div]:!rounded-2xl">
+                <div className="absolute -bottom-8 left-[-8%] right-[-8%] -z-10 h-16 rounded-[50%] border border-orange-200 bg-gradient-to-b from-white to-orange-50 shadow-[0_18px_24px_rgba(249,115,22,.2)]" />
+                <PhysicalCardPreview priority interactive={false} className="shadow-[0_30px_50px_-12px_rgba(15,23,42,.35)] ring-2 ring-amber-400/60" />
 
                 {/* Floating Glassmorphic Privilege Badges */}
                 {/* Badge 1: Top Right - Discount Offer */}
-                <div className="absolute -top-2 right-0 z-20 flex items-center gap-2 rounded-xl border border-amber-300/60 bg-white/95 px-2 py-1.5 shadow-xl shadow-amber-500/10 backdrop-blur-md sm:-top-4 sm:-right-4 sm:rounded-2xl sm:px-3.5 sm:py-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-xs">
-                    <Percent className="h-4 w-4" />
+                <div className="absolute -top-5 -right-2 z-20 flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 shadow-xl sm:-top-8 sm:-right-5 sm:gap-3 sm:px-4 sm:py-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
+                    <CalendarDays className="h-5 w-5" />
                   </div>
                   <div>
                     <span className="block text-[11px] font-extrabold text-slate-900">
-                      Partner offers
+                      6-Month
                     </span>
                     <span className="block text-[9px] font-semibold text-slate-500">
-                      Dining & Retail
+                      Membership
                     </span>
                   </div>
                 </div>
 
                 {/* Badge 2: Bottom Left - Zero App / Offline Ease */}
-                <div className="absolute -bottom-2 left-0 z-20 flex items-center gap-2 rounded-xl border border-emerald-300/60 bg-white/95 px-2 py-1.5 shadow-xl shadow-emerald-500/10 backdrop-blur-md sm:-bottom-4 sm:-left-4 sm:rounded-2xl sm:px-3.5 sm:py-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xs">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <span className="block text-[11px] font-extrabold text-slate-900">
-                      Physical Membership Card
-                    </span>
-                    <span className="block text-[9px] font-semibold text-slate-500">
-                      Online verification
-                    </span>
-                  </div>
-                </div>
-
-                {/* Badge 3: Center Bottom Mini Tag */}
-                <div className="absolute -bottom-8 right-6 z-20 hidden sm:flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-bold text-amber-300 shadow-md">
-                  <span>6-Month Membership</span>
-                </div>
               </div>
             </div>
+          </div>
+          <div className="relative mx-auto mt-8 grid max-w-[1480px] grid-cols-2 gap-y-4 rounded-3xl border border-slate-200 bg-white/90 px-4 py-5 shadow-[0_14px_40px_rgba(15,23,42,.06)] sm:mt-12 sm:grid-cols-4 sm:gap-0 sm:px-7 sm:py-6 lg:mt-10">
+            {[
+              [Truck, "Physical Card Delivery", "Currently in Daltonganj, Jharkhand"],
+              [ShieldCheck, "Secure Checkout", "Payment availability shown at checkout"],
+              [ArrowRight, "Cancellation & Refund", "See our published policy"],
+              [HelpCircle, "Member Support", "For card, delivery and membership help"],
+            ].map(([Icon, title, detail], index) => (
+              <div key={String(title)} className={`flex items-center gap-3 px-2 sm:px-5 ${index < 3 ? "sm:border-r sm:border-slate-200" : ""}`}>
+                <Icon className="h-7 w-7 shrink-0 text-orange-500 sm:h-8 sm:w-8" />
+                <div><strong className="block text-xs font-extrabold text-slate-900 sm:text-sm">{String(title)}</strong><span className="mt-1 block text-[10px] leading-snug text-slate-600 sm:text-xs">{String(detail)}</span></div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -259,7 +256,7 @@ export default function Home() {
                 Why Choose PennyGrade?
               </h2>
               <p className="mt-4 text-xs font-semibold text-slate-500 sm:text-sm">
-                Exclusive in-person savings and trusted local privileges for smart members.
+                Review the current listings and eligibility terms for participating local businesses.
               </p>
             </div>
 
@@ -267,33 +264,33 @@ export default function Home() {
               {[
                 {
                   icon: Percent,
-                  title: "Exclusive Vouchers",
-                  desc: "Review current partner offers and eligibility terms before visiting.",
+                  title: "Partner Offers",
+                  desc: "Review the benefits and eligibility terms shown on each current partner listing.",
                 },
                 {
                   icon: Utensils,
-                  title: "Dining Savings",
-                  desc: "Enjoy 10% to 30% off at top cafés, rooftop restaurants, and bistros.",
+                  title: "Dining",
+                  desc: "Explore participating food and dining businesses in the local directory.",
                 },
                 {
                   icon: ShoppingBag,
-                  title: "Shopping Offers",
-                  desc: "Save on branded fashion, ethnic wear, footwear, and lifestyle stores.",
+                  title: "Shopping",
+                  desc: "Check current participating retail listings and their individual terms.",
                 },
                 {
                   icon: Sparkles,
-                  title: "Wellness Benefits",
-                  desc: "Special rates at luxury salons, spas, fitness gyms, and wellness centers.",
+                  title: "Wellness",
+                  desc: "Find any listed wellness businesses and review their current member benefits.",
                 },
                 {
                   icon: Gamepad2,
-                  title: "Entertainment",
-                  desc: "Privileges at amusement parks, adventure zones, and stay vacations.",
+                  title: "Leisure",
+                  desc: "Browse participating leisure businesses and check the offer conditions before visiting.",
                 },
                 {
-                  icon: QrCode,
-                  title: "QR Based Redemption",
-                  desc: "Scan counter standee, verify instantly on your phone with live timer.",
+                  icon: ShieldCheck,
+                  title: "Membership Verification",
+                  desc: "Use the online membership verification flow where it is supported.",
                 },
               ].map((b, i) => (
                 <article
@@ -362,8 +359,8 @@ export default function Home() {
                     Explore Partner Businesses
                   </h3>
                   <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                    Browse verified restaurants, shopping outlets, salons, gyms, hotels and family
-                    entertainment venues.
+                    Browse participating local businesses and review each listing's current
+                    information and member benefit terms.
                   </p>
                 </div>
               </article>
@@ -555,12 +552,12 @@ export default function Home() {
                   <span className="text-xs uppercase tracking-wider text-amber-400 font-bold">
                     6-Month Membership
                   </span>
-                  <div className="font-display text-4xl font-extrabold text-white">₹500</div>
+                  <div className="font-display text-4xl font-extrabold text-white">{product ? inr(product.plan.price) : "Price unavailable"}</div>
                   <Link
-                    to="/become-a-member"
+                    to="/membership-card"
                     className="mt-4 inline-flex min-h-[42px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-xs font-bold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35"
                   >
-                    Apply For Card (₹500 / 6 Mo)
+                    View Membership Card
                   </Link>
                 </div>
               </div>
@@ -689,10 +686,10 @@ export default function Home() {
             <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
               <div>
                 <h2 className="font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
-                  Recently Added Partner Businesses
+                  Participating Partner Businesses
                 </h2>
                 <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
-                  Discover popular cafes, restaurants, fashion outlets and salons in your city.
+                  Browse participating local businesses and their published information.
                 </p>
               </div>
               <Link
@@ -846,122 +843,5 @@ export default function Home() {
         </section>
       </div>
     </SiteLayout>
-  );
-}
-
-function MobileHome({ partners }: { partners: PublicPartner[] }) {
-  const steps = [
-    [ShoppingCart, "1. Buy", "Your Card"],
-    [Truck, "2. Receive", "at Your Doorstep"],
-    [Store, "3. Visit", "Partner Businesses"],
-    [Tag, "4. Show Card", "& Save"],
-  ] as const;
-  return (
-    <div className="mobile-home bg-white sm:hidden">
-      <section className="bg-gradient-to-br from-white via-orange-50/50 to-white px-5 pb-5 pt-6">
-        <div className="grid grid-cols-[1.12fr_.88fr] items-center gap-2">
-          <div>
-            <h1 className="text-[2rem] font-black leading-[.98] tracking-tight text-slate-950">
-              One Card.<span className="block text-orange-500">Many Privileges.</span>
-            </h1>
-            <p className="mt-3 text-[13px] font-medium leading-[1.35] text-slate-800">
-              Get a six-month physical membership card and explore participating businesses and
-              their listed member benefits in Daltonganj.
-            </p>
-          </div>
-          <PhysicalCardPreview interactive={false} className="rotate-[-5deg] shadow-xl" />
-        </div>
-        <div className="mt-4 grid grid-cols-4 divide-x divide-slate-300 rounded-[1.6rem] bg-white px-1 py-3 text-center shadow-[0_8px_24px_rgba(15,23,42,.1)]">
-          {[
-            [Store, "Local", "Partner Network"],
-            [Percent, "Listed", "Partner Benefits"],
-            [CalendarDays, "6-Month", "Membership"],
-            [CreditCard, "100%", "Offline Card"],
-          ].map(([Icon, value, detail]) => (
-            <div key={String(detail)} className="flex flex-col items-center px-1 text-slate-900">
-              <Icon className="mb-1 h-7 w-7 text-orange-500" />
-              <strong className="text-[12px] font-black leading-tight">{String(value)}</strong>
-              <span className="text-[11px] leading-tight">{String(detail)}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 grid grid-cols-[1.2fr_1fr] gap-2.5 max-[360px]:grid-cols-1">
-          <Link
-            to="/checkout"
-            className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 text-center text-[14px] font-extrabold text-white shadow-lg"
-          >
-            <CreditCard className="h-6 w-6 shrink-0" />
-            Buy Your Card – ₹500 <ArrowRight className="h-4 w-4 shrink-0" />
-          </Link>
-          <Link
-            to="/partners"
-            className="flex min-h-[56px] items-center justify-center gap-2 rounded-full border-2 border-slate-900 px-2 text-center text-[13px] font-extrabold text-slate-900"
-          >
-            <Compass className="h-6 w-6 shrink-0" />
-            Explore Businesses
-          </Link>
-        </div>
-      </section>
-      <section className="mx-5 rounded-[1.6rem] bg-gradient-to-br from-orange-50 to-white px-3 py-4 shadow-[0_8px_24px_rgba(15,23,42,.08)]">
-        <h2 className="mb-3 text-center text-[21px] font-black tracking-tight text-slate-950">
-          How It Works
-        </h2>
-        <div className="grid grid-cols-4 gap-1 text-center">
-          {steps.map(([Icon, title, detail]) => (
-            <div key={title} className="flex flex-col items-center">
-              <span className="mb-1 grid h-14 w-14 place-items-center rounded-full bg-amber-100 text-orange-500">
-                <Icon className="h-8 w-8" />
-              </span>
-              <strong className="text-[11px] font-extrabold leading-tight">{title}</strong>
-              <span className="text-[11px] leading-tight">{detail}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="mt-5">
-        <div className="mb-3 flex items-center justify-between px-5">
-          <h2 className="text-[21px] font-black tracking-tight text-slate-950">
-            Popular Partner Businesses
-          </h2>
-          <Link to="/partners" className="shrink-0 text-sm font-extrabold text-orange-500">
-            View All →
-          </Link>
-        </div>
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 scrollbar-hide">
-          {partners.slice(0, 3).map((p) => (
-            <div key={p.id} className="w-[72%] shrink-0 snap-center">
-              <PartnerCard p={p} />
-            </div>
-          ))}
-        </div>
-        <div className="mt-1 flex justify-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-orange-500" />
-          <span className="h-3 w-3 rounded-full bg-orange-100" />
-          <span className="h-3 w-3 rounded-full bg-orange-100" />
-        </div>
-      </section>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/15 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 px-2 py-2 text-white shadow-[0_-8px_30px_rgba(15,23,42,0.24)] sm:px-3">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-1 sm:gap-2">
-          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-            <CreditCard className="h-7 w-7 shrink-0 text-orange-500 sm:h-8 sm:w-8" />
-            <div>
-              <p className="whitespace-nowrap text-[11px] font-extrabold sm:text-sm">
-                Buy PennyGrade Card
-              </p>
-              <p className="whitespace-nowrap text-[10px] text-slate-300 sm:text-[11px]">
-                ₹500 · 6-Month Validity
-              </p>
-            </div>
-          </div>
-          <span className="h-10 w-px bg-white/30" />
-          <Link
-            to="/checkout"
-            className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2 text-[11px] font-extrabold text-white sm:min-h-10 sm:gap-2 sm:px-5 sm:text-sm"
-          >
-            Get Started <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </div>
   );
 }

@@ -13,12 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as BecomeAMemberRouteImport } from './routes/become-a-member'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MembershipCardRouteImport } from './routes/membership-card'
 import { Route as MembershipTermsRouteImport } from './routes/membership-terms'
 import { Route as MerchantAgreementRouteImport } from './routes/merchant-agreement'
 import { Route as OffersRouteImport } from './routes/offers'
@@ -81,6 +83,11 @@ const BecomeAMemberRoute = BecomeAMemberRouteImport.update({
   path: '/become-a-member',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
@@ -109,6 +116,11 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipCardRoute = MembershipCardRouteImport.update({
+  id: '/membership-card',
+  path: '/membership-card',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MembershipTermsRoute = MembershipTermsRouteImport.update({
@@ -342,12 +354,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/membership-card': typeof MembershipCardRoute
   '/membership-terms': typeof MembershipTermsRoute
   '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
@@ -395,12 +409,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/membership-card': typeof MembershipCardRoute
   '/membership-terms': typeof MembershipTermsRoute
   '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
@@ -449,12 +465,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/become-a-member': typeof BecomeAMemberRoute
+  '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
   '/history': typeof HistoryRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/membership-card': typeof MembershipCardRoute
   '/membership-terms': typeof MembershipTermsRoute
   '/merchant-agreement': typeof MerchantAgreementRoute
   '/offers': typeof OffersRoute
@@ -504,12 +522,14 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/become-a-member'
+    | '/cart'
     | '/checkout'
     | '/contact'
     | '/disclaimer'
     | '/history'
     | '/how-it-works'
     | '/login'
+    | '/membership-card'
     | '/membership-terms'
     | '/merchant-agreement'
     | '/offers'
@@ -557,12 +577,14 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/become-a-member'
+    | '/cart'
     | '/checkout'
     | '/contact'
     | '/disclaimer'
     | '/history'
     | '/how-it-works'
     | '/login'
+    | '/membership-card'
     | '/membership-terms'
     | '/merchant-agreement'
     | '/offers'
@@ -610,12 +632,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/become-a-member'
+    | '/cart'
     | '/checkout'
     | '/contact'
     | '/disclaimer'
     | '/history'
     | '/how-it-works'
     | '/login'
+    | '/membership-card'
     | '/membership-terms'
     | '/merchant-agreement'
     | '/offers'
@@ -665,12 +689,14 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   BecomeAMemberRoute: typeof BecomeAMemberRoute
+  CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
   DisclaimerRoute: typeof DisclaimerRoute
   HistoryRoute: typeof HistoryRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
+  MembershipCardRoute: typeof MembershipCardRoute
   MembershipTermsRoute: typeof MembershipTermsRoute
   MerchantAgreementRoute: typeof MerchantAgreementRoute
   OffersRoute: typeof OffersRoute
@@ -725,6 +751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BecomeAMemberRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout': {
       id: '/checkout'
       path: '/checkout'
@@ -765,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-card': {
+      id: '/membership-card'
+      path: '/membership-card'
+      fullPath: '/membership-card'
+      preLoaderRoute: typeof MembershipCardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/membership-terms': {
@@ -1127,12 +1167,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   BecomeAMemberRoute: BecomeAMemberRoute,
+  CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
   DisclaimerRoute: DisclaimerRoute,
   HistoryRoute: HistoryRoute,
   HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,
+  MembershipCardRoute: MembershipCardRoute,
   MembershipTermsRoute: MembershipTermsRoute,
   MerchantAgreementRoute: MerchantAgreementRoute,
   OffersRoute: OffersRoute,

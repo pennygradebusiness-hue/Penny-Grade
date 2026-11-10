@@ -29,8 +29,8 @@ function AboutPage() {
         <section>
           <h2 className="text-xl font-bold text-slate-900">What membership includes</h2>
           <p className="mt-2">
-            The ₹500 membership includes one physical card and six months of membership access from
-            activation. Members can browse participating local businesses, check the offer and
+            The six-month membership includes one physical card and the current fee is shown on the
+            product page before checkout. Members can browse participating local businesses, check the offer and
             eligibility terms shown on each listing, and verify membership online where supported.
             Partner offers may change; the listing and partner's stated conditions apply.
           </p>
@@ -53,11 +53,10 @@ function AboutPage() {
           </p>
         </section>
         <section>
-          <h2 className="text-xl font-bold text-slate-900">Operator and service area</h2>
+          <h2 className="text-xl font-bold text-slate-900">Service area</h2>
           <p className="mt-2">
-            PennyGrade is operated by Samir Pandey (proprietor / operating entity), with an
-            administrative desk in Daltonganj, Palamu, Jharkhand 822101. Membership card delivery is
-            currently available in Daltonganj, Jharkhand. For help, visit our{" "}
+            Membership card delivery is currently available in Daltonganj, Jharkhand. Contact the
+            PennyGrade support team for membership and order assistance; see our{" "}
             <Link to="/contact" className="font-semibold text-primary underline">
               Contact page
             </Link>

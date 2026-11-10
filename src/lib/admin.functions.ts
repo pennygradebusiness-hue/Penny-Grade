@@ -96,6 +96,12 @@ function getServiceRoleClient() {
   return db;
 }
 
+/** Production admin reads must never hide a Supabase outage by returning a local snapshot. */
+function failClosedForProductionStoreFallback(operation: string, error?: unknown): never {
+  const detail = error instanceof Error ? `: ${error.message}` : "";
+  throw new Error(`${operation} failed against Supabase${detail}`);
+}
+
 function isDuplicateAuthEmailError(error: { code?: string; message?: string } | null) {
   if (!error) return false;
   return (
@@ -2399,7 +2405,13 @@ export const getAdminOrders = createServerFn({ method: "GET" }).handler(
           }));
         }
       } catch (err) {
-        console.warn("[getAdminOrders] DB query error, falling back to store:", err);
+        if (process.env.NODE_ENV === "production") {
+          return failClosedForProductionStoreFallback("Loading admin orders", err);
+        }
+        console.warn("[getAdminOrders] DB query error, using development store:", err);
+      }
+      if (process.env.NODE_ENV === "production") {
+        return failClosedForProductionStoreFallback("Loading admin orders");
       }
     }
 
@@ -2724,7 +2736,13 @@ export const getAdminEmailLogs = createServerFn({ method: "GET" }).handler(
           return data;
         }
       } catch (err) {
-        console.warn("[getAdminEmailLogs] DB error:", err);
+        if (process.env.NODE_ENV === "production") {
+          return failClosedForProductionStoreFallback("Loading admin email logs", err);
+        }
+        console.warn("[getAdminEmailLogs] DB error, using development store:", err);
+      }
+      if (process.env.NODE_ENV === "production") {
+        return failClosedForProductionStoreFallback("Loading admin email logs");
       }
     }
 
@@ -2804,7 +2822,13 @@ export const getAdminOrderStats = createServerFn({ method: "GET" }).handler(
           return data;
         }
       } catch (err) {
-        console.warn("[getAdminOrderStats] Stored procedure fallback:", err);
+        if (process.env.NODE_ENV === "production") {
+          return failClosedForProductionStoreFallback("Loading admin order statistics", err);
+        }
+        console.warn("[getAdminOrderStats] Using development store after RPC failure:", err);
+      }
+      if (process.env.NODE_ENV === "production") {
+        return failClosedForProductionStoreFallback("Loading admin order statistics");
       }
     }
 

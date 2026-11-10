@@ -113,6 +113,54 @@ export type PublicCategory = {
   sort_order: number;
 };
 
+export type PublicStorefrontPlan = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  duration_days: number;
+  benefits: string[];
+  card_included: boolean;
+  status: string;
+};
+
+/** Read only the single active physical six-month card plan through the publishable client. */
+export async function getPublicStorefrontPlan(): Promise<PublicStorefrontPlan | null> {
+  const { data, error } = await (pub() as any)
+    .from("membership_plans")
+    .select("id,name,description,price,duration_days,benefits,card_included,status")
+    .eq("status", "ACTIVE")
+    .eq("card_included", true)
+    .eq("duration_days", 180)
+    .order("price", { ascending: true });
+
+  if (error) {
+    console.warn("[getPublicStorefrontPlan] Public plan catalog unavailable:", error.message);
+    return null;
+  }
+  if (!Array.isArray(data) || data.length !== 1) {
+    console.warn("[getPublicStorefrontPlan] Expected exactly one active six-month card plan.");
+    return null;
+  }
+  const row = data[0];
+  const price = Number(row.price);
+  if (!Number.isFinite(price) || price <= 0) {
+    console.warn("[getPublicStorefrontPlan] Active storefront plan has an invalid price.");
+    return null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    price,
+    duration_days: row.duration_days,
+    benefits: Array.isArray(row.benefits) ? row.benefits : [],
+    card_included: row.card_included,
+    status: row.status,
+  };
+}
+
 export type PrebookingCampaign = {
   id: string; title: string; slug: string; summary: string; description: string;
   benefits: string[]; amount: number; booking_opens_at: string; booking_closes_at: string;

@@ -64,8 +64,7 @@ function TermsPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">2. Key Definitions</h2>
         <ul className="mt-2 list-disc pl-5 space-y-2">
           <li>
-            <strong>&ldquo;PennyGrade&rdquo;, &ldquo;We&rdquo;, &ldquo;Us&rdquo;, or &ldquo;Our&rdquo;:</strong> Refers to the operating 
-            enterprise and proprietary platform managed by Samir Pandey and authorized operating entities behind pennygrade.in.
+            <strong>&ldquo;PennyGrade&rdquo;, &ldquo;We&rdquo;, &ldquo;Us&rdquo;, or &ldquo;Our&rdquo;:</strong> Refers to the membership and physical-card service presented through pennygrade.in. The legal merchant identity should match the details supplied in the payment-provider application and customer payment records.
           </li>
           <li>
             <strong>&ldquo;Member&rdquo; or &ldquo;You&rdquo;:</strong> An individual who has validly acquired a PennyGrade physical 
@@ -238,7 +237,7 @@ function TermsPage() {
         </p>
         <div className="mt-3 rounded-xl border border-border bg-muted/40 p-4 text-xs space-y-1.5">
           <p><strong>Designation:</strong> Customer Support &amp; Grievance Redressal Desk</p>
-          <p><strong>Operating Entity:</strong> PennyGrade (Samir Pandey, Proprietor / Operating Entity)</p>
+          <p><strong>Service:</strong> PennyGrade membership and physical-card service</p>
           <p><strong>Email:</strong> <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a></p>
           <p><strong>Helpline:</strong> <a href="tel:+919356897893" className="text-primary underline">+91 93568 97893</a></p>
           <p><strong>Postal Address:</strong> Daltonganj, Palamu, Jharkhand - 822101, India</p>

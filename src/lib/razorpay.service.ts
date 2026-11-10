@@ -49,13 +49,17 @@ export function isRazorpayPaymentCaptured(payment: RazorpayPaymentResponse): boo
 }
 
 export function isRazorpayConfigured(): boolean {
-  return Boolean(
-    /^rzp_(test|live)_/.test(process.env.RAZORPAY_KEY_ID || "") && process.env.RAZORPAY_KEY_SECRET,
-  );
+  const keyId = process.env.RAZORPAY_KEY_ID || "";
+  return Boolean(/^rzp_(test|live)_/.test(keyId) && process.env.RAZORPAY_KEY_SECRET && isLiveRazorpayEnabled(keyId));
+}
+
+export function isLiveRazorpayEnabled(keyId = process.env.RAZORPAY_KEY_ID || ""): boolean {
+  return !keyId.startsWith("rzp_live_") || process.env.RAZORPAY_LIVE_PAYMENTS_APPROVED === "true";
 }
 
 export function getPublicRazorpayKeyId(): string {
-  return process.env.RAZORPAY_KEY_ID || "";
+  const keyId = process.env.RAZORPAY_KEY_ID || "";
+  return isLiveRazorpayEnabled(keyId) ? keyId : "";
 }
 
 function isNetworkTimeout(error: unknown): boolean {
@@ -283,6 +287,12 @@ export async function createRazorpayOrder(
   if (!keyId || !keySecret || !/^rzp_(test|live)_/.test(keyId)) {
     throw new Error(
       "Razorpay is not configured. Set a valid RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.",
+    );
+  }
+
+  if (!isLiveRazorpayEnabled(keyId)) {
+    throw new Error(
+      "Live payments are disabled until the merchant account and product are approved. Configure RAZORPAY_LIVE_PAYMENTS_APPROVED=true only after approval.",
     );
   }
 
