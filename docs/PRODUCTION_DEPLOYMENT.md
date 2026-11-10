@@ -26,6 +26,7 @@ Set variables in the appropriate Netlify context. Values must be kept in Netlify
 | `ADMIN_SESSION_SECRET` | Signs admin session tokens | **Server secret only** |
 | `RAZORPAY_KEY_ID` | Server Razorpay API key ID | Server; public checkout key may be separately exposed |
 | `RAZORPAY_KEY_SECRET` | Razorpay API and payment-signature secret | **Server secret only** |
+| `RAZORPAY_LIVE_PAYMENTS_APPROVED` | Explicit gate for live payment order creation; keep `false` until the merchant account and exact product are approved | Server; exact value `true` enables live collection |
 | `RAZORPAY_WEBHOOK_SECRET` | Verifies Razorpay webhook signatures | **Server secret only** |
 | `VITE_RAZORPAY_KEY_ID` | Razorpay Checkout browser key ID | Browser-visible key ID only |
 | `RESEND_API_KEY` | Sends transactional email | **Server secret only** |

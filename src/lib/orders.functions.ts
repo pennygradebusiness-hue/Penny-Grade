@@ -12,6 +12,66 @@ import {
 
 export type { PublicPlan, CheckoutInput };
 
+export type StorefrontMembershipProduct = {
+  plan: PublicPlan;
+  availability: "IN_STOCK" | "OUT_OF_STOCK" | "UNCONFIRMED";
+  paymentEnabled: boolean;
+};
+
+/** A single, verified physical-card plan for the public product page. */
+export const getPublicStorefrontMembershipProduct = createServerFn({ method: "GET" }).handler(
+  async (): Promise<StorefrontMembershipProduct | null> => {
+    try {
+      const { getServiceRoleClient } = await import("./supabase-admin.server");
+      const { isRazorpayConfigured } = await import("./razorpay.service");
+      const db = getServiceRoleClient();
+      if (!db) return null;
+
+      const { data: plans, error: plansError } = await db
+        .from("membership_plans")
+        .select("id, name, description, price, duration_days, benefits, card_included, status")
+        .eq("status", "ACTIVE")
+        .eq("card_included", true)
+        .eq("duration_days", 180)
+        .order("price", { ascending: true });
+
+      // A product page must not silently choose between multiple plans or
+      // substitute a hard-coded price when the authoritative catalog fails.
+      if (plansError || !plans || plans.length !== 1) return null;
+      const row = plans[0];
+      const price = Number(row.price);
+      if (!Number.isFinite(price) || price <= 0) return null;
+
+      const { count, error: inventoryError } = await db
+        .from("physical_cards")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "AVAILABLE");
+
+      return {
+        plan: {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          price,
+          duration_days: row.duration_days,
+          benefits: row.benefits || DEFAULT_PLANS[0].benefits,
+          card_included: row.card_included ?? true,
+          status: row.status,
+        },
+        availability: inventoryError || count === null
+          ? "UNCONFIRMED"
+          : count > 0
+            ? "IN_STOCK"
+            : "OUT_OF_STOCK",
+        paymentEnabled: isRazorpayConfigured(),
+      };
+    } catch (error) {
+      console.warn("[getPublicStorefrontMembershipProduct] Product catalog unavailable:", error);
+      return null;
+    }
+  },
+);
+
 /**
  * 1. Public catalog read for active membership plans
  */
@@ -27,8 +87,9 @@ export const getPublicMembershipPlans = createServerFn({ method: "GET" }).handle
           .eq("status", "ACTIVE")
           .order("price", { ascending: true });
 
-        if (!error && data && data.length > 0) {
-          return data.map((p) => ({
+        const cardPlans = (data || []).filter((p) => p.card_included === true && p.duration_days === 180);
+        if (!error && cardPlans.length === 1) {
+          return cardPlans.map((p) => ({
             id: p.id,
             name: p.name,
             description: p.description,
@@ -41,9 +102,9 @@ export const getPublicMembershipPlans = createServerFn({ method: "GET" }).handle
         }
       }
     } catch (err) {
-      console.warn("[getPublicMembershipPlans] Fallback to default plans:", err);
+      console.warn("[getPublicMembershipPlans] Active plan catalog unavailable:", err);
     }
-    return DEFAULT_PLANS;
+    return [];
   },
 );
 

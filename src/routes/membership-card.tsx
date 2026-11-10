@@ -5,15 +5,17 @@ import { SiteLayout } from "@/components/site";
 import { PhysicalCardPreview } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { inr } from "@/lib/format";
-import { isMembershipCardInCart, setMembershipCardInCart } from "@/lib/product-cart";
+import { getMembershipCartPlanId, setMembershipCardInCart } from "@/lib/product-cart";
 import { buildBreadcrumbSchema, buildPageHead, getSiteUrl } from "@/lib/seo";
+import { getPublicStorefrontMembershipProduct } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/membership-card")({
-  head: () =>
+  loader: () => getPublicStorefrontMembershipProduct(),
+  head: ({ loaderData }) =>
     buildPageHead({
-      title: "PennyGrade 6-Month Membership Card | ₹500",
+      title: "PennyGrade 6-Month Membership Card",
       description:
-        "Shop the PennyGrade physical six-month membership card for ₹500. Review included membership access, Daltonganj delivery, and partner offer terms before ordering.",
+        "Shop the PennyGrade physical six-month membership card. Review the current price, included membership access, Daltonganj delivery, and partner offer terms before ordering.",
       path: "/membership-card",
       jsonLd: [
         buildBreadcrumbSchema([
@@ -31,7 +33,7 @@ export const Route = createFileRoute("/membership-card")({
           offers: {
             "@type": "Offer",
             priceCurrency: "INR",
-            price: "500",
+            ...(loaderData ? { price: String(loaderData.plan.price) } : {}),
             url: `${getSiteUrl()}/membership-card`,
           },
         },
@@ -42,14 +44,26 @@ export const Route = createFileRoute("/membership-card")({
 
 function MembershipCardProductPage() {
   const navigate = useNavigate();
+  const product = Route.useLoaderData();
   const [inCart, setInCart] = useState(false);
 
-  useEffect(() => setInCart(isMembershipCardInCart()), []);
+  useEffect(() => setInCart(Boolean(product && getMembershipCartPlanId() === product.plan.id)), [product]);
 
   const addToCart = () => {
-    setMembershipCardInCart(true);
+    if (!product || product.availability !== "IN_STOCK") return;
+    setMembershipCardInCart(product.plan.id);
     setInCart(true);
   };
+
+  const availabilityText = !product
+    ? "Purchase is temporarily unavailable while the active membership plan is being confirmed."
+    : !product.paymentEnabled
+      ? "Online payment is currently unavailable. Please contact PennyGrade before placing an order."
+    : product.availability === "IN_STOCK"
+      ? "Available cards are currently in stock; availability is checked again before payment."
+      : product.availability === "OUT_OF_STOCK"
+        ? "Temporarily out of stock. No payment can be started until card inventory is available."
+        : "Card availability could not be confirmed. Please try again later.";
 
   return (
     <SiteLayout>
@@ -80,7 +94,7 @@ function MembershipCardProductPage() {
             </p>
 
             <div className="mt-6 flex items-baseline gap-3">
-              <span className="text-3xl font-black text-slate-950">{inr(500)}</span>
+            <span className="text-3xl font-black text-slate-950">{product ? inr(product.plan.price) : "Price unavailable"}</span>
               <span className="text-sm text-slate-500">one card · six months</span>
             </div>
 
@@ -114,16 +128,17 @@ function MembershipCardProductPage() {
             </div>
 
             <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-              Card availability is checked before payment is initialized. PennyGrade confirms the card assignment after payment verification. Delivery timing is not guaranteed; contact support before ordering if you need a current estimate.
+              {availabilityText} PennyGrade confirms card assignment only after payment verification. Delivery timing is not guaranteed; contact support before ordering if you need a current estimate.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button onClick={addToCart} variant="outline" className="min-h-12 flex-1 border-slate-300 text-slate-900">
+              <Button onClick={addToCart} disabled={!product || !product.paymentEnabled || product.availability !== "IN_STOCK"} variant="outline" className="min-h-12 flex-1 border-slate-300 text-slate-900">
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 {inCart ? "Added to Cart" : "Add to Cart"}
               </Button>
               <Button
-                onClick={() => navigate({ to: "/checkout" })}
+                disabled={!product || !product.paymentEnabled || product.availability !== "IN_STOCK"}
+                onClick={() => product && navigate({ to: "/checkout", search: { planId: product.plan.id } })}
                 className="min-h-12 flex-1 bg-gradient-to-r from-amber-500 to-orange-500 font-extrabold text-white hover:from-amber-600 hover:to-orange-600"
               >
                 Buy Now <ArrowRight className="ml-2 h-4 w-4" />

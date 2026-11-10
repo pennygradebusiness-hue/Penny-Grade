@@ -4,19 +4,20 @@ Status snapshot: repository review and local implementation only. This is not an
 
 ## Website and purchase flow implemented in this repository
 
-- A dedicated PennyGrade physical membership card product page with ₹500 price, six-month term, included features, delivery-area disclosure, inventory/payment explanation, and links to shipping, refund, membership, and partner information.
-- One-product cart, remove-item action, order summary, and direct Buy Now / checkout path. The cart stores only the one product flag in the browser; it does not create orders or allocate card numbers.
-- Existing checkout collects customer contact and delivery details, accepts the published terms, checks card stock before payment initialization, and uses the active plan amount on the server when creating an order.
+- A dedicated PennyGrade physical membership card product page showing the sole active 180-day card-included plan's live server-side price, actual inventory status (without exposing counts), included features, delivery-area disclosure, and policy links. If plan, inventory, or payment status cannot be verified, purchase actions are disabled instead of displaying fallback data.
+- One-product cart, remove-item action, order summary, and direct Buy Now / checkout path. The cart stores only the selected active plan ID in the browser; it does not create orders or allocate card numbers.
+- Existing checkout collects customer contact and delivery details, accepts the published terms, checks card stock before payment initialization, and uses the selected active plan amount on the server when creating an order. The product-to-checkout link passes the authoritative plan ID and checkout reconciles it with the active plan list.
 - Existing order confirmation and order tracking routes; payment status is verified server-side before fulfilment and card assignment.
 - Homepage and navigation now identify the card as a product available to shop online. Partner businesses remain independent and are not presented as PennyGrade-owned products.
-- Existing About, Contact, Terms, Privacy, Shipping, Refund/Cancellation, Membership Terms, and Merchant Partnership pages remain linked and should be checked against current operations.
+- About, Contact, Terms, Privacy, Shipping, Refund/Cancellation, Membership Terms, and Merchant Partnership pages are linked. Copy was reviewed to remove unsupported operator-status assertions and overbroad privacy language; all legal identity, refund, complaint, support-hours, and fulfilment commitments still need owner confirmation.
 
 ## Existing technical controls and limitations observed
 
 - Existing payment logic verifies provider signatures and captured payment status, and has an idempotent fulfilment path. A code review or unit test is not proof that production credentials, webhook events, migrations, provider configuration, or fulfilment work end to end.
+- Live Razorpay order creation fails closed unless `RAZORPAY_LIVE_PAYMENTS_APPROVED=true`; the public key is withheld and storefront purchase actions are blocked when a live key is not explicitly approved. Keep the setting false until the actual account and product receive approval.
 - Review of the specific earlier audit concerns found source-level controls for keeping partner-evidence fields out of the public catalog projection; requiring partner evidence in admin activation paths; blocking order-card assignment unless the order is paid; idempotent payment fulfilment; returning the actual card-allocation result to the confirmation UI; and obtaining discount totals from the database verification result. The partner-evidence database gate is a migration, and its production application/RLS state is not confirmed. Source checks do not establish deployed or database behavior.
 - The order-creation stock count is a check, not an atomic reservation. Concurrent orders can race for the last available physical card. Resolve and verify that oversell risk before enabling live collection.
-- The product and cart display ₹500 while the checkout order amount comes from the active database plan. Keep the active plan price aligned with the storefront and prevent unintended extra active plans before release.
+- The product and cart price come from the single active database plan with a physical card and 180-day duration; the purchase page is unavailable if there is no unique matching plan. The checkout reads the active plan amount server-side. Confirm that plan configuration and terms before release.
 - `src/routeTree.gen.ts` must be regenerated from the route modules as part of the build; do not deploy a mismatched route tree.
 - The production audit documents outstanding verification gaps around partner-evidence privacy/publication, database migration and RLS state, production routes/runtime, and isolated provider integration. Review `PRODUCTION_AUDIT.md`, `razorpay-underwriting-review.md`, and `PAYMENT_AND_FULFILLMENT.md` before release.
 - No application code can establish that there is real card stock, accurate partner benefits, signed partner agreements, a measured delivery SLA, trained customer support, or an approved Razorpay account.
@@ -33,7 +34,7 @@ Status snapshot: repository review and local implementation only. This is not an
 
 ## Release gates
 
-1. Regenerate route types and run `pnpm typecheck`, `pnpm test`, and `pnpm build` against the final commit.
+1. Keep `RAZORPAY_LIVE_PAYMENTS_APPROVED=false` until written merchant/product approval. Regenerate route types and run `pnpm run typecheck`, `pnpm test`, and `pnpm run build` against the final commit.
 2. Test payment success, failure, abandonment, forged signature, mismatched amount/order, duplicate callbacks/webhooks, inventory exhaustion, last-card concurrency, email idempotency, refund support handling, and tracking in an isolated staging project with test credentials only.
 3. Verify the deployed preview's product, cart, checkout, policy pages, order confirmation and tracking, including mobile layout and network/SSR performance.
 4. Confirm the legal merchant identity, active partner records, fulfilment terms, and data-retention/support process with the operator.

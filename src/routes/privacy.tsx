@@ -5,7 +5,7 @@ import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 const TOC: LegalTocItem[] = [
   { id: "overview", title: "1. Privacy Overview & Scope" },
   { id: "data-we-collect", title: "2. Personal Data We Collect" },
-  { id: "zero-contact-sharing", title: "3. Zero Contact Sharing Guarantee" },
+  { id: "zero-contact-sharing", title: "3. Counter verification data" },
   { id: "purpose", title: "4. Purpose & Lawful Grounds for Processing" },
   { id: "sharing-disclosure", title: "5. Data Sharing & Infrastructure Providers" },
   { id: "cookies-tracking", title: "6. Cookies & Tracking Technologies" },
@@ -102,15 +102,13 @@ function PrivacyPage() {
       <section id="zero-contact-sharing" className="scroll-mt-36">
         <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/10 p-6 text-emerald-950 dark:text-emerald-200">
           <h2 className="text-base font-bold flex items-center gap-2 text-emerald-900 dark:text-emerald-100">
-            <span>🛡️</span> 3. Zero Contact Sharing Guarantee
+            <span>🛡️</span> 3. Counter verification data
           </h2>
           <p className="mt-2 text-xs leading-relaxed">
-            <strong>We respect your personal privacy at checkout counters.</strong> When you scan a partner&rsquo;s QR standee and display 
-            your live verification screen to café, restaurant, or salon cashiers, <strong className="underline">venue staff NEVER see your phone number, email address, or billing history</strong>.
+            When you scan a partner&rsquo;s QR standee and display your live verification screen, the counter flow is designed to show the member and offer details needed for eligibility checking rather than your phone number or email address.
           </p>
           <p className="mt-2 text-xs leading-relaxed">
-            The cashier only views: (1) Your Member Name, (2) Masked PenCode, (3) Current Offer Name, and (4) The server-calculated discount amount. 
-            PennyGrade does not sell, lease, or share your contact number with partner merchants for marketing spam or unsolicited phone calls.
+            The verification result may show your member name, a masked PenCode, the current offer, and the server-calculated result. PennyGrade does not sell or lease customer contact information. Contact information is not provided to partner merchants for their marketing through the counter verification flow.
           </p>
         </div>
       </section>
@@ -209,7 +207,6 @@ function PrivacyPage() {
         </p>
         <div className="mt-3 rounded-xl border border-border bg-muted/40 p-4 text-xs space-y-1.5">
           <p><strong>Contact:</strong> PennyGrade support</p>
-          <p><strong>Business operator:</strong> Verify the legal name against business/KYC records before onboarding.</p>
           <p><strong>Email:</strong> <a href="mailto:pennygradebusiness@gmail.com" className="text-primary underline">pennygradebusiness@gmail.com</a></p>
           <p><strong>Phone:</strong> <a href="tel:+919356897893" className="text-primary underline">+91 93568 97893</a></p>
           <p><strong>Business contact location:</strong> Daltonganj, Palamu, Jharkhand - 822101, India</p>

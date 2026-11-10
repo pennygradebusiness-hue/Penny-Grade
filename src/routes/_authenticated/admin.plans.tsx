@@ -14,7 +14,7 @@ import { inr } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({ component: Plans });
 
-type Plan = { id?: string; name: string; description: string | null; price: number; duration_days: number; status: "ACTIVE" | "INACTIVE" };
+type Plan = { id?: string; name: string; description: string | null; price: number; duration_days: number; card_included: boolean; status: "ACTIVE" | "INACTIVE" };
 
 function Plans() {
   const qc = useQueryClient();
@@ -22,7 +22,7 @@ function Plans() {
   const [edit, setEdit] = useState<Plan | null>(null);
   const save = async () => {
     if (!edit || !edit.name || edit.price < 0 || edit.duration_days < 1) return toast.error("Check the plan fields");
-    const payload = { name: edit.name, description: edit.description, price: edit.price, duration_days: edit.duration_days, status: edit.status };
+    const payload = { name: edit.name, description: edit.description, price: edit.price, duration_days: edit.duration_days, card_included: edit.card_included, status: edit.status };
     const { error } = edit.id ? await supabase.from("membership_plans").update(payload).eq("id", edit.id) : await supabase.from("membership_plans").insert(payload);
     if (error) return toast.error("Not permitted");
     await logAudit(edit.id ? "Updated plan" : "Created plan", "membership_plan", edit.id ?? null, payload);
@@ -30,18 +30,17 @@ function Plans() {
   };
   const list = (q.data ?? []).map((p) => ({
     ...p,
-    name: p.name?.replace(/annual/i, "6-Month") || "PennyGrade 6-Month Membership",
-    description: p.description?.replace(/one year/i, "6 months") || "Full access for 6 months.",
-    duration_days: p.duration_days === 365 ? 180 : p.duration_days,
+    name: p.name,
+    description: p.description,
   }));
 
   return (
     <>
-      <PageHeader title="Membership Plans" desc="Payment is offline in V1 — plans define price and duration." actions={<Button size="sm" onClick={() => setEdit({ name: "", description: "", price: 500, duration_days: 180, status: "ACTIVE" })}>Add plan</Button>} />
+      <PageHeader title="Membership Plans" desc="Active plans supply the server-side checkout price and membership duration." actions={<Button size="sm" onClick={() => setEdit({ name: "", description: "", price: 500, duration_days: 180, card_included: true, status: "ACTIVE" })}>Add plan</Button>} />
       {q.isLoading ? <TableSkeleton /> : (
-        <DataTable head={["Name", "Price", "Duration", "Status", ""]} empty={!list.length}>
+        <DataTable head={["Name", "Price", "Duration", "Physical card", "Status", ""]} empty={!list.length}>
           {list.map((p) => (
-            <tr key={p.id}><td className={`${td} font-medium`}>{p.name}</td><td className={td}>{inr(p.price)}</td><td className={td}>{p.duration_days} days (6 Months)</td><td className={td}><StatusBadge status={p.status} /></td>
+            <tr key={p.id}><td className={`${td} font-medium`}>{p.name}</td><td className={td}>{inr(p.price)}</td><td className={td}>{p.duration_days} days</td><td className={td}>{p.card_included ? "Included" : "Not included"}</td><td className={td}><StatusBadge status={p.status} /></td>
               <td className={td}><Button size="sm" variant="ghost" onClick={() => setEdit(p as Plan)}>Edit</Button></td></tr>
           ))}
         </DataTable>
@@ -55,6 +54,7 @@ function Plans() {
               <div className="space-y-1.5"><Label>Price (₹)</Label><Input type="number" value={edit.price} onChange={(e) => setEdit({ ...edit, price: Number(e.target.value) })} /></div>
               <div className="space-y-1.5"><Label>Duration (days)</Label><Input type="number" value={edit.duration_days} onChange={(e) => setEdit({ ...edit, duration_days: Number(e.target.value) })} /></div>
             </div>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={edit.card_included} onChange={(e) => setEdit({ ...edit, card_included: e.target.checked })} />Physical card included</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={edit.status === "ACTIVE"} onChange={(e) => setEdit({ ...edit, status: e.target.checked ? "ACTIVE" : "INACTIVE" })} />Active</label>
             <Button className="w-full" onClick={save}>Save</Button>
           </div>}

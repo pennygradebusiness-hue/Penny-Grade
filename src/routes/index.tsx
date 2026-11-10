@@ -43,13 +43,15 @@ import {
   buildWebSiteSchema,
   buildFaqSchema,
 } from "@/lib/seo";
+import { getPublicStorefrontMembershipProduct } from "@/lib/orders.functions";
+import { inr } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () =>
     buildPageHead({
       title: "Shop PennyGrade Membership Card | Local Member Privileges",
       description:
-        "Shop the PennyGrade six-month physical membership card online for ₹500. Explore participating local businesses and their listed member benefits in Daltonganj.",
+        "Shop the PennyGrade six-month physical membership card online. Explore participating local businesses and their listed member benefits in Daltonganj.",
       path: "/",
       jsonLd: [
         buildOrganizationSchema(),
@@ -70,6 +72,7 @@ export const Route = createFileRoute("/")({
     Promise.all([
       context.queryClient.ensureQueryData(partnersQuery),
       context.queryClient.ensureQueryData(categoriesQuery),
+      getPublicStorefrontMembershipProduct(),
     ]),
   pendingComponent: () => (
     <SiteLayout hideFooterOnMobile>
@@ -114,11 +117,12 @@ const FAQ = [
 export default function Home() {
   const { data: partners } = useSuspenseQuery(partnersQuery);
   const { data: categories } = useSuspenseQuery(categoriesQuery);
+  const [, , product] = Route.useLoaderData();
   const featured = partners.slice(0, 6);
 
   return (
     <SiteLayout>
-      <MobileHome partners={featured} />
+      <MobileHome partners={featured} productPrice={product?.plan.price ?? null} />
       <div className="block">
         {/* 1. HERO SECTION (Original PennyGrade branding with Bespoke 3D Card Showcase) */}
         <section className="hidden sm:block relative overflow-hidden bg-gradient-to-b from-white via-orange-50/30 to-white pb-8 pt-5 md:pb-20 md:pt-14">
@@ -133,7 +137,7 @@ export default function Home() {
               </h1>
 
               <p className="mt-3 max-w-xl text-[15px] sm:mt-5 sm:text-lg font-medium leading-snug sm:leading-relaxed text-slate-600">
-                Shop the PennyGrade six-month physical membership card online for ₹500 and explore
+                Shop the PennyGrade six-month physical membership card online{product ? ` for ${inr(product.plan.price)}` : ""} and explore
                 participating local businesses and their listed member privileges. Each partner
                 applies eligible benefits under its own terms; customers pay partners directly.
               </p>
@@ -162,7 +166,7 @@ export default function Home() {
                   <Gift className="h-6 w-6 text-amber-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
-                      ₹500
+                      {product ? inr(product.plan.price) : "Price on product page"}
                     </strong>
                     <span className="text-[12px] font-bold text-slate-500">6-Month Pass</span>
                   </div>
@@ -555,12 +559,12 @@ export default function Home() {
                   <span className="text-xs uppercase tracking-wider text-amber-400 font-bold">
                     6-Month Membership
                   </span>
-                  <div className="font-display text-4xl font-extrabold text-white">₹500</div>
+                  <div className="font-display text-4xl font-extrabold text-white">{product ? inr(product.plan.price) : "Price unavailable"}</div>
                   <Link
                     to="/membership-card"
                     className="mt-4 inline-flex min-h-[42px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-xs font-bold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35"
                   >
-                    View Membership Card — ₹500
+                    View Membership Card
                   </Link>
                 </div>
               </div>
@@ -849,7 +853,7 @@ export default function Home() {
   );
 }
 
-function MobileHome({ partners }: { partners: PublicPartner[] }) {
+function MobileHome({ partners, productPrice }: { partners: PublicPartner[]; productPrice: number | null }) {
   const steps = [
     [ShoppingCart, "1. Buy", "Your Card"],
     [Truck, "2. Receive", "at Your Doorstep"],
@@ -865,7 +869,7 @@ function MobileHome({ partners }: { partners: PublicPartner[] }) {
               Shop One Card.<span className="block text-orange-500">Discover Local Privileges.</span>
             </h1>
             <p className="mt-3 text-[13px] font-medium leading-[1.35] text-slate-800">
-              Shop the six-month physical membership card online for ₹500. Explore participating
+              Shop the six-month physical membership card online{productPrice !== null ? ` for ${inr(productPrice)}` : ""}. Explore participating
               businesses and their listed member benefits in Daltonganj.
             </p>
           </div>
@@ -891,7 +895,7 @@ function MobileHome({ partners }: { partners: PublicPartner[] }) {
             className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 text-center text-[14px] font-extrabold text-white shadow-lg"
           >
             <CreditCard className="h-6 w-6 shrink-0" />
-            Shop Card – ₹500 <ArrowRight className="h-4 w-4 shrink-0" />
+            Shop Card{productPrice !== null ? ` – ${inr(productPrice)}` : ""} <ArrowRight className="h-4 w-4 shrink-0" />
           </Link>
           <Link
             to="/partners"
@@ -949,7 +953,7 @@ function MobileHome({ partners }: { partners: PublicPartner[] }) {
                 Buy PennyGrade Card
               </p>
               <p className="whitespace-nowrap text-[10px] text-slate-300 sm:text-[11px]">
-                ₹500 · 6-Month Validity
+                {productPrice !== null ? `${inr(productPrice)} · ` : ""}6-Month Validity
               </p>
             </div>
           </div>

@@ -5,10 +5,13 @@ import { SiteLayout } from "@/components/site";
 import { PhysicalCardPreview } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { inr } from "@/lib/format";
-import { isMembershipCardInCart, setMembershipCardInCart } from "@/lib/product-cart";
+import { setMembershipCardInCart } from "@/lib/product-cart";
 import { buildBreadcrumbSchema, buildPageHead } from "@/lib/seo";
+import { getPublicStorefrontMembershipProduct } from "@/lib/orders.functions";
+import { getMembershipCartPlanId } from "@/lib/product-cart";
 
 export const Route = createFileRoute("/cart")({
+  loader: () => getPublicStorefrontMembershipProduct(),
   head: () =>
     buildPageHead({
       title: "Your Cart | PennyGrade",
@@ -25,12 +28,17 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const navigate = useNavigate();
+  const product = Route.useLoaderData();
   const [hasItem, setHasItem] = useState(false);
 
-  useEffect(() => setHasItem(isMembershipCardInCart()), []);
+  useEffect(() => {
+    const planId = getMembershipCartPlanId();
+    setHasItem(Boolean(product && planId === product.plan.id));
+    if (planId && (!product || planId !== product.plan.id)) setMembershipCardInCart(null);
+  }, [product]);
 
   const removeItem = () => {
-    setMembershipCardInCart(false);
+    setMembershipCardInCart(null);
     setHasItem(false);
   };
 
@@ -57,7 +65,7 @@ function CartPage() {
                   <PhysicalCardPreview interactive={false} className="shadow-lg" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-slate-950">PennyGrade 6-Month Membership Card</h2>
+                  <h2 className="text-lg font-bold text-slate-950">{product?.plan.name || "PennyGrade 6-Month Membership Card"}</h2>
                   <p className="mt-2 text-sm text-slate-600">One physical card · six months of membership access</p>
                   <p className="mt-3 text-sm font-semibold text-slate-800">Quantity: 1</p>
                   <p className="mt-1 text-sm text-slate-600">Delivery currently limited to Daltonganj, Jharkhand.</p>
@@ -65,20 +73,21 @@ function CartPage() {
                     <Trash2 className="mr-2 h-4 w-4" /> Remove
                   </Button>
                 </div>
-                <strong className="text-xl font-black text-slate-950">{inr(500)}</strong>
+                <strong className="text-xl font-black text-slate-950">{product ? inr(product.plan.price) : "Price unavailable"}</strong>
               </div>
             </section>
 
             <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
               <h2 className="font-bold text-slate-950">Order summary</h2>
               <div className="mt-4 space-y-3 text-sm">
-                <div className="flex justify-between text-slate-600"><span>Membership card</span><span>{inr(500)}</span></div>
+                <div className="flex justify-between text-slate-600"><span>Membership card</span><span>{product ? inr(product.plan.price) : "—"}</span></div>
                 <div className="flex justify-between text-slate-600"><span className="flex items-center gap-1"><Truck className="h-4 w-4" /> Delivery</span><span>No separate fee shown</span></div>
-                <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-extrabold text-slate-950"><span>Total</span><span>{inr(500)}</span></div>
+                <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-extrabold text-slate-950"><span>Total</span><span>{product ? inr(product.plan.price) : "—"}</span></div>
               </div>
-              <Button onClick={() => navigate({ to: "/checkout" })} className="mt-5 min-h-12 w-full bg-gradient-to-r from-amber-500 to-orange-500 font-extrabold text-white hover:from-amber-600 hover:to-orange-600">
+              <Button disabled={!product || !product.paymentEnabled || product.availability !== "IN_STOCK"} onClick={() => product && navigate({ to: "/checkout", search: { planId: product.plan.id } })} className="mt-5 min-h-12 w-full bg-gradient-to-r from-amber-500 to-orange-500 font-extrabold text-white hover:from-amber-600 hover:to-orange-600">
                 Continue to Checkout <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              {(!product?.paymentEnabled || product.availability !== "IN_STOCK") && <p role="status" className="mt-3 text-xs text-amber-900">{!product?.paymentEnabled ? "Online payment is currently unavailable." : product?.availability === "OUT_OF_STOCK" ? "Currently out of stock." : "Availability could not be confirmed. Try again later."}</p>}
               <p className="mt-3 text-xs leading-5 text-slate-500">Availability is checked before payment is initialized. Review the <Link to="/shipping-policy" className="underline">shipping</Link> and <Link to="/refund-policy" className="underline">refund</Link> policies before ordering.</p>
             </aside>
           </div>

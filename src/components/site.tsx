@@ -48,7 +48,7 @@ export function SiteHeader() {
 
   const mobileLinks = [
     { to: "/", label: "Home" },
-    { to: "/membership-card", label: "Shop Membership Card · ₹500" },
+    { to: "/membership-card", label: "Shop Membership Card" },
     { to: "/contact", label: "Contact" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
@@ -154,7 +154,7 @@ export function SiteHeader() {
                 to="/membership-card"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 text-[13px] font-extrabold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4 mr-1.5" /> Shop Card (₹500)
+                <CreditCard className="h-4 w-4 mr-1.5" /> Shop Card
               </Link>
             </>
           )}
@@ -301,7 +301,7 @@ export function SiteFooter() {
             </li>
             <li>
               <Link to="/membership-card" className="text-navy-muted transition-colors hover:text-white">
-                Shop Membership Card (₹500)
+                Shop Membership Card
               </Link>
             </li>
             <li>

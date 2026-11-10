@@ -55,8 +55,7 @@ function MerchantAgreementPage() {
           This Merchant Partnership Agreement (&ldquo;Agreement&rdquo;) is entered into between:
         </p>
         <p className="mt-2 pl-4 border-l-2 border-primary/50 italic text-slate-800 dark:text-slate-200">
-          <strong>PennyGrade</strong>, an Indian digital privilege and discount membership platform operated by Samir Pandey 
-          (Proprietor / Operating Entity), having its administrative desk in Daltonganj, Palamu, Jharkhand - 822101 (&ldquo;PennyGrade&rdquo;),
+          <strong>PennyGrade</strong>, the membership and physical-card service presented through pennygrade.in, represented for this agreement by the authorised signatory identified in the completed execution schedule (&ldquo;PennyGrade&rdquo;),
         </p>
         <p className="mt-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">— AND —</p>
         <p className="mt-2 pl-4 border-l-2 border-primary/50 italic text-slate-800 dark:text-slate-200">

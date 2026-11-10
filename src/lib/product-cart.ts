@@ -1,12 +1,16 @@
 export const MEMBERSHIP_CART_KEY = "pennygrade-membership-card-cart";
 
-export function isMembershipCardInCart(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(MEMBERSHIP_CART_KEY) === "1";
+export function getMembershipCartPlanId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(MEMBERSHIP_CART_KEY);
 }
 
-export function setMembershipCardInCart(added: boolean): void {
+export function isMembershipCardInCart(): boolean {
+  return getMembershipCartPlanId() !== null;
+}
+
+export function setMembershipCardInCart(planId: string | null): void {
   if (typeof window === "undefined") return;
-  if (added) window.localStorage.setItem(MEMBERSHIP_CART_KEY, "1");
+  if (planId) window.localStorage.setItem(MEMBERSHIP_CART_KEY, planId);
   else window.localStorage.removeItem(MEMBERSHIP_CART_KEY);
 }

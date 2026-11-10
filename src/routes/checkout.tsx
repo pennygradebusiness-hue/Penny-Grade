@@ -25,7 +25,7 @@ import {
   createMembershipOrder,
   verifyPaymentAndFulfillOrder,
 } from "@/lib/orders.functions";
-import { DEFAULT_PLANS, type PublicPlan } from "@/lib/orders.logic";
+import { type PublicPlan } from "@/lib/orders.logic";
 import { inr } from "@/lib/format";
 import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 import { recordVerifiedOrderForNavigation } from "@/lib/order-confirmation";
@@ -86,6 +86,9 @@ interface CheckoutOrderResponse {
 }
 
 export const Route = createFileRoute("/checkout")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    planId: typeof search.planId === "string" ? search.planId : undefined,
+  }),
   head: () =>
     buildPageHead({
       title: "Checkout | Order PennyGrade Physical Membership Card",
@@ -131,8 +134,9 @@ function loadRazorpayScript(): Promise<boolean> {
 
 function CheckoutPage() {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<PublicPlan[]>(DEFAULT_PLANS);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(DEFAULT_PLANS[0].id);
+  const search = Route.useSearch();
+  const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(search.planId || "");
 
   const getPlansFn = useServerFn(getPublicMembershipPlans);
   const createOrderFn = useServerFn(createMembershipOrder);
@@ -193,21 +197,27 @@ function CheckoutPage() {
       .then((res) => {
         if (Array.isArray(res) && res.length > 0) {
           setPlans(res);
-          setSelectedPlanId((prev) => prev || res[0].id);
+          setSelectedPlanId((prev) => {
+            if (search.planId && res.some((plan) => plan.id === search.planId)) return search.planId;
+            return res.some((plan) => plan.id === prev) ? prev : res[0].id;
+          });
         }
       })
       .catch(() => {
         // Fallback default safely preserved
       });
-  }, [getPlansFn]);
+  }, [getPlansFn, search.planId]);
 
-  const safePlans = Array.isArray(plans) && plans.length > 0 ? plans : DEFAULT_PLANS;
-  const selectedPlan =
-    safePlans.find((p) => p.id === selectedPlanId) || safePlans[0] || DEFAULT_PLANS[0];
+  const safePlans = Array.isArray(plans) ? plans : [];
+  const selectedPlan = safePlans.find((p) => p.id === selectedPlanId) || safePlans[0] || null;
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (checkoutInProgressRef.current || retryDelay > 0) return;
+    if (!selectedPlan) {
+      toast.error("The active membership plan could not be confirmed. Please try again later.");
+      return;
+    }
 
     if (!fullName.trim() || fullName.trim().length < 2) {
       toast.error("Please enter your full name (minimum 2 characters)");
@@ -343,7 +353,7 @@ function CheckoutPage() {
             });
 
             if (fulfillRes.ok) {
-              setMembershipCardInCart(false);
+              setMembershipCardInCart(null);
               setPendingCheckout(null);
               recordVerifiedOrderForNavigation({
                 orderNumber: orderRes.orderNumber,
@@ -501,6 +511,11 @@ function CheckoutPage() {
                       </div>
                     );
                   })}
+                  {safePlans.length === 0 && (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                      The active six-month physical-card plan is unavailable. Checkout is disabled until PennyGrade's current plan and price can be verified.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -684,7 +699,7 @@ function CheckoutPage() {
 
                 {/* Plan Highlights */}
                 <div className="space-y-2 rounded-xl bg-slate-50 p-3.5 text-xs text-slate-600">
-                  <div className="font-bold text-slate-900">{selectedPlan.name}</div>
+                  <div className="font-bold text-slate-900">{selectedPlan?.name || "Plan unavailable"}</div>
                   <div className="flex items-center gap-1.5 text-slate-700">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     <span>Valid for 180 days from activation</span>
@@ -708,7 +723,7 @@ function CheckoutPage() {
                 <div className="mt-5 space-y-2.5 border-t border-slate-100 pt-4 text-sm">
                   <div className="flex justify-between text-slate-600">
                     <span>Membership Fee</span>
-                    <span>{inr(selectedPlan.price)}</span>
+                    <span>{selectedPlan ? inr(selectedPlan.price) : "—"}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Physical Card Packaging & Courier</span>
@@ -716,7 +731,7 @@ function CheckoutPage() {
                   </div>
                   <div className="flex justify-between border-t border-slate-200 pt-3 text-base font-extrabold text-slate-900">
                     <span>Total Payable</span>
-                    <span className="text-xl text-amber-600">{inr(selectedPlan.price)}</span>
+                    <span className="text-xl text-amber-600">{selectedPlan ? inr(selectedPlan.price) : "—"}</span>
                   </div>
                 </div>
 
@@ -776,7 +791,7 @@ function CheckoutPage() {
                 {/* Pay Now Button */}
                 <Button
                   type="submit"
-                  disabled={checkoutLocked || retryDelay > 0}
+                  disabled={!selectedPlan || checkoutLocked || retryDelay > 0}
                   className="mt-6 w-full h-12 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 font-extrabold text-white shadow-lg shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500 transition-all text-sm cursor-pointer disabled:cursor-not-allowed"
                   aria-busy={checkoutLocked}
                 >
@@ -789,7 +804,7 @@ function CheckoutPage() {
                     `Retry in ${retryDelay}s`
                   ) : (
                     <>
-                      <Lock className="mr-2 h-4 w-4" /> Pay {inr(selectedPlan.price)} with Razorpay
+                      <Lock className="mr-2 h-4 w-4" /> {selectedPlan ? `Pay ${inr(selectedPlan.price)} with Razorpay` : "Membership plan unavailable"}
                     </>
                   )}
                 </Button>

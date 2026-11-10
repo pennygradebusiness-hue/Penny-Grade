@@ -6,6 +6,7 @@ import {
   getRazorpayOrderErrorMessage,
   generateTestPaymentSignature,
   isRazorpayPaymentCaptured,
+  getPublicRazorpayKeyId,
   razorpayPaymentMatchesOrder,
   verifyRazorpayPaymentSignature,
   verifyRazorpayWebhookSignature,
@@ -16,6 +17,7 @@ const savedEnv = {
   keyId: process.env.RAZORPAY_KEY_ID,
   keySecret: process.env.RAZORPAY_KEY_SECRET,
   webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET,
+  liveApproved: process.env.RAZORPAY_LIVE_PAYMENTS_APPROVED,
 };
 
 afterEach(() => {
@@ -25,6 +27,7 @@ afterEach(() => {
     RAZORPAY_KEY_ID: savedEnv.keyId,
     RAZORPAY_KEY_SECRET: savedEnv.keySecret,
     RAZORPAY_WEBHOOK_SECRET: savedEnv.webhookSecret,
+    RAZORPAY_LIVE_PAYMENTS_APPROVED: savedEnv.liveApproved,
   })) {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
@@ -72,6 +75,17 @@ describe("Razorpay service", () => {
     delete process.env.RAZORPAY_KEY_SECRET;
     await expect(createRazorpayOrder({ amountInPaise: 50000, receipt: "ORD-123" })).rejects.toThrow(
       /not configured/i,
+    );
+  });
+
+  it("keeps live collection disabled until an explicit merchant approval flag is set", async () => {
+    process.env.NODE_ENV = "production";
+    process.env.RAZORPAY_KEY_ID = "rzp_live_unit";
+    process.env.RAZORPAY_KEY_SECRET = "live_secret";
+    delete process.env.RAZORPAY_LIVE_PAYMENTS_APPROVED;
+    expect(getPublicRazorpayKeyId()).toBe("");
+    await expect(createRazorpayOrder({ amountInPaise: 50000, receipt: "ORD-LIVE" })).rejects.toThrow(
+      /Live payments are disabled/i,
     );
   });
 

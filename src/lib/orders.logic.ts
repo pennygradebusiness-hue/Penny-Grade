@@ -133,6 +133,9 @@ export async function createMembershipOrderLogic(rawInput: CheckoutInput) {
     if (error) throw new Error("Could not verify the selected membership plan.");
     if (!dbPlan)
       throw new Error("This membership plan is unavailable. Refresh and choose an active plan.");
+    if (dbPlan.duration_days !== 180 || dbPlan.card_included !== true) {
+      throw new Error("Only the active six-month physical membership card is available for online purchase.");
+    }
     plan = {
       id: dbPlan.id,
       name: dbPlan.name,
