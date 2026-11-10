@@ -13,4 +13,5 @@ export function setMembershipCardInCart(planId: string | null): void {
   if (typeof window === "undefined") return;
   if (planId) window.localStorage.setItem(MEMBERSHIP_CART_KEY, planId);
   else window.localStorage.removeItem(MEMBERSHIP_CART_KEY);
+  window.dispatchEvent(new Event("pennygrade-cart-updated"));
 }

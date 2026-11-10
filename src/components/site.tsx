@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Menu,
   X,
@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Sparkles,
   Heart,
+  ShoppingCart,
 } from "lucide-react";
 import { Wordmark, LogoMark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
@@ -26,24 +27,35 @@ import { clearAdminSession } from "@/lib/admin-session";
 import { offerHeadline, offerSub, inr, formatDays } from "@/lib/format";
 import type { PublicPartner } from "@/lib/public.functions";
 import { PrebookingPopup } from "@/components/prebooking-popup";
+import { isMembershipCardInCart } from "@/lib/product-cart";
 
 export function SiteHeader() {
   const { user } = useSession();
   const [open, setOpen] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Daltonganj");
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const updateCart = () => setCartCount(isMembershipCardInCart() ? 1 : 0);
+    updateCart();
+    window.addEventListener("storage", updateCart);
+    window.addEventListener("pennygrade-cart-updated", updateCart);
+    return () => {
+      window.removeEventListener("storage", updateCart);
+      window.removeEventListener("pennygrade-cart-updated", updateCart);
+    };
+  }, []);
 
   const desktopLinks = [
     { to: "/membership-card", label: "Shop Card" },
     { to: "/about", label: "About" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
-    { to: "/prebook", label: "Prebook" },
     { to: "/how-it-works", label: "How It Works" },
     { to: "/partner-with-us", label: "Partner With Us" },
     { to: "/history", label: "History" },
-    { to: "/cart", label: "Cart" },
   ];
 
   const mobileLinks = [
@@ -70,18 +82,18 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#ececf1] bg-white/95 text-foreground backdrop-blur-md transition-all">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-2 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto flex h-[72px] max-w-[1580px] items-center justify-between gap-3 px-3 sm:h-20 sm:px-6 lg:px-8 xl:px-10">
         {/* Brand */}
         <Wordmark className="shrink-0 max-[360px]:gap-1 [&>span:first-child]:max-[360px]:h-8 [&>span:first-child]:max-[360px]:w-8 [&>span:last-child]:max-[360px]:text-base" />
 
         {/* Desktop Nav - Spacious & Uncrowded */}
-        <nav className="hidden items-center gap-7 lg:flex xl:gap-9">
+        <nav className="hidden items-center gap-1.5 lg:flex xl:gap-3">
           {desktopLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               activeOptions={{ exact: l.to === "/" }}
-              className="relative rounded-lg px-2.5 py-1.5 text-[13.5px] font-semibold text-slate-600 transition-all hover:bg-amber-50/70 hover:text-amber-600 xl:text-[14.5px]"
+              className={`relative whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-semibold transition-all hover:bg-amber-50/70 hover:text-amber-700 xl:px-3 xl:text-[13px] ${l.to === "/membership-card" ? "border border-orange-200 bg-orange-50/70 text-amber-900" : "text-slate-700"}`}
               activeProps={{
                 className:
                   "!text-slate-900 font-extrabold bg-amber-50/90 after:content-[''] after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:rounded-full after:bg-gradient-to-r after:from-amber-400 after:to-amber-500",
@@ -93,7 +105,7 @@ export function SiteHeader() {
         </nav>
 
         {/* Nav Actions - Spacious Cluster */}
-        <div className="hidden items-center gap-3 lg:flex xl:gap-4.5">
+        <div className="hidden items-center gap-3 lg:flex xl:gap-5">
           {/* Exclusive City Pill */}
           <div className="relative">
             <button
@@ -129,7 +141,10 @@ export function SiteHeader() {
             )}
           </div>
 
-          <div className="hidden h-5 w-px bg-slate-200/80 xl:block" />
+          <Link to="/cart" aria-label={`Shopping cart, ${cartCount} items`} className="relative rounded-xl p-2 text-slate-900 transition hover:bg-amber-50">
+            <ShoppingCart className="h-7 w-7" />
+            <span className="absolute -right-0.5 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-white">{cartCount}</span>
+          </Link>
 
           {user ? (
             <>
@@ -154,7 +169,7 @@ export function SiteHeader() {
                 to="/membership-card"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 text-[13px] font-extrabold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4 mr-1.5" /> Shop Card
+                Shop Membership
               </Link>
             </>
           )}
