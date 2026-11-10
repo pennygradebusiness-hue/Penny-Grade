@@ -18,12 +18,10 @@ function resolveSiteUrl() {
     process.env.SITE_URL;
 
   if (!raw || !raw.trim()) {
-    if (process.env.NODE_ENV === "production" || process.env.NETLIFY === "true") {
-      throw new Error(
-        "[generate-robots] Fatal: VITE_SITE_URL or SITE_URL environment variable must be set in Netlify."
-      );
+    if (process.env.NODE_ENV === "production" || process.env.NETLIFY === "true" || process.env.VERCEL === "1") {
+      return "https://www.pennygrade.in";
     }
-    return "http://localhost:8080";
+    return "https://www.pennygrade.in";
   }
 
   return raw.trim().replace(/\/+$/, "");

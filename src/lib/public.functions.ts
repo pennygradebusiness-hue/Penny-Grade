@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
-import { getRealtimeTransport } from "./config";
+import { getRealtimeTransport, getPublicSupabaseConfig } from "./config";
 import { getServiceRoleClient } from "./supabase-admin.server";
 import { hasCompletePartnerEvidence } from "./partner-publication";
 import {
@@ -19,25 +19,9 @@ import { sendTransactionalEmail, renderRedemptionSuccessEmail } from "./email.se
 const PUBLIC_CATALOG_TIMEOUT_MS = 1_800;
 
 export function pub() {
-  const projectId =
-    process.env.SUPABASE_PROJECT_ID ||
-    process.env.VITE_SUPABASE_PROJECT_ID ||
-    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_PROJECT_ID"]);
+  const cfg = getPublicSupabaseConfig();
 
-  const url =
-    process.env.SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL ||
-    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_URL"]) ||
-    (projectId ? `https://${projectId}.supabase.co` : undefined) ||
-    "https://placeholder.supabase.co";
-
-  const key =
-    process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    (typeof import.meta !== "undefined" && import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"]) ||
-    "placeholder-key";
-
-  return createClient<Database>(url, key, {
+  return createClient<Database>(cfg.url, cfg.publishableKey, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     global: {
       fetch: (input, init) =>
@@ -168,23 +152,46 @@ const DEMO_PARTNER_SLUGS = new Set([
   "saffron-table",
 ]);
 
+let cachedPartners: { data: PublicPartner[]; timestamp: number } | null = null;
+let cachedCategories: { data: PublicCategory[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 60_000; // 60s in-memory cache for ultra-fast SSR
+
+export function invalidatePublicCatalogCache() {
+  cachedPartners = null;
+  cachedCategories = null;
+}
+
 export const getCategories = createServerFn({ method: "GET" }).handler(async () => {
+  const now = Date.now();
+  if (cachedCategories && now - cachedCategories.timestamp < CACHE_TTL_MS) {
+    return cachedCategories.data;
+  }
+
   try {
     const { data, error } = await pub()
       .from("categories")
       .select("id,name,slug,icon,sort_order")
       .order("sort_order");
     if (error || !data || data.length === 0) {
+      cachedCategories = { data: DEFAULT_CATEGORIES, timestamp: now };
       return DEFAULT_CATEGORIES;
     }
-    return data as PublicCategory[];
+    const result = data as PublicCategory[];
+    cachedCategories = { data: result, timestamp: now };
+    return result;
   } catch (err) {
     console.warn("[getCategories] Falling back to default categories:", err);
+    cachedCategories = { data: DEFAULT_CATEGORIES, timestamp: now };
     return DEFAULT_CATEGORIES;
   }
 });
 
 export const getPartners = createServerFn({ method: "GET" }).handler(async () => {
+  const now = Date.now();
+  if (cachedPartners && now - cachedPartners.timestamp < CACHE_TTL_MS) {
+    return cachedPartners.data;
+  }
+
   const delSet = new Set(store.deletedPartnerIds || []);
   const delOfferSet = new Set(store.deletedOfferIds || []);
 
@@ -197,7 +204,7 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
       .order("featured", { ascending: false })
       .order("business_name");
     if (!error && data) {
-      return (data as unknown as PublicPartner[])
+      const result = (data as unknown as PublicPartner[])
         .filter(
           (p) =>
             p.city?.trim().toLowerCase() === "daltonganj" &&
@@ -208,6 +215,8 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
           ...p,
           offers: currentOffers((p.offers ?? []).filter((o) => !delOfferSet.has(o.id))),
         }));
+      cachedPartners = { data: result, timestamp: now };
+      return result;
     }
   } catch {
     // Fall back to the local store only when the database is unavailable.
@@ -262,7 +271,7 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
         return a.business_name.localeCompare(b.business_name);
       });
 
-    return activePartners.map((p) => {
+    const mapped: PublicPartner[] = activePartners.map((p) => {
       const rawOffers = dbOffersMap.get(p.id) || dbOffersMap.get(p.slug) || [];
       const offers = rawOffers.filter((o) => !delOfferSet.has(o.id));
 
@@ -290,8 +299,11 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
         offers: currentOffers(offers),
       };
     });
+    cachedPartners = { data: mapped, timestamp: now };
+    return mapped;
   }
 
+  cachedPartners = { data: [], timestamp: now };
   return [] as PublicPartner[];
 });
 

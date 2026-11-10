@@ -35,16 +35,26 @@ if (localQaMode) {
 if (process.env.NETLIFY === "true" && !process.env.NITRO_PRESET) {
   process.env.NITRO_PRESET = "netlify";
 }
+if (process.env.VERCEL && !process.env.NITRO_PRESET) {
+  process.env.NITRO_PRESET = "vercel";
+}
 
-// Auto-bridge Netlify environment variables if VITE_ prefix is omitted
-const supabaseProjectId = process.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID || "";
+// Auto-bridge production environment variables with safe defaults
+const isProd = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL) || Boolean(process.env.NETLIFY);
+const supabaseProjectId =
+  process.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID || "gvdrpojyoznepohqrbpd";
 const supabaseUrl =
   process.env.VITE_SUPABASE_URL ||
   process.env.SUPABASE_URL ||
-  (supabaseProjectId ? `https://${supabaseProjectId}.supabase.co` : "");
+  (supabaseProjectId ? `https://${supabaseProjectId}.supabase.co` : "https://gvdrpojyoznepohqrbpd.supabase.co");
 const supabasePublishableKey =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
-const siteUrl = process.env.VITE_SITE_URL || process.env.SITE_URL || "";
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6";
+const siteUrl =
+  process.env.VITE_SITE_URL ||
+  process.env.SITE_URL ||
+  (isProd ? "https://www.pennygrade.in" : "http://localhost:8080");
 
 if (supabaseProjectId && !process.env.VITE_SUPABASE_PROJECT_ID) {
   process.env.VITE_SUPABASE_PROJECT_ID = supabaseProjectId;

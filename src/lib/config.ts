@@ -68,6 +68,15 @@ export function getAppSiteUrl(): string {
     return normalizeUrl(window.location.origin);
   }
 
+  // In production / deployed environments (Vercel, Netlify, Cloudflare), default to authoritative domain
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.VERCEL ||
+    process.env.NETLIFY
+  ) {
+    return "https://www.pennygrade.in";
+  }
+
   // Safe development / local test fallback
   return "http://localhost:8080";
 }
@@ -79,18 +88,18 @@ export function getPublicSupabaseConfig() {
   const projectId =
     (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_PROJECT_ID) ||
     (typeof process !== "undefined" && (process.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID)) ||
-    "";
+    "gvdrpojyoznepohqrbpd";
 
   const url =
     (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_URL) ||
     (typeof process !== "undefined" && (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL)) ||
     (projectId ? `https://${projectId}.supabase.co` : "") ||
-    "https://placeholder.supabase.co";
+    "https://gvdrpojyoznepohqrbpd.supabase.co";
 
   const publishableKey =
     (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
     (typeof process !== "undefined" && (process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY)) ||
-    "placeholder-key";
+    "sb_publishable_TylvCZPl31m5no_GsQe7Kw_g9iPk_k6";
 
   return { projectId, url, publishableKey };
 }
