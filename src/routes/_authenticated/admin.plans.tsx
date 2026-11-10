@@ -27,16 +27,47 @@ const SIX_MONTH_CARD_BENEFITS = [
 
 function Plans() {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["admin", "plans"], queryFn: async () => (await supabase.from("membership_plans").select("*").order("created_at")).data ?? [] });
+  const q = useQuery({
+    queryKey: ["admin", "plans"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("membership_plans").select("*").order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const [edit, setEdit] = useState<Plan | null>(null);
   const save = async () => {
     if (!edit || !edit.name || edit.price < 0 || edit.duration_days < 1) return toast.error("Check the plan fields");
     const benefits = edit.benefits.map((benefit) => benefit.trim()).filter(Boolean);
     const payload = { name: edit.name, description: edit.description, price: edit.price, duration_days: edit.duration_days, benefits, card_included: edit.card_included, status: edit.status };
-    const { error } = edit.id ? await supabase.from("membership_plans").update(payload).eq("id", edit.id) : await supabase.from("membership_plans").insert(payload);
-    if (error) return toast.error("Not permitted");
+    if (edit.id) {
+      const { data, error } = await supabase
+        .from("membership_plans")
+        .update(payload)
+        .eq("id", edit.id)
+        .select("id")
+        .maybeSingle();
+      if (error) return toast.error(`Plan was not updated: ${error.message}`);
+      if (!data) {
+        return toast.error(
+          "Plan was not updated. Supabase changed 0 rows; check your admin role and membership_plans UPDATE policy.",
+        );
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("membership_plans")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) return toast.error(`Plan was not created: ${error.message}`);
+      if (!data) return toast.error("Plan was not created: Supabase returned no inserted row.");
+    }
+
     await logAudit(edit.id ? "Updated plan" : "Created plan", "membership_plan", edit.id ?? null, payload);
-    toast.success("Plan saved"); setEdit(null); qc.invalidateQueries({ queryKey: ["admin", "plans"] });
+    await qc.invalidateQueries({ queryKey: ["admin", "plans"] });
+    await qc.refetchQueries({ queryKey: ["admin", "plans"], type: "active" });
+    toast.success("Plan saved to Supabase");
+    setEdit(null);
   };
   const list = (q.data ?? []).map((p) => ({
     ...p,
