@@ -256,7 +256,7 @@ export default function Home() {
                 Why Choose PennyGrade?
               </h2>
               <p className="mt-4 text-xs font-semibold text-slate-500 sm:text-sm">
-                Exclusive in-person savings and trusted local privileges for smart members.
+                Review the current listings and eligibility terms for participating local businesses.
               </p>
             </div>
 
@@ -264,33 +264,33 @@ export default function Home() {
               {[
                 {
                   icon: Percent,
-                  title: "Exclusive Vouchers",
-                  desc: "Review current partner offers and eligibility terms before visiting.",
+                  title: "Partner Offers",
+                  desc: "Review the benefits and eligibility terms shown on each current partner listing.",
                 },
                 {
                   icon: Utensils,
-                  title: "Dining Savings",
-                  desc: "Enjoy 10% to 30% off at top cafés, rooftop restaurants, and bistros.",
+                  title: "Dining",
+                  desc: "Explore participating food and dining businesses in the local directory.",
                 },
                 {
                   icon: ShoppingBag,
-                  title: "Shopping Offers",
-                  desc: "Save on branded fashion, ethnic wear, footwear, and lifestyle stores.",
+                  title: "Shopping",
+                  desc: "Check current participating retail listings and their individual terms.",
                 },
                 {
                   icon: Sparkles,
-                  title: "Wellness Benefits",
-                  desc: "Special rates at luxury salons, spas, fitness gyms, and wellness centers.",
+                  title: "Wellness",
+                  desc: "Find any listed wellness businesses and review their current member benefits.",
                 },
                 {
                   icon: Gamepad2,
-                  title: "Entertainment",
-                  desc: "Privileges at amusement parks, adventure zones, and stay vacations.",
+                  title: "Leisure",
+                  desc: "Browse participating leisure businesses and check the offer conditions before visiting.",
                 },
                 {
-                  icon: QrCode,
-                  title: "QR Based Redemption",
-                  desc: "Scan counter standee, verify instantly on your phone with live timer.",
+                  icon: ShieldCheck,
+                  title: "Membership Verification",
+                  desc: "Use the online membership verification flow where it is supported.",
                 },
               ].map((b, i) => (
                 <article
@@ -359,8 +359,8 @@ export default function Home() {
                     Explore Partner Businesses
                   </h3>
                   <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-                    Browse verified restaurants, shopping outlets, salons, gyms, hotels and family
-                    entertainment venues.
+                    Browse participating local businesses and review each listing's current
+                    information and member benefit terms.
                   </p>
                 </div>
               </article>
@@ -686,10 +686,10 @@ export default function Home() {
             <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
               <div>
                 <h2 className="font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
-                  Recently Added Partner Businesses
+                  Participating Partner Businesses
                 </h2>
                 <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
-                  Discover popular cafes, restaurants, fashion outlets and salons in your city.
+                  Browse participating local businesses and their published information.
                 </p>
               </div>
               <Link

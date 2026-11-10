@@ -25,7 +25,19 @@ export const getPublicStorefrontMembershipProduct = createServerFn({ method: "GE
       const { getServiceRoleClient } = await import("./supabase-admin.server");
       const { isRazorpayConfigured } = await import("./razorpay.service");
       const db = getServiceRoleClient();
-      if (!db) return null;
+      if (!db) {
+        // The active plan is intentionally public catalog data. If the server
+        // lacks service-role credentials, still render its real price through
+        // the publishable catalog client, but never infer card inventory.
+        const { getPublicStorefrontPlan } = await import("./public.functions");
+        const plan = await getPublicStorefrontPlan();
+        if (!plan) return null;
+        return {
+          plan,
+          availability: "UNCONFIRMED",
+          paymentEnabled: isRazorpayConfigured(),
+        };
+      }
 
       const { data: plans, error: plansError } = await db
         .from("membership_plans")
@@ -54,7 +66,7 @@ export const getPublicStorefrontMembershipProduct = createServerFn({ method: "GE
           description: row.description,
           price,
           duration_days: row.duration_days,
-          benefits: row.benefits || DEFAULT_PLANS[0].benefits,
+          benefits: row.benefits || [],
           card_included: row.card_included ?? true,
           status: row.status,
         },

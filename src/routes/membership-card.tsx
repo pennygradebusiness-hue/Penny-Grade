@@ -34,6 +34,11 @@ export const Route = createFileRoute("/membership-card")({
             "@type": "Offer",
             priceCurrency: "INR",
             ...(loaderData ? { price: String(loaderData.plan.price) } : {}),
+            ...(loaderData?.availability === "IN_STOCK"
+              ? { availability: "https://schema.org/InStock" }
+              : loaderData?.availability === "OUT_OF_STOCK"
+                ? { availability: "https://schema.org/OutOfStock" }
+                : {}),
             url: `${getSiteUrl()}/membership-card`,
           },
         },
