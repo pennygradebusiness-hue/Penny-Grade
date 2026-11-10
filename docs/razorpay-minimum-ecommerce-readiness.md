@@ -20,6 +20,12 @@ The homepage and `/membership-card` now render ₹500, a six-month card, and a l
 
 The public `/checkout` HTML still rendered “active six-month physical-card plan is unavailable” because checkout fetched plans only after client-side JavaScript ran. A server-side route loader has now been added in source so crawlers and customers receive the same plan data in initial HTML. This source change must be deployed and verified against the live checkout response before Razorpay review. The live hosting project has not been inspected, so a successful Git push does not confirm a production deployment.
 
+## Razorpay terms review
+
+The supplied Razorpay Payments Terms (reviewed against the current [Razorpay Payments Terms](https://razorpay.com/terms/) on 10 November 2026) allow review of merchant websites, product pages, checkout, policies, and customer support. They call out matching the real onboarding profile, visible pricing/refund policy/contact details, and possible test orders, cancellations, refunds, and support enquiries. They also place delivery, after-sales support, refunds, invoicing, and customer enquiries on the merchant. PennyGrade has public product pricing, product details, contact information, shipping and refund policy routes, and policy links at checkout. Operators must be able to fulfil and support actual orders and must not present different products or prices to a reviewer.
+
+This is not a policy-compliance certification. Live checkout still needs to be verified after the server-rendered plan change is deployed. In addition, the public partner directory reports zero verified businesses, so current partner privileges are not evidenced as available. Do not submit until that mismatch is resolved truthfully, or until the product is revised to remove/qualify unavailable partner benefits. Confirm that the listed support contact, delivery procedure, refund handling, legal merchant identity, and KYC details all correspond to current operations.
+
 ## Website and purchase flow implemented in this repository
 
 - A dedicated PennyGrade physical membership card product page showing the sole active 180-day card-included plan's live server-side price, actual inventory status (without exposing counts), included features, delivery-area disclosure, and policy links. If plan, inventory, or payment status cannot be verified, purchase actions are disabled instead of displaying fallback data.
