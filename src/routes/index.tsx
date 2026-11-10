@@ -47,9 +47,9 @@ import {
 export const Route = createFileRoute("/")({
   head: () =>
     buildPageHead({
-      title: "PennyGrade | Local Privilege & Membership Network",
+      title: "Shop PennyGrade Membership Card | Local Member Privileges",
       description:
-        "A six-month physical membership card connecting members with participating local businesses and their listed benefits in Daltonganj. ₹500.",
+        "Shop the PennyGrade six-month physical membership card online for ₹500. Explore participating local businesses and their listed member benefits in Daltonganj.",
       path: "/",
       jsonLd: [
         buildOrganizationSchema(),
@@ -126,16 +126,16 @@ export default function Home() {
             {/* Left Column: Copy & Actions */}
             <div>
               <h1 className="font-display text-[2.45rem] font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-[54px] leading-[1.02]">
-                One Card. <span className="hidden sm:inline">Physical </span>{" "}
+                Discover Local Privileges{" "}
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600">
-                  Many Privileges.
+                  with One Membership Card.
                 </span>
               </h1>
 
               <p className="mt-3 max-w-xl text-[15px] sm:mt-5 sm:text-lg font-medium leading-snug sm:leading-relaxed text-slate-600">
-                Join a local membership network, explore participating businesses, and use the
-                member benefits shown on each partner listing. Membership is ₹500 for six months;
-                eligible offers are applied by the partner when you pay them directly.
+                Shop the PennyGrade six-month physical membership card online for ₹500 and explore
+                participating local businesses and their listed member privileges. Each partner
+                applies eligible benefits under its own terms; customers pay partners directly.
               </p>
 
               {/* 4-column Hero Stats Strip (Real PennyGrade Details) */}
@@ -181,10 +181,10 @@ export default function Home() {
               {/* Dual CTA buttons */}
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
                 <Link
-                  to="/checkout"
+                  to="/membership-card"
                   className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-8 text-sm font-extrabold text-white shadow-lg shadow-amber-500/30 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-xl hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0"
                 >
-                  Become a Member
+                  Shop Membership Card
                 </Link>
                 <Link
                   to="/partners"
@@ -557,10 +557,10 @@ export default function Home() {
                   </span>
                   <div className="font-display text-4xl font-extrabold text-white">₹500</div>
                   <Link
-                    to="/become-a-member"
+                    to="/membership-card"
                     className="mt-4 inline-flex min-h-[42px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-xs font-bold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35"
                   >
-                    Apply For Card (₹500 / 6 Mo)
+                    View Membership Card — ₹500
                   </Link>
                 </div>
               </div>
@@ -862,11 +862,11 @@ function MobileHome({ partners }: { partners: PublicPartner[] }) {
         <div className="grid grid-cols-[1.12fr_.88fr] items-center gap-2">
           <div>
             <h1 className="text-[2rem] font-black leading-[.98] tracking-tight text-slate-950">
-              One Card.<span className="block text-orange-500">Many Privileges.</span>
+              Shop One Card.<span className="block text-orange-500">Discover Local Privileges.</span>
             </h1>
             <p className="mt-3 text-[13px] font-medium leading-[1.35] text-slate-800">
-              Get a six-month physical membership card and explore participating businesses and
-              their listed member benefits in Daltonganj.
+              Shop the six-month physical membership card online for ₹500. Explore participating
+              businesses and their listed member benefits in Daltonganj.
             </p>
           </div>
           <PhysicalCardPreview interactive={false} className="rotate-[-5deg] shadow-xl" />
@@ -887,11 +887,11 @@ function MobileHome({ partners }: { partners: PublicPartner[] }) {
         </div>
         <div className="mt-4 grid grid-cols-[1.2fr_1fr] gap-2.5 max-[360px]:grid-cols-1">
           <Link
-            to="/checkout"
+            to="/membership-card"
             className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 text-center text-[14px] font-extrabold text-white shadow-lg"
           >
             <CreditCard className="h-6 w-6 shrink-0" />
-            Buy Your Card – ₹500 <ArrowRight className="h-4 w-4 shrink-0" />
+            Shop Card – ₹500 <ArrowRight className="h-4 w-4 shrink-0" />
           </Link>
           <Link
             to="/partners"
@@ -955,10 +955,10 @@ function MobileHome({ partners }: { partners: PublicPartner[] }) {
           </div>
           <span className="h-10 w-px bg-white/30" />
           <Link
-            to="/checkout"
+            to="/membership-card"
             className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2 text-[11px] font-extrabold text-white sm:min-h-10 sm:gap-2 sm:px-5 sm:text-sm"
           >
-            Get Started <ArrowRight className="h-4 w-4" />
+            Shop Card <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

@@ -16,7 +16,7 @@ import {
   LoaderCircle,
 } from "lucide-react";
 import { SiteLayout } from "@/components/site";
-import { Wordmark, PhysicalCardPreview } from "@/components/brand";
+import { LOGO_URL, Wordmark, PhysicalCardPreview } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ import { DEFAULT_PLANS, type PublicPlan } from "@/lib/orders.logic";
 import { inr } from "@/lib/format";
 import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 import { recordVerifiedOrderForNavigation } from "@/lib/order-confirmation";
+import { setMembershipCardInCart } from "@/lib/product-cart";
 import {
   isPaymentLocked,
   needsPaymentBlockingOverlay,
@@ -299,7 +300,7 @@ function CheckoutPage() {
         currency: orderRes.currency,
         name: "PennyGrade",
         description: selectedPlan.name,
-        image: "https://pennygrade.com/assets/pennygrade-emblem.png",
+        image: LOGO_URL,
         prefill: {
           name: fullName.trim(),
           email: cleanEmail,
@@ -342,6 +343,7 @@ function CheckoutPage() {
             });
 
             if (fulfillRes.ok) {
+              setMembershipCardInCart(false);
               setPendingCheckout(null);
               recordVerifiedOrderForNavigation({
                 orderNumber: orderRes.orderNumber,
@@ -429,7 +431,7 @@ function CheckoutPage() {
         <div className="mb-10 text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50 px-3.5 py-1 text-xs font-bold text-amber-900 shadow-2xs">
             <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-            <span>Official Membership Card Checkout</span>
+            <span>Secure Membership Card Checkout</span>
           </div>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Order Your Physical Card Online

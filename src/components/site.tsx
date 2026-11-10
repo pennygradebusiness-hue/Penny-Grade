@@ -35,7 +35,7 @@ export function SiteHeader() {
   const navigate = useNavigate();
 
   const desktopLinks = [
-    { to: "/about", label: "About" },
+    { to: "/membership-card", label: "Shop Card" },
     { to: "/about", label: "About" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
@@ -43,21 +43,20 @@ export function SiteHeader() {
     { to: "/how-it-works", label: "How It Works" },
     { to: "/partner-with-us", label: "Partner With Us" },
     { to: "/history", label: "History" },
+    { to: "/cart", label: "Cart" },
   ];
 
   const mobileLinks = [
     { to: "/", label: "Home" },
-    { to: "/about", label: "About PennyGrade" },
-    { to: "/contact", label: "Contact" },
-    { to: "/about", label: "About PennyGrade" },
+    { to: "/membership-card", label: "Shop Membership Card · ₹500" },
     { to: "/contact", label: "Contact" },
     { to: "/partners", label: "Partners" },
     { to: "/offers", label: "Offers" },
     { to: "/prebook", label: "Prebook upcoming offers" },
     { to: "/how-it-works", label: "How It Works" },
-    { to: "/checkout", label: "Buy Your Card (₹500)" },
     { to: "/partner-with-us", label: "Partner With Us" },
     { to: "/history", label: "History" },
+    { to: "/cart", label: "Cart" },
   ];
 
   const signOut = async () => {
@@ -152,10 +151,10 @@ export function SiteHeader() {
           ) : (
             <>
               <Link
-                to="/checkout"
+                to="/membership-card"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 text-[13px] font-extrabold text-white shadow-md shadow-amber-500/25 transition-all hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4 mr-1.5" /> Buy Card (₹500)
+                <CreditCard className="h-4 w-4 mr-1.5" /> Shop Card (₹500)
               </Link>
             </>
           )}
@@ -255,8 +254,8 @@ export function SiteFooter() {
         <div className="md:col-span-1">
           <Wordmark className="text-white" />
           <p className="mt-4 text-xs leading-relaxed text-navy-muted">
-            India's Smart Physical Card Discount Membership connecting members with trusted local
-            businesses.
+            Shop PennyGrade's six-month physical membership card and explore participating local
+            businesses and their listed member benefits.
           </p>
 
           <div className="mt-5 space-y-2.5 text-xs">
@@ -301,8 +300,8 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link to="/checkout" className="text-navy-muted transition-colors hover:text-white">
-                Buy Your Card (₹500)
+              <Link to="/membership-card" className="text-navy-muted transition-colors hover:text-white">
+                Shop Membership Card (₹500)
               </Link>
             </li>
             <li>
@@ -437,7 +436,7 @@ export function SiteFooter() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/about" className="hover:text-white">About Us</Link>
             <Link to="/contact" className="hover:text-white">Contact Us</Link>
-            <Link to="/become-a-member" className="hover:text-white">Membership &amp; Pricing</Link>
+            <Link to="/membership-card" className="hover:text-white">Membership &amp; Pricing</Link>
             <Link to="/membership-terms" className="hover:text-white">Membership Terms</Link>
             <Link to="/terms" className="hover:text-white">
               Terms
