@@ -29,7 +29,18 @@ export async function normalizeCatastrophicSsrResponse(
   request?: Request,
 ): Promise<Response> {
   if (response.status < 500) return response;
-  const isHtmlRequest = request?.headers.get("accept")?.includes("text/html");
+  const isServerFn =
+    request?.url?.includes("/_server") ||
+    request?.headers?.has("x-ts-server-fn") ||
+    request?.headers?.has("x-server-function");
+  if (isServerFn) return response;
+
+  const isHtmlRequest =
+    request?.method !== "POST" &&
+    request?.method !== "PUT" &&
+    request?.method !== "PATCH" &&
+    request?.method !== "DELETE" &&
+    request?.headers.get("accept")?.includes("text/html");
   const captured = consumeLastCapturedError();
   logApplicationError(captured ?? new Error(`SSR request returned HTTP ${response.status}`), {
     boundary: "NitroSsrHandler",
@@ -108,7 +119,17 @@ export default {
       return applySecurityHeaders(response, requestId);
     } catch (error) {
       logApplicationError(error, { boundary: "NitroServerEntry", requestId });
-      const isHtmlRequest = request.headers.get("accept")?.includes("text/html");
+      const isServerFn =
+        request.url?.includes("/_server") ||
+        request.headers.has("x-ts-server-fn") ||
+        request.headers.has("x-server-function");
+      const isHtmlRequest =
+        !isServerFn &&
+        request.method !== "POST" &&
+        request.method !== "PUT" &&
+        request.method !== "PATCH" &&
+        request.method !== "DELETE" &&
+        request.headers.get("accept")?.includes("text/html");
       if (!isHtmlRequest) {
         const errResponse = new Response(
           JSON.stringify({

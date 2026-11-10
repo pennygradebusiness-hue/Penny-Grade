@@ -4,10 +4,15 @@ import { renderErrorPage } from "./lib/error-page";
 import { logApplicationError } from "./lib/error-logger";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
-const errorMiddleware = createMiddleware().server(async ({ next }) => {
+const errorMiddleware = createMiddleware().server(async ({ next, handlerType }) => {
   try {
     return await next();
   } catch (error) {
+    // Server function errors must bubble cleanly through TanStack Start's RPC serialization,
+    // rather than being converted into an HTML error page.
+    if (handlerType === "serverFn") {
+      throw error;
+    }
     if (error != null && typeof error === "object" && "statusCode" in error) {
       throw error;
     }

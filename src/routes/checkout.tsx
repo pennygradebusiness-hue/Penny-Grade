@@ -392,12 +392,15 @@ function CheckoutPage() {
       let message =
         err instanceof Error ? err.message : "Could not complete checkout. Please try again.";
       if (
-        message.includes("<!doctype") ||
-        message.includes("<html") ||
-        message.includes("<head") ||
-        message.includes("<title>")
+        message.toLowerCase().includes("<!doctype") ||
+        message.toLowerCase().includes("<html") ||
+        message.toLowerCase().includes("<head") ||
+        message.toLowerCase().includes("<title>") ||
+        /<[a-z!][\s\S]*>/i.test(message)
       ) {
         message = "Server is temporarily unavailable. Please refresh and try again.";
+      } else if (/Authentication failed/i.test(message)) {
+        message = "Payment gateway authentication failed. Please verify Razorpay API keys in settings.";
       }
       const gatewayUnavailable = /Razorpay did not respond|Could not connect to Razorpay/i.test(
         message,
