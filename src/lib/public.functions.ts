@@ -14,6 +14,10 @@ import {
 } from "./v1-store";
 import { sendTransactionalEmail, renderRedemptionSuccessEmail } from "./email.service";
 
+// Public catalog queries run during SSR on the homepage. Bound their network
+// time so a slow Supabase edge cannot hold the entire HTML response open.
+const PUBLIC_CATALOG_TIMEOUT_MS = 1_800;
+
 export function pub() {
   const projectId =
     process.env.SUPABASE_PROJECT_ID ||
@@ -35,6 +39,10 @@ export function pub() {
 
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) =>
+        fetch(input, { ...init, signal: AbortSignal.timeout(PUBLIC_CATALOG_TIMEOUT_MS) }),
+    },
     realtime: {
       transport: getRealtimeTransport(),
     },
@@ -205,26 +213,10 @@ export const getPartners = createServerFn({ method: "GET" }).handler(async () =>
     // Fall back to the local store only when the database is unavailable.
   }
 
-  // Fetch existing offers from Supabase if available to attach
+  // The primary query already includes offers. If it failed, do not issue a
+  // second network request here: that would serialize another full timeout
+  // onto the SSR response. Local catalog data remains available as fallback.
   const dbOffersMap = new Map<string, PublicOffer[]>();
-  try {
-    const { data: dbPartners } = await pub()
-      .from("partners")
-      .select(`id,slug,offers(${OFFER_COLS})`);
-    if (dbPartners) {
-      for (const p of dbPartners) {
-        if (!delSet.has(p.id) && !delSet.has(p.slug) && p.offers && p.offers.length > 0) {
-          const filteredOffers = (p.offers as unknown as PublicOffer[]).filter(
-            (o) => !delOfferSet.has(o.id),
-          );
-          dbOffersMap.set(p.id, filteredOffers);
-          dbOffersMap.set(p.slug, filteredOffers);
-        }
-      }
-    }
-  } catch {
-    // ignore
-  }
 
   // Also attach offers from store.offers
   if (store.offers) {
