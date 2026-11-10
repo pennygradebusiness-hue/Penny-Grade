@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader, DataTable, td, TableSkeleton } from "@/components/admin-ui";
 import { StatusBadge } from "@/components/brand";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/use-session";
 import { inr } from "@/lib/format";
+import { getAdminMutationErrorMessage } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({ component: Plans });
 
@@ -36,38 +37,52 @@ function Plans() {
     },
   });
   const [edit, setEdit] = useState<Plan | null>(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const save = async () => {
-    if (!edit || !edit.name || edit.price < 0 || edit.duration_days < 1) return toast.error("Check the plan fields");
-    const benefits = edit.benefits.map((benefit) => benefit.trim()).filter(Boolean);
-    const payload = { name: edit.name, description: edit.description, price: edit.price, duration_days: edit.duration_days, benefits, card_included: edit.card_included, status: edit.status };
-    if (edit.id) {
-      const { data, error } = await supabase
-        .from("membership_plans")
-        .update(payload)
-        .eq("id", edit.id)
-        .select("id")
-        .maybeSingle();
-      if (error) return toast.error(`Plan was not updated: ${error.message}`);
-      if (!data) {
-        return toast.error(
-          "Plan was not updated. Supabase changed 0 rows; check your admin role and membership_plans UPDATE policy.",
-        );
-      }
-    } else {
-      const { data, error } = await supabase
-        .from("membership_plans")
-        .insert(payload)
-        .select("id")
-        .single();
-      if (error) return toast.error(`Plan was not created: ${error.message}`);
-      if (!data) return toast.error("Plan was not created: Supabase returned no inserted row.");
+    if (savingRef.current) return;
+    if (!edit || !edit.name.trim() || !Number.isFinite(edit.price) || edit.price < 0 || !Number.isInteger(edit.duration_days) || edit.duration_days < 1) {
+      return toast.error("Check the plan details and try again.");
     }
 
-    await logAudit(edit.id ? "Updated plan" : "Created plan", "membership_plan", edit.id ?? null, payload);
-    await qc.invalidateQueries({ queryKey: ["admin", "plans"] });
-    await qc.refetchQueries({ queryKey: ["admin", "plans"], type: "active" });
-    toast.success("Plan saved to Supabase");
-    setEdit(null);
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const benefits = edit.benefits.map((benefit) => benefit.trim()).filter(Boolean);
+      const payload = { name: edit.name.trim(), description: edit.description?.trim() || null, price: edit.price, duration_days: edit.duration_days, benefits, card_included: edit.card_included, status: edit.status };
+      if (edit.id) {
+        const { data, error } = await supabase
+          .from("membership_plans")
+          .update(payload)
+          .eq("id", edit.id)
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) throw Object.assign(new Error("No row updated"), { code: "PGRST116" });
+      } else {
+        const { data, error } = await supabase
+          .from("membership_plans")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (error) throw error;
+        if (!data) throw new Error("Insert returned no row");
+      }
+
+      await logAudit(edit.id ? "Updated plan" : "Created plan", "membership_plan", edit.id ?? null, payload);
+      setEdit(null);
+      toast.success("Changes saved.");
+      await qc.invalidateQueries({ queryKey: ["admin", "plans"] });
+      await qc.refetchQueries({ queryKey: ["admin", "plans"], type: "active" });
+    } catch (error) {
+      console.error("Membership plan save failed", {
+        code: error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined,
+      });
+      toast.error(getAdminMutationErrorMessage(error));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
   const list = (q.data ?? []).map((p) => ({
     ...p,
@@ -98,7 +113,7 @@ function Plans() {
             </div>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={edit.card_included} onChange={(e) => setEdit({ ...edit, card_included: e.target.checked })} />Physical card included</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={edit.status === "ACTIVE"} onChange={(e) => setEdit({ ...edit, status: e.target.checked ? "ACTIVE" : "INACTIVE" })} />Active</label>
-            <Button className="w-full" onClick={save}>Save</Button>
+            <Button className="w-full" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
           </div>}
         </DialogContent>
       </Dialog>

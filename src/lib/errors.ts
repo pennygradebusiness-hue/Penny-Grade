@@ -113,3 +113,21 @@ export function sanitizeLogData(data: unknown, depth = 0): unknown {
 
   return String(data);
 }
+
+/** Converts common database/network failures into safe, actionable admin copy. */
+export function getAdminMutationErrorMessage(error: unknown): string {
+  const value = error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+  const code = typeof value.code === "string" ? value.code : "";
+  const status = typeof value.status === "number" ? value.status : 0;
+  const message = typeof value.message === "string" ? value.message : "";
+
+  if (["42501", "401", "403"].includes(code) || status === 401 || status === 403 || /permission denied|row-level security|not authorized/i.test(message)) {
+    return "You don’t have permission to make this change. Contact an administrator.";
+  }
+  if (code === "23505") return "A record with these details already exists. Review the information and try again.";
+  if (["23503", "23514", "22P02"].includes(code)) return "Some information is invalid or unavailable. Review the fields and try again.";
+  if (status === 0 || error instanceof TypeError || /network|fetch failed|timeout|timed out/i.test(message)) {
+    return "We couldn’t reach the server. Check your connection and try again.";
+  }
+  return "We couldn’t save your changes. Please try again. If the problem continues, contact support.";
+}
