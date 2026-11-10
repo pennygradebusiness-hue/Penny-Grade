@@ -8,9 +8,20 @@ import { inr } from "@/lib/format";
 import { getMembershipCartPlanId, setMembershipCardInCart } from "@/lib/product-cart";
 import { buildBreadcrumbSchema, buildPageHead, getSiteUrl } from "@/lib/seo";
 import { getPublicStorefrontMembershipProduct } from "@/lib/orders.functions";
+import { partnersQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/membership-card")({
-  loader: () => getPublicStorefrontMembershipProduct(),
+  loader: async ({ context }) => {
+    const [product, partners] = await Promise.all([
+      getPublicStorefrontMembershipProduct(),
+      context.queryClient.ensureQueryData(partnersQuery),
+    ]);
+    return {
+      product,
+      partnerCount: partners.length,
+      offerCount: partners.reduce((total, partner) => total + partner.offers.length, 0),
+    };
+  },
   head: ({ loaderData }) =>
     buildPageHead({
       title: "PennyGrade 6-Month Membership Card",
@@ -26,17 +37,18 @@ export const Route = createFileRoute("/membership-card")({
           "@context": "https://schema.org",
           "@type": "Product",
           name: "PennyGrade 6-Month Membership Card",
-          description:
-            "One physical PennyGrade membership card with six months of membership access to participating local businesses and their listed member benefits.",
+          description: loaderData?.partnerCount
+            ? "One physical PennyGrade membership card with six months of membership access to participating local businesses and their listed member benefits."
+            : "One physical PennyGrade membership card with six months of membership access. No verified partner businesses or member offers are currently listed.",
           brand: { "@type": "Brand", name: "PennyGrade" },
           image: `${getSiteUrl()}/pennygrade-card.webp`,
           offers: {
             "@type": "Offer",
             priceCurrency: "INR",
-            ...(loaderData ? { price: String(loaderData.plan.price) } : {}),
-            ...(loaderData?.availability === "IN_STOCK"
+            ...(loaderData?.product ? { price: String(loaderData.product.plan.price) } : {}),
+            ...(loaderData?.product?.availability === "IN_STOCK"
               ? { availability: "https://schema.org/InStock" }
-              : loaderData?.availability === "OUT_OF_STOCK"
+              : loaderData?.product?.availability === "OUT_OF_STOCK"
                 ? { availability: "https://schema.org/OutOfStock" }
                 : {}),
             url: `${getSiteUrl()}/membership-card`,
@@ -49,7 +61,7 @@ export const Route = createFileRoute("/membership-card")({
 
 function MembershipCardProductPage() {
   const navigate = useNavigate();
-  const product = Route.useLoaderData();
+  const { product, partnerCount, offerCount } = Route.useLoaderData();
   const [inCart, setInCart] = useState(false);
 
   useEffect(() => setInCart(Boolean(product && getMembershipCartPlanId() === product.plan.id)), [product]);
@@ -95,7 +107,7 @@ function MembershipCardProductPage() {
               PennyGrade 6-Month Membership Card
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              One physical membership card with six months of access to PennyGrade membership features, the participating business directory, and the benefits shown on each partner listing.
+              One physical membership card with six months of access to PennyGrade membership features. {partnerCount > 0 ? `${partnerCount} verified partner businesses currently list ${offerCount} member offers; check each listing for its terms.` : "There are currently no verified partner businesses or member offers listed, so partner privileges are not currently available."}
             </p>
 
             <div className="mt-6 flex items-baseline gap-3">
@@ -109,7 +121,9 @@ function MembershipCardProductPage() {
                 {[
                   "One physical PennyGrade membership card",
                   "Six months of membership access from card activation",
-                  "Access to participating business listings and their current member benefits",
+                  partnerCount > 0
+                    ? "Access to participating business listings and their current member benefits"
+                    : "Online membership verification; no verified partner businesses or offers are currently listed",
                   "Online membership verification where supported",
                   "Membership and order support by email and phone",
                 ].map((item) => (

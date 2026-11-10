@@ -27,6 +27,7 @@ import {
 } from "@/lib/orders.functions";
 import { type PublicPlan } from "@/lib/orders.logic";
 import { inr } from "@/lib/format";
+import { partnersQuery } from "@/lib/queries";
 import { buildPageHead, buildBreadcrumbSchema } from "@/lib/seo";
 import { recordVerifiedOrderForNavigation } from "@/lib/order-confirmation";
 import { setMembershipCardInCart } from "@/lib/product-cart";
@@ -86,7 +87,13 @@ interface CheckoutOrderResponse {
 }
 
 export const Route = createFileRoute("/checkout")({
-  loader: async () => ({ plans: await getPublicMembershipPlans() }),
+  loader: async ({ context }) => {
+    const [plans, partners] = await Promise.all([
+      getPublicMembershipPlans(),
+      context.queryClient.ensureQueryData(partnersQuery),
+    ]);
+    return { plans, partnerCount: partners.length };
+  },
   validateSearch: (search: Record<string, unknown>) => ({
     planId: typeof search.planId === "string" ? search.planId : undefined,
   }),
@@ -136,7 +143,7 @@ function loadRazorpayScript(): Promise<boolean> {
 function CheckoutPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const { plans } = Route.useLoaderData();
+  const { plans, partnerCount } = Route.useLoaderData();
   const [selectedPlanId, setSelectedPlanId] = useState<string>(search.planId || plans[0]?.id || "");
 
   const createOrderFn = useServerFn(createMembershipOrder);
@@ -448,6 +455,11 @@ function CheckoutPage() {
           <p className="mx-auto mt-2 max-w-2xl text-xs font-semibold text-amber-800">
             Card delivery is currently available only in Daltonganj, Jharkhand.
           </p>
+          {partnerCount === 0 && (
+            <p className="mx-auto mt-3 max-w-2xl rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-sm leading-6 text-amber-950">
+              No verified partner businesses or member offers are currently listed. Partner privileges are not currently available; review the directory before ordering.
+            </p>
+          )}
         </div>
 
         <form

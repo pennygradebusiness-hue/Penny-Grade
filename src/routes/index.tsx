@@ -118,6 +118,7 @@ export default function Home() {
   const { data: categories } = useSuspenseQuery(categoriesQuery);
   const [, , product] = Route.useLoaderData();
   const featured = partners.slice(0, 6);
+  const listedOfferCount = partners.reduce((total, partner) => total + partner.offers.length, 0);
 
   return (
     <SiteLayout>
@@ -136,7 +137,7 @@ export default function Home() {
               </h1>
 
               <p className="mt-5 max-w-[710px] text-base font-medium leading-[1.55] text-slate-700 sm:text-lg">
-                Shop the PennyGrade six-month physical membership card online{product ? ` for ${inr(product.plan.price)}` : ""} and explore participating local businesses offering listed member benefits. Each partner applies benefits under its own terms; customers pay partner businesses directly.
+                Shop the PennyGrade six-month physical membership card online{product ? ` for ${inr(product.plan.price)}` : ""}. {partners.length > 0 ? `Explore ${partners.length} verified local businesses and ${listedOfferCount} currently listed offers. Each partner applies benefits under its own terms; customers pay partner businesses directly.` : "There are currently no verified partner businesses or member offers listed. Check the directory for updates before purchasing; partner privileges are not currently available."}
               </p>
 
               {/* 4-column Hero Stats Strip (Real PennyGrade Details) */}
@@ -145,16 +146,16 @@ export default function Home() {
                   <Store className="h-8 w-8 text-orange-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
-                      Local
+                      {partners.length}
                     </strong>
-                    <span className="text-[12px] font-semibold text-slate-600">Partner Network</span>
+                    <span className="text-[12px] font-semibold text-slate-600">Verified Businesses</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 border-slate-200 sm:border-r sm:px-4">
                   <Gift className="h-8 w-8 text-orange-500 shrink-0" />
                   <div>
                     <strong className="block font-display text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
-                      Listed
+                      {listedOfferCount}
                     </strong>
                     <span className="text-[12px] font-semibold text-slate-600">Member Offers</span>
                   </div>
