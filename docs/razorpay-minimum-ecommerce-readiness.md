@@ -2,6 +2,16 @@
 
 Status snapshot: repository review and local implementation only. This is not an independent Razorpay review, a live-production validation, or approval to accept live payments.
 
+## Live site review — 10 November 2026
+
+An unauthenticated HTTP check of `https://www.pennygrade.in` and the product, cart, checkout, About, Contact, Terms, Privacy, Shipping, Refund, and Membership Terms routes returned HTTP 200. This confirms reachability at the time of review, not end-to-end checkout correctness. The live `/membership-card` page currently renders **“Price unavailable”** and **“Purchase is temporarily unavailable while the active membership plan is being confirmed.”** Therefore the live storefront is **not ready to submit for final website review as a functioning priced storefront** until the production plan query resolves to the intended active ₹500, 180-day, physical-card plan and actual available card inventory is confirmed. Do not hard-code a fallback price or invent stock to hide this issue. Diagnose the production Supabase/server configuration and database state, then verify the live page and checkout again.
+
+### Category selection guidance
+
+The actual product is a PennyGrade membership, represented by a physical card, which grants access to a local partner directory and partner-defined offers. It is not a third-party seller marketplace, a stored-value gift card, or a standalone coupon product. On the category options supplied from the current onboarding form, **Social group or platform** is the closest description of the membership-network business, if its offered subcategory accurately supports memberships. The old Razorpay Route `SOCIAL` list mentioning “Associations and Membership” is only a lead for clarification; it does not establish the standard Payment Gateway category or eligibility.
+
+If Razorpay explicitly instructs the merchant to select **Ecommerce**, no displayed Ecommerce subcategory is an exact fit. `Coupons` is the nearest possible label only as a question to put to Razorpay, not a confirmed recommendation: the product includes a physical card and term membership rather than a coupon-only sale. Do not choose `Ecommerce Marketplace` (PennyGrade does not collect seller payments) or `Gift Cards Vouchers` (the card is not stored value or a gift balance) to improve approval odds. Ask Razorpay to confirm the category/subcategory for the exact product in writing and disclose the membership-plus-card model fully. No category can make approval certain.
+
 ## Website and purchase flow implemented in this repository
 
 - A dedicated PennyGrade physical membership card product page showing the sole active 180-day card-included plan's live server-side price, actual inventory status (without exposing counts), included features, delivery-area disclosure, and policy links. If plan, inventory, or payment status cannot be verified, purchase actions are disabled instead of displaying fallback data.
@@ -39,6 +49,7 @@ Status snapshot: repository review and local implementation only. This is not an
 3. Verify the deployed preview's product, cart, checkout, policy pages, order confirmation and tracking, including mobile layout and network/SSR performance.
 4. Confirm the legal merchant identity, active partner records, fulfilment terms, and data-retention/support process with the operator.
 5. Keep live collection disabled until Razorpay approves the exact product and account. Do not submit generated mockups, sample records, or unsigned drafts as completed evidence.
+6. Before requesting website review, resolve the live page's missing-price/unavailable-plan state and verify the actual plan, physical inventory, payment configuration, policies, and checkout against production. A successful HTTP status alone is not a readiness pass.
 
 ## Classification
 

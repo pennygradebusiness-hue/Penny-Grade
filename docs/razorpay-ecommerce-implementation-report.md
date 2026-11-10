@@ -44,3 +44,9 @@
 - `pnpm test` — passed: 16 files, 145 tests.
 
 No database migration was applied, the live-payment approval flag was not enabled, production payment was not enabled, deployment was not made, and no Razorpay application was submitted.
+
+## Live storefront recheck — 10 November 2026
+
+The public site and the main product, cart, checkout, and policy URLs returned HTTP 200. The live `/membership-card` response, however, displayed “Price unavailable” and “Purchase is temporarily unavailable while the active membership plan is being confirmed.” This means the live deployment does not currently expose the intended priced product for a normal customer purchase. The source code is deliberately fail-closed when it cannot confirm the unique active server-side plan. Before asking Razorpay to review the live website, verify production Supabase credentials/schema and plan data, confirm real available card inventory, then retest the product and checkout pages. Do not mask this with a hard-coded price or fabricated inventory.
+
+The onboarding category cannot be conclusively inferred from a separate Razorpay Route category document. Based on the business description and the options shared by the merchant, Social group or platform appears closer than an inaccurate Ecommerce Marketplace or stored-value Gift Cards/Vouchers classification. If the dashboard requires Ecommerce, Coupons is only a possible label to ask Razorpay about, not a confirmed selection. Obtain Razorpay's written category guidance for this membership-plus-physical-card product before treating the category as settled.
