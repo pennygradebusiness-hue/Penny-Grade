@@ -86,6 +86,7 @@ interface CheckoutOrderResponse {
 }
 
 export const Route = createFileRoute("/checkout")({
+  loader: async () => ({ plans: await getPublicMembershipPlans() }),
   validateSearch: (search: Record<string, unknown>) => ({
     planId: typeof search.planId === "string" ? search.planId : undefined,
   }),
@@ -135,10 +136,9 @@ function loadRazorpayScript(): Promise<boolean> {
 function CheckoutPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [plans, setPlans] = useState<PublicPlan[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(search.planId || "");
+  const { plans } = Route.useLoaderData();
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(search.planId || plans[0]?.id || "");
 
-  const getPlansFn = useServerFn(getPublicMembershipPlans);
   const createOrderFn = useServerFn(createMembershipOrder);
   const verifyPaymentFn = useServerFn(verifyPaymentAndFulfillOrder);
 
@@ -193,20 +193,15 @@ function CheckoutPage() {
 
   useEffect(() => {
     loadRazorpayScript().then(setRazorpayReady);
-    getPlansFn()
-      .then((res) => {
-        if (Array.isArray(res) && res.length > 0) {
-          setPlans(res);
-          setSelectedPlanId((prev) => {
-            if (search.planId && res.some((plan) => plan.id === search.planId)) return search.planId;
-            return res.some((plan) => plan.id === prev) ? prev : res[0].id;
-          });
-        }
-      })
-      .catch(() => {
-        // Fallback default safely preserved
-      });
-  }, [getPlansFn, search.planId]);
+  }, []);
+
+  useEffect(() => {
+    if (search.planId && plans.some((plan) => plan.id === search.planId)) {
+      setSelectedPlanId(search.planId);
+    } else if (!plans.some((plan) => plan.id === selectedPlanId)) {
+      setSelectedPlanId(plans[0]?.id || "");
+    }
+  }, [plans, search.planId, selectedPlanId]);
 
   const safePlans = Array.isArray(plans) ? plans : [];
   const selectedPlan = safePlans.find((p) => p.id === selectedPlanId) || safePlans[0] || null;

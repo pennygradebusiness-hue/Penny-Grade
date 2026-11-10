@@ -14,6 +14,12 @@ The actual product is a PennyGrade membership, represented by a physical card, w
 
 No displayed Ecommerce subcategory is an exact fit. `Coupons` is the nearest possible label only as a question to put to Razorpay, not a confirmed recommendation: the product includes a physical card and term membership rather than a coupon-only sale. Do not choose `Ecommerce Marketplace` (PennyGrade does not collect seller payments) or `Gift Cards Vouchers` (the card is not stored value or a gift balance) to improve approval odds. Ask Razorpay to confirm the category/subcategory for the exact product in writing and disclose the membership-plus-card model fully. No category can make approval certain.
 
+## Live storefront recheck — 10 November 2026, later check
+
+The homepage and `/membership-card` now render ₹500, a six-month card, and a live in-stock state; public policy routes including `/shipping-policy` return HTTP 200. The live `/partners` page currently says **0 verified businesses**. This is a material product-readiness blocker: do not imply that partner benefits are presently redeemable until genuine partner listings, executed agreements, and current offer terms exist. Do not fabricate partners to satisfy a crawler.
+
+The public `/checkout` HTML still rendered “active six-month physical-card plan is unavailable” because checkout fetched plans only after client-side JavaScript ran. A server-side route loader has now been added in source so crawlers and customers receive the same plan data in initial HTML. This source change must be deployed and verified against the live checkout response before Razorpay review. The live hosting project has not been inspected, so a successful Git push does not confirm a production deployment.
+
 ## Website and purchase flow implemented in this repository
 
 - A dedicated PennyGrade physical membership card product page showing the sole active 180-day card-included plan's live server-side price, actual inventory status (without exposing counts), included features, delivery-area disclosure, and policy links. If plan, inventory, or payment status cannot be verified, purchase actions are disabled instead of displaying fallback data.
@@ -54,7 +60,7 @@ No displayed Ecommerce subcategory is an exact fit. `Coupons` is the nearest pos
 3. Verify the deployed preview's product, cart, checkout, policy pages, order confirmation and tracking, including mobile layout and network/SSR performance.
 4. Confirm the legal merchant identity, active partner records, fulfilment terms, and data-retention/support process with the operator.
 5. Keep live collection disabled until Razorpay approves the exact product and account. Do not submit generated mockups, sample records, or unsigned drafts as completed evidence.
-6. Before requesting website review, create/confirm the correct active 180-day plan without changing records referenced by existing orders, resolve the live page's missing-price/unavailable-plan state, and verify actual physical inventory, payment configuration, policies, and checkout against production. A successful HTTP status alone is not a readiness pass.
+6. Before requesting website review, confirm the correct active 180-day plan without changing records referenced by existing orders, ensure genuine partner listings and benefits are available (or revise the product honestly), and verify actual physical inventory, payment configuration, policies, and server-rendered checkout against production. A successful HTTP status alone is not a readiness pass.
 
 ## Classification
 
