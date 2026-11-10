@@ -4,17 +4,17 @@
 
 - Framework: TanStack Start with React and file-based routes under `src/routes/`.
 - Build/runtime: Vite 8 and Nitro; `vite.config.ts` selects the Netlify Nitro preset when `NETLIFY=true`.
-- Hosting: Netlify. `netlify.toml` sets `pnpm run build` and publishes `dist`; tracked `public/_redirects` rewrites application paths to `/.netlify/functions/server`.
+- Repository deployment config: `netlify.toml` sets `pnpm run build` and publishes `dist`; tracked `public/_redirects` rewrites application paths to `/.netlify/functions/server`.
 - Route generation: the TanStack router plugin generates `src/routeTree.gen.ts` during Vite builds. Do not edit that file by hand.
 - Node: 22, as declared in `.node-version`, `.nvmrc`, and Netlify build configuration.
 - Package manager: pnpm 10.33.0.
 - Database/auth: the linked Supabase project configured in `supabase/config.toml`.
 
-The local Netlify build generated `dist/_redirects`, `dist/assets/`, and `.netlify/functions-internal/server/`, then packaged `server/server.mjs` as a function. Netlify Dev returned 404 for every route tested both with framework proxying and with static mode; diagnostic runs with the generated redirect present or removed and with either functions directory also returned 404. `netlify functions:invoke server` could not find a matching function. The exact local CLI/framework incompatibility is not established, and the runtime has not been proven through Netlify CLI. Netlify CLI reports that this workstation is not logged in, so account status, preview, logs, and production deploy commit remain unavailable.
+The live `www.pennygrade.in` response was observed with `Server: Vercel` on 2026-11-10, which conflicts with the repository's Netlify deployment config. The actual Vercel project settings, build command, environment variables, deployment branch, and commit could not be inspected from this workstation. The local Netlify build generated `dist/_redirects`, `dist/assets/`, and `.netlify/functions-internal/server/`, then packaged `server/server.mjs` as a function. Netlify Dev returned 404 for every route tested both with framework proxying and with static mode. Do not treat the Netlify setup as verified production configuration until the deployment owner resolves this host/config mismatch.
 
 ## Environment variables
 
-Set variables in the appropriate Netlify context. Values must be kept in Netlify's secret store and must never be copied into source control or browser bundles.
+Set variables in the actual hosting project's runtime/build context. Values must be kept in the provider's secret store and must never be copied into source control or browser bundles. The current live host is not verified against this repository's Netlify config.
 
 | Variable name | Use | Exposure |
 |---|---|---|
@@ -59,13 +59,13 @@ Do not use a preview that points at live payment credentials or sends mail to re
 
 ## Rollback
 
-1. Identify the last known-good immutable Netlify deploy in the Netlify deploy history.
-2. Restore that deploy using Netlify's published-deploy rollback action and verify the production domain.
+1. Identify the last known-good immutable deploy in the hosting provider's deploy history.
+2. Restore that deploy using the provider's rollback action and verify the production domain.
 3. Check compatibility before rolling back code if a database migration has been applied. Do not reverse schema changes or restore a database snapshot without a separately reviewed recovery plan.
 4. Re-run the route smoke test and confirm payment/webhook health after rollback.
 
-The rollback procedure has not been exercised because Netlify deployment access was unavailable.
+The rollback procedure has not been exercised because hosting project access was unavailable.
 
 ## Current deployment status
 
-**BLOCKED.** No deployment was initiated. `pnpm --package=netlify-cli dlx netlify status` reports this workstation is not logged in. The Supabase migration inventory command reached the configured production project but returned HTTP 403 for insufficient account privileges. Netlify site linkage, preview URLs, deploy logs, variable contexts, and deployed commit remain to be checked by an authorized project operator.
+**PARTIALLY VERIFIED.** Source was pushed to `hue/main` at commit `4045bf8`; the public membership-card URL returned HTTP 200 and a Vercel server header on 2026-11-10. The exact deployed commit and production deployment configuration remain unverified because this workstation has no access to the hosting project. The Supabase migration inventory command reached the configured project but returned HTTP 403 for insufficient account privileges. The current live product page reports price unavailable because the database does not contain exactly one active physical-card plan with a six-month term. No production database row or migration was changed.
