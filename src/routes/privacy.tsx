@@ -133,7 +133,7 @@ function PrivacyPage() {
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1.5">
           <li><strong>Database &amp; Authentication:</strong> Supabase is used for application data and account authentication.</li>
-          <li><strong>Payment processing:</strong> If Razorpay is approved and enabled, checkout details needed to process a PennyGrade membership or prebooking payment will be shared with Razorpay. PennyGrade does not receive or store full payment-card credentials.</li>
+          <li><strong>Payment processing:</strong> The current membership and prebooking checkout integration uses Razorpay. When you initiate a payment, the details required to process that PennyGrade order (such as contact information, amount, and order reference) are sent to Razorpay. PennyGrade does not receive or store full payment-card credentials. If the payment provider changes, this policy will be updated before the new provider is used.</li>
           <li><strong>Transactional emails:</strong> Resend may process a customer's email address and message content to deliver membership, order, or prebooking confirmation emails.</li>
           <li><strong>Physical delivery:</strong> A courier or local delivery provider may receive the recipient name, phone number, and address required to deliver the physical membership card.</li>
           <li><strong>Web hosting:</strong> Hosting and security providers process technical request data needed to operate and protect the website.</li>
