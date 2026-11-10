@@ -1916,6 +1916,20 @@
   ],
   "auditLogs": [
     {
+      "id": "934c9f70-8e07-4aeb-912e-9bbfb56070a9",
+      "admin_user_id": "public-portal",
+      "action": "Member Application Received: Samir Pandey",
+      "target_type": "member_application",
+      "target_id": "1a0ae666-1722-406e-81cc-e0097ac7b356",
+      "metadata": {
+        "mobile": "7209853850",
+        "city": "Daltonganj",
+        "app_number": "PGM-2026-5530"
+      },
+      "created_at": "2026-11-03T19:36:18.952Z",
+      "who": "Public Portal"
+    },
+    {
       "id": "ea43317f-e7db-49ed-914e-442a7df939ad",
       "admin_user_id": "d9679e9b-7a65-42a3-9fbe-1aa27300321e",
       "action": "Password reset successfully via recovery (pennygradebusiness@gmail.com)",
@@ -3323,6 +3337,21 @@
     }
   ],
   "memberApplications": [
+    {
+      "id": "1a0ae666-1722-406e-81cc-e0097ac7b356",
+      "application_number": "PGM-2026-5530",
+      "full_name": "Samir Pandey",
+      "mobile": "7209853850",
+      "email": "pamdeysamir@gmail.com",
+      "city": "Daltonganj",
+      "plan_name": "PennyGrade 6-Month Membership",
+      "delivery_preference": "Direct Handover in Daltonganj (Free)",
+      "payment_preference": "UPI Payment upon Member Call Confirmation",
+      "notes": "Kanke kala,ps-patan,palamau,Jharkhand",
+      "status": "PENDING_VERIFICATION",
+      "created_at": "2026-11-03T19:36:18.952Z",
+      "updated_at": "2026-11-03T19:36:18.952Z"
+    },
     {
       "id": "c65ace82-6040-4b31-9782-a91e93f251fe",
       "application_number": "PGM-2026-7096",
